@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2337
+title: "Public campaign squeeze page at /landing/:slug"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2337-landing-slug
+
+paths:
+  - pages/landing/[slug].vue
+  - plugins/trail.client.ts
+  - components/modals/LeadModalForm.vue
+  - app/routers/leads.py
+  - app/services/leads_service.py
+  - tests/test_leads_capture.py
+
+ac:
+  - Public GET /leads/campaigns/{slug} for active WARO Colombia campaigns; 404 otherwise
+  - Squeeze page /landing/:slug with email+phone capture button_source landing:<slug>
+  - Capture persists campaign_leads, campaign_id, visitor_key, and UTM when present
+  - Trail page_view on /landing with existing UTM query fields
+  - Thank-you copy is WhatsApp outbound, not a call SLA
+
+out_of_scope:
+  - Facebook ads creatives and Instant Forms
+  - Video player/hosting
+  - Campaign admin UI
+  - Food-cost vs IA copy production
+
+hints:
+  entry: "pages/landing/[slug].vue"
+  pattern: "LeadModalForm + plugins/trail.client.ts shouldTrack"
+  tests: "pytest tests/test_leads_capture.py -q"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"
