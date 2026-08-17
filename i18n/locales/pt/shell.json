@@ -121,7 +121,37 @@
     "copyError": "Erro ao copiar",
     "revoked": "API Key revogada",
     "deleted": "API Key excluída",
-    "actionError": "Ocorreu um erro"
+    "actionError": "Ocorreu um erro",
+    "nav": {
+      "claves": "Chaves",
+      "pasarela": "Gateway"
+    },
+    "pasarela": {
+      "pageTitle": "Gateway Wompi",
+      "statusTitle": "Estado da conexão",
+      "disconnected": "Não conectada",
+      "disconnectedHint": "Cole as chaves Wompi do restaurante para cobrar o cliente.",
+      "connected": "Conectada",
+      "inactive": "Inativa",
+      "fingerprint": "Impressão",
+      "environment": "Ambiente",
+      "envTest": "Sandbox",
+      "envProd": "Produção",
+      "webhookUrl": "URL do webhook",
+      "webhookHint": "Cole no dashboard Wompi deste comércio. Uma URL de cobrança WARO.",
+      "formTitle": "Chaves do comércio",
+      "publicKey": "Chave pública",
+      "privateKey": "Chave privada",
+      "eventsSecret": "Segredo de eventos",
+      "integritySecret": "Segredo de integridade (opcional)",
+      "save": "Conectar",
+      "saving": "Conectando...",
+      "saved": "Gateway conectado",
+      "loadError": "Não foi possível carregar o gateway",
+      "saveError": "Não foi possível guardar as chaves",
+      "rotateHint": "As chaves privadas não voltam a ser mostradas. Para rodar, cole chaves novas e guarde.",
+      "notFinanzas": "Isto cobra o cliente no comércio do restaurante. Não é Finanças → Pagamentos."
+    }
   },
   "negocio": {
     "pageTitle": "Meu Negócio",

@@ -121,7 +121,37 @@
     "copyError": "Erreur lors de la copie",
     "revoked": "Clé API révoquée",
     "deleted": "Clé API supprimée",
-    "actionError": "Une erreur est survenue"
+    "actionError": "Une erreur est survenue",
+    "nav": {
+      "claves": "Clés",
+      "pasarela": "Passerelle"
+    },
+    "pasarela": {
+      "pageTitle": "Passerelle Wompi",
+      "statusTitle": "État de la connexion",
+      "disconnected": "Non connectée",
+      "disconnectedHint": "Collez les clés Wompi du restaurant pour encaisser le client.",
+      "connected": "Connectée",
+      "inactive": "Inactive",
+      "fingerprint": "Empreinte",
+      "environment": "Environnement",
+      "envTest": "Sandbox",
+      "envProd": "Production",
+      "webhookUrl": "URL du webhook",
+      "webhookHint": "Collez-la dans le tableau de bord Wompi de ce commerce. Une URL d’encaissement WARO.",
+      "formTitle": "Clés du commerce",
+      "publicKey": "Clé publique",
+      "privateKey": "Clé privée",
+      "eventsSecret": "Secret des événements",
+      "integritySecret": "Secret d’intégrité (optionnel)",
+      "save": "Connecter",
+      "saving": "Connexion...",
+      "saved": "Passerelle connectée",
+      "loadError": "Impossible de charger la passerelle",
+      "saveError": "Impossible d’enregistrer les clés",
+      "rotateHint": "Les clés privées ne s’affichent plus. Pour les remplacer, collez de nouvelles clés et enregistrez.",
+      "notFinanzas": "Ceci encaisse le client sur le commerce du restaurant. Ce n’est pas Finances → Paiements."
+    }
   },
   "negocio": {
     "pageTitle": "Mon entreprise",

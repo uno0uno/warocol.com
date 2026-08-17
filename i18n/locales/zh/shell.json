@@ -121,7 +121,37 @@
     "copyError": "复制失败",
     "revoked": "API 密钥已撤销",
     "deleted": "API 密钥已删除",
-    "actionError": "发生错误"
+    "actionError": "发生错误",
+    "nav": {
+      "claves": "密钥",
+      "pasarela": "支付网关"
+    },
+    "pasarela": {
+      "pageTitle": "Wompi 网关",
+      "statusTitle": "连接状态",
+      "disconnected": "未连接",
+      "disconnectedHint": "粘贴餐厅的 Wompi 商户密钥以便向食客收款。",
+      "connected": "已连接",
+      "inactive": "未启用",
+      "fingerprint": "指纹",
+      "environment": "环境",
+      "envTest": "沙盒",
+      "envProd": "生产",
+      "webhookUrl": "Webhook URL",
+      "webhookHint": "粘贴到该商户的 Wompi 控制台。WARO 收款共用这一条 URL。",
+      "formTitle": "商户密钥",
+      "publicKey": "公钥",
+      "privateKey": "私钥",
+      "eventsSecret": "事件密钥",
+      "integritySecret": "完整性密钥（可选）",
+      "save": "连接",
+      "saving": "正在连接...",
+      "saved": "网关已连接",
+      "loadError": "无法加载网关",
+      "saveError": "无法保存密钥",
+      "rotateHint": "私钥不会再次显示。要轮换，请粘贴新密钥并保存。",
+      "notFinanzas": "这会通过餐厅自己的商户向食客收款。不是财务 → 付款。"
+    }
   },
   "negocio": {
     "pageTitle": "我的业务",
