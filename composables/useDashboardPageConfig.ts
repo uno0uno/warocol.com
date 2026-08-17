@@ -301,16 +301,6 @@ export const useDashboardPageConfig = () => {
         breadcrumbPage: undefined,
         backButton: undefined
       }
-    } else if (path === '/integraciones') {
-      return {
-        pageTitle: 'Integraciones Dashboard',
-        pageSubtitle: undefined,
-        searchPlaceholder: undefined,
-        activePage: 'integraciones' as const,
-        showBreadcrumb: false,
-        breadcrumbPage: undefined,
-        backButton: undefined
-      }
     } else if (path.includes('/analitica/rentabilidad')) {
       return {
         pageTitle: 'Rentabilidad',

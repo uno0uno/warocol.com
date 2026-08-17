@@ -126,7 +126,37 @@
     "copyError": "Could not copy",
     "revoked": "API key revoked",
     "deleted": "API key deleted",
-    "actionError": "Something went wrong"
+    "actionError": "Something went wrong",
+    "nav": {
+      "claves": "API keys",
+      "pasarela": "Payment gateway"
+    },
+    "pasarela": {
+      "pageTitle": "Wompi gateway",
+      "statusTitle": "Connection status",
+      "disconnected": "Not connected",
+      "disconnectedHint": "Paste the restaurant Wompi merchant keys to collect diner payments.",
+      "connected": "Connected",
+      "inactive": "Inactive",
+      "fingerprint": "Fingerprint",
+      "environment": "Environment",
+      "envTest": "Sandbox",
+      "envProd": "Production",
+      "webhookUrl": "Webhook URL",
+      "webhookHint": "Paste this in the restaurant Wompi dashboard. One WARO collections URL.",
+      "formTitle": "Merchant keys",
+      "publicKey": "Public key",
+      "privateKey": "Private key",
+      "eventsSecret": "Events secret",
+      "integritySecret": "Integrity secret (optional)",
+      "save": "Connect",
+      "saving": "Connecting...",
+      "saved": "Gateway connected",
+      "loadError": "Could not load the gateway",
+      "saveError": "Could not save the keys",
+      "rotateHint": "Private keys are never shown again. To rotate, paste new keys and save.",
+      "notFinanzas": "This charges the diner on the restaurant merchant. It is not Finance → Payments."
+    }
   },
   "negocio": {
     "pageTitle": "My Business",

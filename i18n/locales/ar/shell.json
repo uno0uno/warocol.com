@@ -121,7 +121,37 @@
     "copyError": "تعذر النسخ",
     "revoked": "تم إلغاء مفتاح API",
     "deleted": "تم حذف مفتاح API",
-    "actionError": "حدث خطأ ما"
+    "actionError": "حدث خطأ ما",
+    "nav": {
+      "claves": "المفاتيح",
+      "pasarela": "بوابة الدفع"
+    },
+    "pasarela": {
+      "pageTitle": "بوابة Wompi",
+      "statusTitle": "حالة الاتصال",
+      "disconnected": "غير متصل",
+      "disconnectedHint": "الصق مفاتيح تاجر Wompi للمطعم لتحصيل المدفوعات من الزبون.",
+      "connected": "متصل",
+      "inactive": "غير نشط",
+      "fingerprint": "البصمة",
+      "environment": "البيئة",
+      "envTest": "تجريبي",
+      "envProd": "إنتاج",
+      "webhookUrl": "رابط الويب هوك",
+      "webhookHint": "الصقه في لوحة Wompi لهذا التاجر. رابط تحصيل واحد من WARO.",
+      "formTitle": "مفاتيح التاجر",
+      "publicKey": "المفتاح العام",
+      "privateKey": "المفتاح الخاص",
+      "eventsSecret": "سر الأحداث",
+      "integritySecret": "سر السلامة (اختياري)",
+      "save": "اتصال",
+      "saving": "جارٍ الاتصال...",
+      "saved": "تم ربط البوابة",
+      "loadError": "تعذر تحميل البوابة",
+      "saveError": "تعذر حفظ المفاتيح",
+      "rotateHint": "لا تُعرض المفاتيح الخاصة مرة أخرى. للتدوير، الصق مفاتيح جديدة واحفظ.",
+      "notFinanzas": "هذا يحصّل من الزبون على تاجر المطعم. ليس المالية ← المدفوعات."
+    }
   },
   "negocio": {
     "pageTitle": "نشاطي التجاري",

@@ -121,7 +121,37 @@
     "copyError": "Fehler beim Kopieren",
     "revoked": "API-Schlüssel widerrufen",
     "deleted": "API-Schlüssel gelöscht",
-    "actionError": "Es ist ein Fehler aufgetreten"
+    "actionError": "Es ist ein Fehler aufgetreten",
+    "nav": {
+      "claves": "Schlüssel",
+      "pasarela": "Zahlungsportal"
+    },
+    "pasarela": {
+      "pageTitle": "Wompi-Portal",
+      "statusTitle": "Verbindungsstatus",
+      "disconnected": "Nicht verbunden",
+      "disconnectedHint": "Füge die Wompi-Händlerschlüssel des Restaurants ein, um Gäste abzurechnen.",
+      "connected": "Verbunden",
+      "inactive": "Inaktiv",
+      "fingerprint": "Fingerabdruck",
+      "environment": "Umgebung",
+      "envTest": "Sandbox",
+      "envProd": "Produktion",
+      "webhookUrl": "Webhook-URL",
+      "webhookHint": "Im Wompi-Dashboard dieses Händlers einfügen. Eine WARO-Inkasso-URL.",
+      "formTitle": "Händlerschlüssel",
+      "publicKey": "Öffentlicher Schlüssel",
+      "privateKey": "Privater Schlüssel",
+      "eventsSecret": "Event-Geheimnis",
+      "integritySecret": "Integritätsgeheimnis (optional)",
+      "save": "Verbinden",
+      "saving": "Verbinden...",
+      "saved": "Portal verbunden",
+      "loadError": "Portal konnte nicht geladen werden",
+      "saveError": "Schlüssel konnten nicht gespeichert werden",
+      "rotateHint": "Private Schlüssel werden nicht erneut angezeigt. Zum Rotieren neue Schlüssel einfügen und speichern.",
+      "notFinanzas": "Das belastet den Gast über den Restaurant-Händler. Das ist nicht Finanzen → Zahlungen."
+    }
   },
   "negocio": {
     "pageTitle": "Mein Geschäft",

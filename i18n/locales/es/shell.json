@@ -126,7 +126,37 @@
     "copyError": "Error al copiar",
     "revoked": "API Key revocada",
     "deleted": "API Key eliminada",
-    "actionError": "Ocurrió un error"
+    "actionError": "Ocurrió un error",
+    "nav": {
+      "claves": "Claves",
+      "pasarela": "Pasarela"
+    },
+    "pasarela": {
+      "pageTitle": "Pasarela Wompi",
+      "statusTitle": "Estado de la conexión",
+      "disconnected": "Sin conectar",
+      "disconnectedHint": "Pega las llaves del comercio Wompi del restaurante para cobrar al comensal.",
+      "connected": "Conectada",
+      "inactive": "Inactiva",
+      "fingerprint": "Huella",
+      "environment": "Entorno",
+      "envTest": "Sandbox",
+      "envProd": "Producción",
+      "webhookUrl": "URL del webhook",
+      "webhookHint": "Pégala en el dashboard de Wompi de este comercio. Una sola URL de cobros WARO.",
+      "formTitle": "Llaves del comercio",
+      "publicKey": "Llave pública",
+      "privateKey": "Llave privada",
+      "eventsSecret": "Secreto de eventos",
+      "integritySecret": "Secreto de integridad (opcional)",
+      "save": "Conectar",
+      "saving": "Conectando...",
+      "saved": "Pasarela conectada",
+      "loadError": "No se pudo cargar la pasarela",
+      "saveError": "No se pudieron guardar las llaves",
+      "rotateHint": "Las llaves privadas no se vuelven a mostrar. Para rotar, pega llaves nuevas y guarda.",
+      "notFinanzas": "Esto cobra al comensal en el comercio del restaurante. No es Finanzas → Pagos."
+    }
   },
   "negocio": {
     "pageTitle": "Mi Negocio",

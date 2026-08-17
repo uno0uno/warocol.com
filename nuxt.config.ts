@@ -79,6 +79,7 @@ export default defineNuxtConfig({
     '/cocina/**': { ssr: false },
     '/despacho/**': { ssr: false },
     '/integraciones': { ssr: false },
+    '/integraciones/**': { ssr: false },
     '/perfil': { ssr: false },
     // Legacy redirect: stale link `/billing/renovar` 404'd. Send anyone
     // who lands there (bookmarks, old emails, Wompi callbacks) to the real
