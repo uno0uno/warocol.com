@@ -41,3 +41,13 @@ export function waroCollectionThankYouUrl (origin: string, sessionId: string): s
 export function isValidCollectionEmail (email: string | null | undefined): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim())
 }
+
+export function ventasPaymentStatusIsUnpaid (status: string | null | undefined): boolean {
+  return !status
+}
+
+export function collectionMailtoHref (email: string, landingUrl: string): string {
+  const subject = encodeURIComponent('Paga tu cuenta en el restaurante')
+  const body = encodeURIComponent(`Usa este enlace de WARO para pagar:\n${landingUrl}`)
+  return `mailto:${String(email || '').trim()}?subject=${subject}&body=${body}`
+}
