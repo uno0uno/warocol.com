@@ -16,6 +16,8 @@ import {
 import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
 import { useOpenSale } from '~/composables/useOpenSale'
 import type { ActiveTableSession } from '~/stores/usePOSStore'
+import { isWompiPaymentMethod } from '~/utils/wompiCollections'
+import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -202,6 +204,26 @@ function isPaymentGroupVisible(group: PosPaymentGroup) {
 }
 
 const visiblePaymentGroups = computed(() => paymentGroups.value.filter(isPaymentGroupVisible))
+const isWompiTender = computed(() => {
+  const group = paymentGroups.value.find(g => g.slug === form.value.payment_method)
+  if (!group) return false
+  const method = form.value.payment_method_id
+    ? group.methods?.find(m => m.id === form.value.payment_method_id)
+    : null
+  if (method) return isWompiPaymentMethod(method)
+  if ((group.methods?.length ?? 0) === 1) return isWompiPaymentMethod(group.methods[0])
+  return isWompiPaymentMethod(group)
+})
+const showWompiSlideover = ref(false)
+const wompiOrderId = ref<string | null>(null)
+const wompiAmount = ref(0)
+let unsubscribeWompiPayment: (() => void) | null = subscribeOrderPaymentApproved((payload) => {
+  if (payload.order_id && payload.order_id === wompiOrderId.value) {
+    showWompiSlideover.value = false
+    useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
+    void navigateTo(`/ventas/${payload.order_id}`)
+  }
+})
 
 // Single composed value for the v-model: "groupSlug:methodId" or "groupSlug:".
 // "cash:" means group "cash" without a specific method (group default).
@@ -607,6 +629,8 @@ setOpenCartHandler(() => {
 
 onUnmounted(() => {
   clearMobileCart()
+  unsubscribeWompiPayment?.()
+  unsubscribeWompiPayment = null
 })
 
 const selectedCustomerInitial = computed(() => {
@@ -641,6 +665,10 @@ watch(selectedCustomer, () => {
 
 async function submit() {
   if (!canSubmit.value) return
+  if (isWompiTender.value && splitMode.value) {
+    useToast().error('Wompi no admite cobro dividido. Cobra el total con Wompi.', { title: t('ventas.common.error') })
+    return
+  }
   const invalidItem = form.value.items.find(item => missingRequiredModifierGroupForItem(item))
   if (invalidItem) {
     const missingGroup = missingRequiredModifierGroupForItem(invalidItem)
@@ -682,6 +710,7 @@ async function submit() {
               })),
             }
           : {}),
+        ...(isWompiTender.value ? { wompi_collection: true } : {}),
         items: form.value.items.map(i => ({
           product_id: i.product_id,
           quantity: i.quantity,
@@ -695,6 +724,12 @@ async function submit() {
         }))
       }
     })
+    if (isWompiTender.value) {
+      wompiOrderId.value = res.data.id
+      wompiAmount.value = Number(res.data.total_amount || total.value)
+      showWompiSlideover.value = true
+      return
+    }
     useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
     await navigateTo(`/ventas/${res.data.id}`)
   } catch (err: any) {
@@ -1607,6 +1642,13 @@ async function submit() {
         v-model="showCustomerModal"
         @customer-identified="onCustomerIdentified"
         @fiscal-updated="onCustomerIdentified"
+      />
+      <PosWompiCollectionSlideover
+        v-model="showWompiSlideover"
+        :order-id="wompiOrderId"
+        :amount="wompiAmount"
+        :customer-id="selectedCustomer?.id"
+        :email="selectedCustomer?.email"
       />
     </Teleport>
 

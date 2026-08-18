@@ -11,6 +11,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { mergePosPaymentGroupsFromApi, type PosPaymentGroup } from '~/utils/paymentDefaults'
 import { notifyTableSessionUpdated } from '~/composables/useTableSessionSync'
+import { isWompiPaymentMethod } from '~/utils/wompiCollections'
 
 interface SessionAdvance {
   id: string
@@ -142,6 +143,13 @@ const refreshAfterMutation = async () => {
 
 const submit = async () => {
   if (!props.tableId || !selectedGroup.value || amountInvalid.value || requiresMethodSelection.value || submitting.value) return
+  const method = selectedMethodId.value
+    ? selectedGroup.value.methods?.find(item => item.id === selectedMethodId.value)
+    : selectedGroup.value.methods?.[0]
+  if (isWompiPaymentMethod(method) || isWompiPaymentMethod(selectedGroup.value)) {
+    toast.error('Wompi se cobra al cerrar la cuenta, no como anticipo', { title: t('pos.advance.tableAdvance') })
+    return
+  }
   submitting.value = true
   try {
     await $fetch(`/api/tables/${props.tableId}/session-advances`, {

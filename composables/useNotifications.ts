@@ -15,6 +15,36 @@ export interface Notification {
 // (SSE onmessage runs outside Vue reactivity, so useQueryCache() cannot be called there)
 let _queryCache: ReturnType<typeof useQueryCache> | null = null
 
+export type OrderPaymentApprovedPayload = {
+  type: 'order_payment_approved'
+  order_id: string
+  session_id: string
+  order_payment_id?: string
+}
+
+const orderPaymentApprovedListeners = new Set<(payload: OrderPaymentApprovedPayload) => void>()
+
+export function subscribeOrderPaymentApproved (
+  listener: (payload: OrderPaymentApprovedPayload) => void,
+) {
+  orderPaymentApprovedListeners.add(listener)
+  return () => {
+    orderPaymentApprovedListeners.delete(listener)
+  }
+}
+
+function notifyOrderPaymentApproved (payload: Record<string, unknown>) {
+  const event: OrderPaymentApprovedPayload = {
+    type: 'order_payment_approved',
+    order_id: String(payload.order_id ?? ''),
+    session_id: String(payload.session_id ?? ''),
+    order_payment_id: payload.order_payment_id ? String(payload.order_payment_id) : undefined,
+  }
+  for (const listener of orderPaymentApprovedListeners) {
+    listener(event)
+  }
+}
+
 // Singleton state — shared across all callers, prevents multiple SSE connections
 const initialized = ref(false)
 const isTenantResetting = ref(false)
@@ -106,6 +136,10 @@ export const useNotifications = () => {
             },
           })
           // No notifications row for this type — skip list invalidation churn
+          return
+        }
+        if (payload?.type === 'order_payment_approved') {
+          notifyOrderPaymentApproved(payload)
           return
         }
       } catch {
@@ -221,5 +255,6 @@ export const useNotifications = () => {
     disconnect,
     markAsRead,
     markAllRead,
+    subscribeOrderPaymentApproved,
   }
 }

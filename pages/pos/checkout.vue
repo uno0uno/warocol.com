@@ -40,6 +40,9 @@ import {
   formatFiscalIdentityLabel,
   type InvoiceAcquirerSource,
 } from '~/utils/customerIdentityPresentation'
+import { isWompiPaymentMethod } from '~/utils/wompiCollections'
+import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
+import WompiCollectionSlideover from '~/components/pos/WompiCollectionSlideover.vue'
 
 interface TopProduct {
   name: string
@@ -286,6 +289,11 @@ interface PosCustomer {
   fiscal_email?: string | null
 }
 const selectedCustomer = ref<PosCustomer | null>(null)
+const showWompiSlideover = ref(false)
+const wompiOrderId = ref<string | null>(null)
+const wompiAmount = ref(0)
+const wompiWasKitchen = ref(false)
+let unsubscribeWompiPayment: (() => void) | null = null
 const selectedCustomerIdentity = computed(() =>
   buildCustomerIdentityPresentation(selectedCustomer.value),
 )
@@ -1109,6 +1117,10 @@ const addSplitPayment = async () => {
   }
   if (splitPaymentValidationMessage.value) {
     processingError.value = splitPaymentValidationMessage.value
+    return
+  }
+  if (isWompiTender.value) {
+    processingError.value = 'Wompi no admite cobro dividido. Cobra el total con Wompi.'
     return
   }
   const amountToCharge = splitAmountToCharge.value
@@ -2057,6 +2069,157 @@ function checkoutErrorMessage(error: any, fallback: string) {
   return error?.data?.message || error?.message || fallback
 }
 
+const pendingKitchenOrderId = () => {
+  const orders = mesaCurrentData.value?.data?.orders as Array<{ id?: string; status?: string }> | undefined
+  return orders?.find(order => order.status === 'pending' && order.id)?.id || orders?.[0]?.id || null
+}
+
+const openWompiSlideover = (orderId: string, amount: number, kitchen: boolean) => {
+  wompiOrderId.value = orderId
+  wompiAmount.value = amount
+  wompiWasKitchen.value = kitchen
+  showWompiSlideover.value = true
+}
+
+const finishWompiSale = async () => {
+  const orderId = wompiOrderId.value
+  if (!orderId) return
+  showWompiSlideover.value = false
+  try {
+    if (wompiWasKitchen.value) {
+      const session = posStore.activeTableSession
+      if (session?.tableId) {
+        const closeResponse = await $fetch(`/api/tables/${session.tableId}/close`, {
+          method: 'POST',
+          body: {
+            customer_id: selectedCustomer.value?.id ?? null,
+            ...checkoutTipBody.value,
+            ...checkoutServedByBody.value,
+            ...checkoutWaroBody.value,
+          },
+        }) as any
+        cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+        const closeData = closeResponse?.data ?? {}
+        orderResult.value = {
+          order_id: orderId,
+          order_ids: closeData.order_ids || [orderId],
+          order_number: Number(closeData.order_number) || Number(closeData.order_numbers?.[0]) || 0,
+          total_amount: wompiAmount.value,
+          payment_method: 'digital',
+          payment_method_name: 'Wompi',
+          status: 'completed',
+          payment_status: 'paid',
+          customer_id: selectedCustomer.value?.id,
+        }
+        wasMesaMode.value = !session.isBar
+        if (session.isBar) posStore.exitSession()
+      }
+    } else if (!orderResult.value) {
+      orderResult.value = {
+        order_id: orderId,
+        order_number: 0,
+        total_amount: wompiAmount.value,
+        payment_method: 'digital',
+        payment_method_name: 'Wompi',
+        status: 'completed',
+        payment_status: 'paid',
+        customer_id: selectedCustomer.value?.id,
+      }
+    } else {
+      orderResult.value = {
+        ...orderResult.value,
+        payment_method: 'digital',
+        payment_method_name: 'Wompi',
+        status: 'completed',
+        payment_status: 'paid',
+      }
+    }
+    cartItemsSnapshot.value = snapshotCartItemsForReceipt()
+    applyReceiptEmailAfterSale(selectedCustomer.value)
+    posStore.clearAll()
+    showSuccessModal.value = true
+  } catch (error: any) {
+    processingError.value = checkoutErrorMessage(error, 'El pago Wompi se aprobó, pero no se pudo cerrar la mesa')
+  } finally {
+    wompiOrderId.value = null
+    wompiWasKitchen.value = false
+    isProcessing.value = false
+  }
+}
+
+const processWompiCollection = async () => {
+  if (splitMode.value) {
+    processingError.value = 'Wompi no admite cobro dividido. Cobra el total con Wompi.'
+    return
+  }
+  try {
+    isProcessing.value = true
+    processingError.value = ''
+    const amount = finalAmountToCollect.value
+    if (isKitchenServiceMode.value) {
+      const orderId = pendingKitchenOrderId()
+      if (!orderId) {
+        processingError.value = 'No hay una orden pendiente para cobrar con Wompi'
+        return
+      }
+      openWompiSlideover(orderId, amount, true)
+      return
+    }
+    if (!posStore.cartId) {
+      processingError.value = t('pos.checkout.errors.cartNotSynced')
+      return
+    }
+    const _discountAmtPos = discountAmount.value
+    const _subtotalPos = cartTotal.value
+    const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
+      method: 'POST',
+      body: {
+        wompi_collection: true,
+        customer_id: selectedCustomer.value!.id,
+        ...(discountEnabled.value && _discountAmtPos > 0
+          ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+          : {}),
+        ...(posStore.activeTableSession?.isBar
+          ? { table_session_id: posStore.activeTableSession.sessionId }
+          : {}),
+        ...(deliveryEnabled.value && addressStore.selectedAddressId
+          ? {
+              delivery_address_id: addressStore.selectedAddressId,
+              ...(deliveryInstructions.value.trim()
+                ? { delivery_instructions: deliveryInstructions.value.trim() }
+                : {}),
+            }
+          : {}),
+        ...checkoutServedByBody.value,
+        ...checkoutTipBody.value,
+        ...checkoutWaroBody.value,
+      },
+    }) as { success: boolean; data: { order_id: string; order_number: number; total_amount: number; status?: string; payment_status?: string | null } }
+    if (!response.success || !response.data.order_id) {
+      processingError.value = t('pos.checkout.errors.processOrder')
+      return
+    }
+    orderResult.value = {
+      order_id: response.data.order_id,
+      order_number: response.data.order_number,
+      total_amount: response.data.total_amount,
+      payment_method: 'digital',
+      payment_method_name: 'Wompi',
+      status: response.data.status,
+      payment_status: response.data.payment_status,
+      customer_id: selectedCustomer.value?.id,
+      ...(discountEnabled.value && _discountAmtPos > 0
+        ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
+        : {}),
+    }
+    openWompiSlideover(response.data.order_id, Number(response.data.total_amount || amount), false)
+  } catch (error: any) {
+    processingError.value = checkoutErrorMessage(error, t('pos.checkout.errors.processOrder'))
+  } finally {
+    isProcessing.value = false
+  }
+}
+
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
@@ -2065,6 +2228,10 @@ const processOrder = async () => {
   }
   if (!manualDiscountIsValid.value) {
     processingError.value = discountValidationError.value
+    return
+  }
+  if (isWompiTender.value) {
+    await processWompiCollection()
     return
   }
 
@@ -2415,6 +2582,16 @@ const onCustomerIdentified = async (customer: { id: string; name: string | null;
 const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
+const isWompiTender = computed(() => {
+  const group = selectedGroup.value
+  if (!group) return false
+  const method = selectedPaymentMethodId.value
+    ? group.methods?.find(m => m.id === selectedPaymentMethodId.value)
+    : null
+  if (method) return isWompiPaymentMethod(method)
+  if ((group.methods?.length ?? 0) === 1) return isWompiPaymentMethod(group.methods[0])
+  return isWompiPaymentMethod(group)
+})
 const canDeferDeliveryPayment = computed(() =>
   isDeliveryEligible.value
 )
@@ -3491,6 +3668,11 @@ onMounted(async () => {
   // local → backend). All read queries already kicked off from setup.
   await syncCart()
   posDebugLog('checkout', 'mount:after-syncCart', checkoutDebugSnapshot())
+  unsubscribeWompiPayment = subscribeOrderPaymentApproved((payload) => {
+    if (payload.order_id && payload.order_id === wompiOrderId.value) {
+      void finishWompiSale()
+    }
+  })
 })
 
 watch(
@@ -3527,6 +3709,8 @@ watch(
 
 onUnmounted(() => {
   clearRefreshHandler(refreshAll)
+  unsubscribeWompiPayment?.()
+  unsubscribeWompiPayment = null
 })
 
 // Issue #529 — auto-select the anonymous customer when the tenant flag is on. Applies to
@@ -4323,6 +4507,14 @@ onUnmounted(() => {
           v-model="showCustomerModal"
           @customer-identified="onCustomerIdentified"
           @fiscal-updated="onCustomerIdentified"
+        />
+        <WompiCollectionSlideover
+          v-model="showWompiSlideover"
+          :order-id="wompiOrderId"
+          :amount="wompiAmount"
+          :customer-id="selectedCustomer?.id"
+          :email="selectedCustomer?.email"
+          @error="(message) => { processingError = message }"
         />
 
       </div>
