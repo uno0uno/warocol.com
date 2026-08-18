@@ -260,6 +260,7 @@ import CartSummary from '~/components/online/CartSummary.vue'
 import { Button } from '~/components/ui'
 import type { PosPaymentGroup } from '~/utils/paymentDefaults'
 import { modifierLineTotal } from '~/utils/saleModifierOption'
+import { isWompiPaymentMethod, waroCollectionLandingUrl, waroCollectionThankYouUrl } from '~/utils/wompiCollections'
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -396,6 +397,16 @@ onMounted(fetchWarosInfo)
 const paymentGroups = ref<PosPaymentGroup[]>([])
 const paymentSelection = ref<{ slug: string; id: string | null }>({ slug: '', id: null })
 const paymentError = ref('')
+const isWompiOnlineTender = computed(() => {
+  const group = paymentGroups.value.find(g => g.slug === paymentSelection.value.slug)
+  if (!group) return false
+  const method = paymentSelection.value.id
+    ? group.methods?.find(m => m.id === paymentSelection.value.id)
+    : null
+  if (method) return isWompiPaymentMethod(method)
+  if ((group.methods?.length ?? 0) === 1) return isWompiPaymentMethod(group.methods[0])
+  return isWompiPaymentMethod(group)
+})
 
 const tenantSlug = computed(() => String(route.params.tenant ?? ''))
 
@@ -506,8 +517,9 @@ const submitOrder = async () => {
       }
     }
 
+    const cartId = cartStore.cartId
     const response = await $fetch<{ success: boolean; data: ConfirmedOrder }>(
-      `/api/online/cart/${cartStore.cartId}/checkout`,
+      `/api/online/cart/${cartId}/checkout`,
       {
         method: 'POST',
         body: {
@@ -520,6 +532,26 @@ const submitOrder = async () => {
         },
       },
     )
+
+    if (isWompiOnlineTender.value) {
+      const runtimeConfig = useRuntimeConfig()
+      const origin = String(runtimeConfig.public.siteUrl || 'https://warocol.com')
+      const sessionRes = await $fetch<{ success: boolean; data: { id: string } }>(
+        '/api/collections/sessions/online',
+        {
+          method: 'POST',
+          body: {
+            orderId: response.data.order_id,
+            cartId,
+            amount: response.data.total_amount,
+            linkEmail: otpAuthStore.email || undefined,
+            redirectUrl: waroCollectionThankYouUrl(origin, '{sessionId}'),
+          },
+        },
+      )
+      window.location.href = waroCollectionLandingUrl(origin, sessionRes.data.id)
+      return
+    }
 
     confirmedOrder.value = response.data
     showSuccessModal.value = true

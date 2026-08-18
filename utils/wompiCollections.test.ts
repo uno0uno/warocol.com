@@ -4,7 +4,11 @@ import test from 'node:test'
 import {
   COLLECTIONS_WEBHOOK_PATH,
   collectionsWebhookUrl,
+  isValidCollectionEmail,
+  isWompiPaymentMethod,
   pasarelaEnvironmentLabelKey,
+  waroCollectionLandingUrl,
+  waroCollectionThankYouUrl,
 } from './wompiCollections.ts'
 
 test('builds the collections webhook URL from the API origin', () => {
@@ -32,4 +36,29 @@ test('maps Wompi environment to i18n keys', () => {
   assert.equal(pasarelaEnvironmentLabelKey('prod'), 'integraciones.pasarela.envProd')
   assert.equal(pasarelaEnvironmentLabelKey('test'), 'integraciones.pasarela.envTest')
   assert.equal(pasarelaEnvironmentLabelKey(null), 'integraciones.pasarela.envTest')
+})
+
+test('detects Wompi by method name, not the digital group', () => {
+  assert.equal(isWompiPaymentMethod({ name: 'Wompi' }), true)
+  assert.equal(isWompiPaymentMethod('Wompi'), true)
+  assert.equal(isWompiPaymentMethod({ name: 'Nequi' }), false)
+  assert.equal(isWompiPaymentMethod({ name: 'QR' }), false)
+  assert.equal(isWompiPaymentMethod({ name: 'digital' }), false)
+})
+
+test('builds WARO cobro URLs without Wompi or API hosts', () => {
+  const landing = waroCollectionLandingUrl('https://warocol.com/', 'session-1')
+  const thanks = waroCollectionThankYouUrl('https://warocol.com', 'session-1')
+  assert.equal(landing, 'https://warocol.com/cobro/session-1')
+  assert.equal(thanks, 'https://warocol.com/cobro/session-1/gracias')
+  assert.equal(landing.includes('/api/'), false)
+  assert.equal(thanks.includes('/api/'), false)
+  assert.equal(landing.includes('checkout.wompi.co'), false)
+  assert.equal(thanks.includes('checkout.wompi.co'), false)
+})
+
+test('validates collection email', () => {
+  assert.equal(isValidCollectionEmail('diner@example.com'), true)
+  assert.equal(isValidCollectionEmail('  '), false)
+  assert.equal(isValidCollectionEmail('not-an-email'), false)
 })
