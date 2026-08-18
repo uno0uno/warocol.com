@@ -2069,9 +2069,9 @@ function checkoutErrorMessage(error: any, fallback: string) {
   return error?.data?.message || error?.message || fallback
 }
 
-const pendingKitchenOrderId = () => {
-  const orders = mesaCurrentData.value?.data?.orders as Array<{ id?: string; status?: string }> | undefined
-  return orders?.find(order => order.status === 'pending' && order.id)?.id || orders?.[0]?.id || null
+const pendingKitchenOrder = () => {
+  const orders = mesaCurrentData.value?.data?.orders as Array<{ id?: string; status?: string; total_amount?: number }> | undefined
+  return (orders || []).filter(order => order.status === 'pending' && order.id)
 }
 
 const openWompiSlideover = (orderId: string, amount: number, kitchen: boolean) => {
@@ -2089,21 +2089,26 @@ const finishWompiSale = async () => {
     if (wompiWasKitchen.value) {
       const session = posStore.activeTableSession
       if (session?.tableId) {
-        const closeResponse = await $fetch(`/api/tables/${session.tableId}/close`, {
-          method: 'POST',
-          body: {
-            customer_id: selectedCustomer.value?.id ?? null,
-            ...checkoutTipBody.value,
-            ...checkoutServedByBody.value,
-            ...checkoutWaroBody.value,
-          },
-        }) as any
-        cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
-        const closeData = closeResponse?.data ?? {}
+        try {
+          await $fetch(`/api/tables/${session.tableId}/close`, {
+            method: 'POST',
+            body: {
+              customer_id: selectedCustomer.value?.id ?? null,
+            },
+          })
+          cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+          wasMesaMode.value = !session.isBar
+          if (session.isBar) posStore.exitSession()
+        } catch (closeError: any) {
+          processingError.value = checkoutErrorMessage(
+            closeError,
+            'El pago Wompi se aprobó. Si la mesa sigue abierta, ciérrala cuando no queden pendientes.',
+          )
+        }
         orderResult.value = {
           order_id: orderId,
-          order_ids: closeData.order_ids || [orderId],
-          order_number: Number(closeData.order_number) || Number(closeData.order_numbers?.[0]) || 0,
+          order_ids: [orderId],
+          order_number: 0,
           total_amount: wompiAmount.value,
           payment_method: 'digital',
           payment_method_name: 'Wompi',
@@ -2111,8 +2116,6 @@ const finishWompiSale = async () => {
           payment_status: 'paid',
           customer_id: selectedCustomer.value?.id,
         }
-        wasMesaMode.value = !session.isBar
-        if (session.isBar) posStore.exitSession()
       }
     } else if (!orderResult.value) {
       orderResult.value = {
@@ -2157,12 +2160,15 @@ const processWompiCollection = async () => {
     processingError.value = ''
     const amount = finalAmountToCollect.value
     if (isKitchenServiceMode.value) {
-      const orderId = pendingKitchenOrderId()
-      if (!orderId) {
-        processingError.value = 'No hay una orden pendiente para cobrar con Wompi'
+      const pending = pendingKitchenOrder()
+      if (pending.length !== 1 || !pending[0]?.id) {
+        processingError.value = pending.length > 1
+          ? 'Wompi cobra una orden a la vez. Consolida o cierra el resto de la cuenta primero.'
+          : 'No hay una orden pendiente para cobrar con Wompi'
         return
       }
-      openWompiSlideover(orderId, amount, true)
+      const orderAmount = Number(pending[0].total_amount)
+      openWompiSlideover(pending[0].id, Number.isFinite(orderAmount) && orderAmount > 0 ? orderAmount : amount, true)
       return
     }
     if (!posStore.cartId) {
