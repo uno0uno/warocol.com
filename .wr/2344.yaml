@@ -1,0 +1,43 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2344
+title: Hide sale mutations on order detail when electronic invoice exists
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2344-lock-fe-sale-mutations
+
+paths:
+  - pages/ventas/[id].vue
+  - utils/saleInvoiceLock.ts
+  - utils/saleInvoiceLock.test.ts
+  - ../api_warocol.com/app/services/orders_service.py
+  - ../api_warocol.com/tests/test_order_invoice_mutation_lock.py
+
+ac:
+  - Order detail with FE pending or accepted does not show change-status, edit-sale, or finalize-pending
+  - View, print, email, and PDF of the invoice remain available
+  - Order detail without FE (or rejected FE) keeps the current mutation actions
+  - API rejects status and line mutations when FE is pending or accepted
+  - PR lists the verification command used
+
+out_of_scope:
+  - Credit-note flow
+  - Bulk status on the orders list
+  - POS checkout
+  - Productos/Propinas tabs
+
+hints:
+  entry: "pages/ventas/[id].vue invoiceData + update_order_status / delete_order_item / delete_order_item_modifier"
+  pattern: "saleMutationsLockedByInvoice(pending|accepted); assert_order_invoice_allows_mutation 409 after closed-period guard"
+  tests: "node --test utils/saleInvoiceLock.test.ts ; pytest tests/test_order_invoice_mutation_lock.py tests/test_orders_despacho_operation_events.py -q"
+
+risk:
+  sensitive: true
+  areas: [fiscal, electronic-invoice]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Human review; fiscal/FE also /wr-review in a new chat if wanted"

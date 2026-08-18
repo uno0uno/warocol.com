@@ -19,6 +19,7 @@ import {
   isValidCollectionEmail,
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
+import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
@@ -174,6 +175,12 @@ watch(
   { immediate: true },
 )
 const invoiceData = computed(() => invoiceSnapshot.value ?? invoiceQueryData.value ?? null)
+const saleMutationsLocked = computed(() =>
+  saleMutationsLockedByInvoice(invoiceData.value?.status),
+)
+watch(saleMutationsLocked, (locked) => {
+  if (locked) isEditMode.value = false
+})
 const trimmedCufe = computed(() => {
   const cufe = String(invoiceData.value?.cufe ?? '').trim()
   if (cufe.length <= 32) return cufe
@@ -1424,7 +1431,7 @@ onUnmounted(() => {
       </div>
 
       <button
-        v-else-if="order.status === 'pending'"
+        v-else-if="order.status === 'pending' && !saleMutationsLocked"
         type="button"
         class="mb-6 bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
         @click="openFinalizeSalePanel"
@@ -1880,7 +1887,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Status Update Panel (mesa and barra orders) -->
-      <div v-if="order.source === 'mesa' || order.source === 'barra'"
+      <div v-if="(order.source === 'mesa' || order.source === 'barra') && !saleMutationsLocked"
         class="bg-surface border border-border rounded-xl p-5 space-y-4">
         <!-- Header -->
         <div class="flex items-center gap-2">
@@ -2009,7 +2016,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Edit/Save Buttons -->
-          <div class="flex gap-2 shrink-0">
+          <div v-if="!saleMutationsLocked" class="flex gap-2 shrink-0">
             <template v-if="!isEditMode">
               <button @click="enterEditMode"
                 class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
