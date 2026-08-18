@@ -1387,7 +1387,7 @@ onUnmounted(() => {
       </PurchasesPurchaseOrderHeader>
 
       <div
-        v-if="isWompiCollectionPending"
+        v-if="isWompiCollectionPending && order.status === 'pending'"
         class="mb-6 bg-status-warning-bg border border-status-warning-text/30 rounded-xl p-4 w-full"
       >
         <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
