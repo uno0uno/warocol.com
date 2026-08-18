@@ -3,10 +3,12 @@ import test from 'node:test'
 
 import {
   COLLECTIONS_WEBHOOK_PATH,
+  collectionMailtoHref,
   collectionsWebhookUrl,
   isValidCollectionEmail,
   isWompiPaymentMethod,
   pasarelaEnvironmentLabelKey,
+  ventasPaymentStatusIsUnpaid,
   waroCollectionLandingUrl,
   waroCollectionThankYouUrl,
 } from './wompiCollections.ts'
@@ -61,4 +63,20 @@ test('validates collection email', () => {
   assert.equal(isValidCollectionEmail('diner@example.com'), true)
   assert.equal(isValidCollectionEmail('  '), false)
   assert.equal(isValidCollectionEmail('not-an-email'), false)
+})
+
+test('treats null payment_status as unpaid, not paid', () => {
+  assert.equal(ventasPaymentStatusIsUnpaid(null), true)
+  assert.equal(ventasPaymentStatusIsUnpaid(undefined), true)
+  assert.equal(ventasPaymentStatusIsUnpaid(''), true)
+  assert.equal(ventasPaymentStatusIsUnpaid('paid'), false)
+  assert.equal(ventasPaymentStatusIsUnpaid('credit'), false)
+})
+
+test('mailto uses the WARO landing URL, never Wompi checkout', () => {
+  const landing = waroCollectionLandingUrl('https://warocol.com', 'session-1')
+  const href = collectionMailtoHref('diner@example.com', landing)
+  assert.equal(href.includes('checkout.wompi.co'), false)
+  assert.equal(href.includes(encodeURIComponent(landing)), true)
+  assert.equal(href.startsWith('mailto:diner@example.com'), true)
 })

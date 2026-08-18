@@ -5,6 +5,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
+import { ventasPaymentStatusIsUnpaid } from '~/utils/wompiCollections'
 
 useHead({ title: () => t('ventas.head.ordenes') })
 
@@ -348,7 +349,8 @@ const handleSort = (event: string | { field: string; direction?: 'asc' | 'desc' 
 
 const { formatDateTime: formatDate, formatCurrency } = useFormatters()
 
-const getPaymentStatusLabel = (status: string) => {
+const getPaymentStatusLabel = (status: string | null | undefined) => {
+  if (ventasPaymentStatusIsUnpaid(status)) return t('ventas.common.pendiente')
   const labels: Record<string, string> = {
     'paid': t('ventas.common.pagado'),
     'credit': t('ventas.common.credito'),
@@ -785,9 +787,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_status="{ value }">
           <UiStatusBadge
-            :value="getPaymentStatusLabel(value || 'paid')"
+            :value="getPaymentStatusLabel(value)"
             format="text"
-            :variant="value === 'partial' ? 'warning' : value === 'credit' ? 'warning' : 'success'"
+            :variant="ventasPaymentStatusIsUnpaid(value) || value === 'partial' || value === 'credit' ? 'warning' : 'success'"
             size="sm"
           />
         </template>

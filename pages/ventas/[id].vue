@@ -14,6 +14,12 @@ import {
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 import { displayedTipPercent } from '~/utils/tipPercentDisplay'
+import {
+  collectionMailtoHref,
+  isValidCollectionEmail,
+  waroCollectionLandingUrl,
+} from '~/utils/wompiCollections'
+import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -130,6 +136,29 @@ const { data: invoiceQueryData, status: invoiceStatus, refetch: refetchInvoice }
   staleTime: 0,
 })
 
+type WompiStaffSession = { id: string; status: string }
+
+const {
+  data: wompiSessionData,
+  refetch: refetchWompiSession,
+} = useQuery({
+  key: () => ['wompi-collection-session', currentTenant.value?.id ?? null, orderId.value],
+  query: async (): Promise<WompiStaffSession | null> => {
+    try {
+      const response = await $fetch<{ success: boolean; data: WompiStaffSession }>(
+        '/api/collections/sessions',
+        { query: { orderId: orderId.value } },
+      )
+      return response.data
+    } catch (e: any) {
+      if (e.status === 404 || e.statusCode === 404) return null
+      throw e
+    }
+  },
+  enabled: () => !!currentTenant.value && !!orderId.value,
+  staleTime: 15_000,
+})
+
 /**
  * Local override: Pinia Colada setQueryData/refetch was unreliable after emit when
  * the query had just cached null from 404 (worse after PATCH customer + refetch).
@@ -177,6 +206,65 @@ const showEmailModal = ref(false)
 const showInvoiceEmailHistory = ref(false)
 const invoiceEmailHistoryRefreshKey = ref(0)
 const toast = useToast()
+const runtimeConfig = useRuntimeConfig()
+const siteOrigin = computed(() => String(runtimeConfig.public.siteUrl || 'https://warocol.com'))
+const wompiSession = computed(() => wompiSessionData.value ?? null)
+const isWompiCollectionPending = computed(() => wompiSession.value?.status === 'pending')
+const wompiLandingUrl = computed(() => (
+  wompiSession.value?.id ? waroCollectionLandingUrl(siteOrigin.value, wompiSession.value.id) : ''
+))
+const wompiCopied = ref(false)
+const isVerifyingWompi = ref(false)
+const wompiActionError = ref('')
+const canSendWompiLink = computed(() => (
+  Boolean(wompiLandingUrl.value && isValidCollectionEmail(order.value?.customer?.email))
+))
+
+async function copyWompiLandingUrl () {
+  if (!wompiLandingUrl.value) return
+  try {
+    await navigator.clipboard.writeText(wompiLandingUrl.value)
+    wompiCopied.value = true
+    window.setTimeout(() => { wompiCopied.value = false }, 2000)
+  } catch {
+    wompiActionError.value = 'No se pudo copiar el enlace'
+  }
+}
+
+function sendWompiLandingUrl () {
+  const email = String(order.value?.customer?.email || '').trim()
+  if (!canSendWompiLink.value || !wompiLandingUrl.value) return
+  window.location.href = collectionMailtoHref(email, wompiLandingUrl.value)
+}
+
+async function verifyWompiCollection () {
+  if (!wompiSession.value?.id || isVerifyingWompi.value) return
+  isVerifyingWompi.value = true
+  wompiActionError.value = ''
+  try {
+    const result = await $fetch<{ success: boolean; data: { applied?: boolean; status?: string } }>(
+      `/api/collections/sessions/${wompiSession.value.id}/verify`,
+      { method: 'POST', body: {} },
+    )
+    await Promise.all([refetchOrder(), refetchWompiSession()])
+    if (result.data?.applied) {
+      toast.success('Pago confirmado', { title: 'Wompi' })
+    } else {
+      toast.info('Wompi aún no aprueba este cobro')
+    }
+  } catch (error: any) {
+    wompiActionError.value = error?.data?.detail || error?.data?.message || error?.message || 'No se pudo comprobar el pago'
+  } finally {
+    isVerifyingWompi.value = false
+  }
+}
+
+let unsubscribeWompiPayment: (() => void) | null = subscribeOrderPaymentApproved((payload) => {
+  if (payload.order_id && payload.order_id === orderId.value) {
+    void Promise.all([refetchOrder(), refetchWompiSession()])
+  }
+})
+
 const onInvoiceEmailSent = (email: string) => {
   invoiceEmailHistoryRefreshKey.value += 1
   toast.success(t('ventas.detail.emailSent', { email }), { title: t('ventas.detail.emailSentTitle') })
@@ -358,7 +446,7 @@ const isRefreshing = computed(() =>
 )
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
-  await Promise.all([refetchOrder(), refetchItems(), refetchInvoice()])
+  await Promise.all([refetchOrder(), refetchItems(), refetchInvoice(), refetchWompiSession()])
 }
 registerProgressiveLoading(isRefreshing)
 
@@ -1102,6 +1190,8 @@ onUnmounted(() => {
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
   setHeaderAction?.(undefined)
+  unsubscribeWompiPayment?.()
+  unsubscribeWompiPayment = null
 })
 </script>
 
@@ -1296,8 +1386,45 @@ onUnmounted(() => {
         </PurchasesPurchaseInfoCard>
       </PurchasesPurchaseOrderHeader>
 
+      <div
+        v-if="isWompiCollectionPending"
+        class="mb-6 bg-status-warning-bg border border-status-warning-text/30 rounded-xl p-4 w-full"
+      >
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
+        <p class="text-base font-bold leading-tight mb-1">Esperando cobro Wompi</p>
+        <p class="text-sm text-text-secondary mb-3">El comensal aún no paga. No marques esta venta como pagada.</p>
+        <p v-if="wompiLandingUrl" class="text-sm break-all text-text-primary mb-3">{{ wompiLandingUrl }}</p>
+        <p v-if="wompiActionError" class="text-sm text-destructive mb-3" role="alert">{{ wompiActionError }}</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            class="min-h-[44px] rounded-xl bg-primary text-primary-foreground font-semibold px-4 disabled:opacity-50"
+            :disabled="!wompiLandingUrl"
+            @click="copyWompiLandingUrl"
+          >
+            {{ wompiCopied ? 'Enlace copiado' : 'Copiar enlace WARO' }}
+          </button>
+          <button
+            type="button"
+            class="min-h-[44px] rounded-xl border border-border font-semibold text-text-primary px-4 disabled:opacity-50"
+            :disabled="!canSendWompiLink"
+            @click="sendWompiLandingUrl"
+          >
+            {{ t('ventas.detail.emailInvoiceCta') }}
+          </button>
+          <button
+            type="button"
+            class="min-h-[44px] rounded-xl border border-border font-semibold text-text-primary px-4 disabled:opacity-50"
+            :disabled="isVerifyingWompi || !wompiSession?.id"
+            @click="verifyWompiCollection"
+          >
+            {{ isVerifyingWompi ? t('common.loading') : 'Comprobar pago' }}
+          </button>
+        </div>
+      </div>
+
       <button
-        v-if="order.status === 'pending'"
+        v-else-if="order.status === 'pending'"
         type="button"
         class="mb-6 bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
         @click="openFinalizeSalePanel"
