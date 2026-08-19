@@ -178,6 +178,7 @@
       "invoiceValidatedTitle": "发票 {label} 已在 DIAN 验证",
       "invoiceValidatedBody": "DIAN 已验证此发票，但本地信息已不同步。",
       "matiasAuthError": "Matias 认证错误。请修正令牌并点击“重试开票”。",
+      "facturadorInternalError": "电子发票未能开具。开票服务出现内部错误。可以重试。",
       "invoiceUnavailableTitle": "电子发票不可用",
       "invoiceUnavailableBody": "仅信用支付的销售无法通过此流程开具电子发票。如需在销售时开票，请使用分期支付。",
       "noInvoiceTitle": "无电子发票",

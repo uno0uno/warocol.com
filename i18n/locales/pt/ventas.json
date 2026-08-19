@@ -178,6 +178,7 @@
       "invoiceValidatedTitle": "Nota fiscal {label} já validada na DIAN",
       "invoiceValidatedBody": "A DIAN validou esta nota fiscal, mas as informações locais ficaram dessincronizadas.",
       "matiasAuthError": "Erro de autenticação com Matias. Corrija o token e toque em Reemitir.",
+      "facturadorInternalError": "Não foi possível emitir a nota fiscal. O faturador teve um erro interno. Você pode tentar de novo.",
       "invoiceUnavailableTitle": "Nota fiscal eletrônica não disponível",
       "invoiceUnavailableBody": "Vendas com pagamento somente a crédito não emitem nota fiscal eletrônica por este fluxo. Use pagamento dividido se precisar faturar no momento da venda.",
       "noInvoiceTitle": "Sem nota fiscal eletrônica",

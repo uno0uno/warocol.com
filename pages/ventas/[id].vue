@@ -20,6 +20,7 @@ import {
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
 import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
+import { publicInvoiceErrorMessage } from '~/utils/invoiceEmitError'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
@@ -311,6 +312,13 @@ const canRetryInvoice = computed(() =>
     && !isCreditOnlyInvoiceBlocked.value,
 )
 
+const invoiceErrorDisplay = computed(() =>
+  publicInvoiceErrorMessage(
+    invoiceData.value?.error_message,
+    t('ventas.detail.facturadorInternalError'),
+  ),
+)
+
 const isMatiasAuthInvoiceError = computed(() => {
   const msg = (invoiceData.value?.error_message || emitInvoiceError.value || '').toLowerCase()
   return msg.includes('401') || msg.includes('unauthenticated')
@@ -417,10 +425,16 @@ const emitInvoice = async () => {
         }
       }
     } else {
-      emitInvoiceError.value = result?.error_message || t('ventas.detail.rejected')
+      emitInvoiceError.value = publicInvoiceErrorMessage(
+        result?.error_message || t('ventas.detail.rejected'),
+        t('ventas.detail.facturadorInternalError'),
+      )
     }
   } catch (e: any) {
-    emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || t('ventas.detail.emitError')
+    emitInvoiceError.value = publicInvoiceErrorMessage(
+      e.data?.detail || e.data?.message || e.message || t('ventas.detail.emitError'),
+      t('ventas.detail.facturadorInternalError'),
+    )
   } finally {
     isEmittingInvoice.value = false
   }
@@ -1713,7 +1727,7 @@ onUnmounted(() => {
                   d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
               </svg>
               <div class="min-w-0 space-y-1">
-                <span>{{ invoiceData.error_message }}</span>
+                <span>{{ invoiceErrorDisplay }}</span>
                 <p v-if="isMatiasAuthInvoiceError" class="text-xs opacity-90">
                   {{ t('ventas.detail.matiasAuthError') }}
                 </p>
