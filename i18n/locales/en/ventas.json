@@ -189,6 +189,7 @@
       "invoiceValidatedTitle": "Invoice {label} already validated in DIAN",
       "invoiceValidatedBody": "DIAN has this invoice validated but local data is out of sync.",
       "matiasAuthError": "Matias authentication error. Fix the token and tap Retry emission.",
+      "facturadorInternalError": "The electronic invoice could not be issued. The invoicing provider had an internal error. You can retry.",
       "invoiceUnavailableTitle": "Electronic invoice not available",
       "invoiceUnavailableBody": "Credit-only sales do not emit an electronic invoice from this flow. Use split payment if you need to invoice at sale time.",
       "noInvoiceTitle": "No electronic invoice",

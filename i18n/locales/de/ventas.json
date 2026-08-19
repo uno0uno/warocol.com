@@ -178,6 +178,7 @@
       "invoiceValidatedTitle": "Rechnung {label} bereits bei DIAN validiert",
       "invoiceValidatedBody": "DIAN hat diese Rechnung validiert, aber die lokalen Informationen sind nicht synchronisiert.",
       "matiasAuthError": "Authentifizierungsfehler bei Matias. Korrigieren Sie den Token und tippen Sie auf 'Erneut ausstellen'.",
+      "facturadorInternalError": "Die elektronische Rechnung konnte nicht ausgestellt werden. Der Anbieter hatte einen internen Fehler. Sie können es erneut versuchen.",
       "invoiceUnavailableTitle": "Elektronische Rechnung nicht verfügbar",
       "invoiceUnavailableBody": "Verkäufe mit Zahlungen nur auf Kredit stellen über diesen Workflow keine elektronische Rechnung aus. Verwenden Sie geteilte Zahlung, wenn Sie zum Zeitpunkt des Verkaufs eine Rechnung benötigen.",
       "noInvoiceTitle": "Keine elektronische Rechnung",

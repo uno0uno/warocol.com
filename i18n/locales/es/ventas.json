@@ -189,6 +189,7 @@
       "invoiceValidatedTitle": "Factura {label} ya validada en DIAN",
       "invoiceValidatedBody": "DIAN tiene esta factura validada pero la información local quedó desincronizada.",
       "matiasAuthError": "Error de autenticación con Matias. Corrige el token y pulsa Reintentar emisión.",
+      "facturadorInternalError": "No se pudo emitir la factura electrónica. El facturador tuvo un error interno. Puedes reintentar.",
       "invoiceUnavailableTitle": "Factura electrónica no disponible",
       "invoiceUnavailableBody": "Las ventas con pago solo crédito no emiten factura electrónica desde este flujo. Usa pago dividido si necesitas facturar al momento de la venta.",
       "noInvoiceTitle": "Sin factura electrónica",
