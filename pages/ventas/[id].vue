@@ -500,6 +500,7 @@ const preInvoiceAcquirerLabel = computed(() =>
 const orderHasInvoiceCustomer = computed(() => Boolean(orderCustomer.value?.id))
 const canAssociateOrderCustomer = computed(() => Boolean(
   order.value
+    && order.value.status !== 'cancelled'
     && invoiceStatus.value === 'success'
     && !invoiceData.value
 ))
@@ -1067,6 +1068,10 @@ const updateStatus = async () => {
         payment_method: selectedPaymentMethod.value || undefined,
         reason: selectedNewStatus.value === 'cancelled' ? cancelReason.value.trim() : undefined,
       },
+    })
+    setPageStatus?.({
+      label: getStatusLabel(selectedNewStatus.value),
+      color: getStatusColor(selectedNewStatus.value),
     })
     await refetchOrder()
     selectedNewStatus.value = ''

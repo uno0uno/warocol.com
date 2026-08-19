@@ -1,0 +1,37 @@
+# Compact Codex plan. Keep <=80 lines.
+issue: 2356
+title: "Lock cancelled sales: header matches status; no customer assign"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2356-lock-cancelled-sale
+
+paths:
+  - pages/ventas/[id].vue
+
+ac:
+  - Header badge updates to saved status right after successful confirm
+  - Selecting a card without confirm does not change the header
+  - Hide Asociar/Cambiar cliente when cancelled
+  - Email and history stay completed-only
+
+out_of_scope:
+  - emit FE on cancelled
+  - waiter assign
+  - bulk
+
+hints:
+  entry: "setPageStatus watch + canAssociateOrderCustomer + updateStatus"
+  pattern: "getStatusLabel(order.status); canSendOrderEmail completed-only"
+  tests: "none (no page unit test)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Companion API PR Closes uno0uno/warocol.com#2356"
