@@ -1,0 +1,33 @@
+# Compact plan for wr-fast. Keep <=80 lines.
+issue: 2352
+issue_ref: uno0uno/warocol.com#2352
+title: "Hide Completada on completed sales; status cards icon-left text-right"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2352-hide-completed-status-card
+closes: "Closes #2352"
+risk: low
+
+paths:
+  - pages/ventas/[id].vue
+
+ac:
+  - Completed sale: Completada card hidden; only Cancelada
+  - Pending sale still shows Pendiente, Completada, Cancelada
+  - Cards are horizontal: icon left, text right
+  - Editar venta only while pending unchanged
+
+out_of_scope:
+  - API
+  - Bulk Órdenes
+  - FE lock
+
+hints:
+  entry: "pages/ventas/[id].vue status cards ~1908"
+  pattern: "Pendiente already v-if order.status !== 'completed'"
+  tests: "no automated UI test; rg v-if + flex-row on status cards"
+
+skip:
+  audits: [color, typography]
