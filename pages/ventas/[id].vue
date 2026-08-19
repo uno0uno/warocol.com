@@ -1905,20 +1905,20 @@ onUnmounted(() => {
         </div>
 
         <!-- Status cards -->
-        <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-2' : 'grid-cols-3'">
+        <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-1' : 'grid-cols-3'">
           <!-- Pendiente -->
           <button
             v-if="order.status !== 'completed'"
             type="button"
             @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'"
             :class="[
-            'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+            'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
             selectedNewStatus === 'pending'
               ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
               : 'bg-surface border-border'
           ]">
             <div
-              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary']">
+              :class="['w-9 h-9 shrink-0 rounded-full flex items-center justify-center', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary']">
               <svg class="w-4.5 h-4.5 transition-colors duration-150"
                 :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary group-hover:text-status-warning-text'"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -1928,20 +1928,22 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">{{ t('ventas.common.pendiente') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">{{ t('ventas.common.pendiente') }}</span>
           </button>
 
           <!-- Completada -->
-          <button type="button"
+          <button
+            v-if="order.status !== 'completed'"
+            type="button"
             @click="() => { selectedNewStatus = selectedNewStatus === 'completed' ? '' : 'completed'; selectedPaymentMethod = '' }"
             :class="[
-              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+              'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'completed'
                 ? 'bg-status-success-bg border-status-success-text/50 shadow-sm'
                 : 'bg-surface border-border'
             ]">
             <div
-              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
+              :class="['w-9 h-9 shrink-0 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
               <svg class="w-4.5 h-4.5 transition-colors duration-150"
                 :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary group-hover:text-status-success-text'"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -1951,19 +1953,19 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">{{ t('ventas.common.completada') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">{{ t('ventas.common.completada') }}</span>
           </button>
 
           <!-- Cancelada -->
           <button type="button" @click="selectedNewStatus = selectedNewStatus === 'cancelled' ? '' : 'cancelled'"
             :class="[
-              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+              'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'cancelled'
                 ? 'bg-status-critical-bg border-status-critical-text/50 shadow-sm'
                 : 'bg-surface border-border'
             ]">
             <div
-              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary']">
+              :class="['w-9 h-9 shrink-0 rounded-full flex items-center justify-center', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary']">
               <svg class="w-4.5 h-4.5 transition-colors duration-150"
                 :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary group-hover:text-status-critical-text'"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -1973,7 +1975,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">{{ t('ventas.common.cancelada') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">{{ t('ventas.common.cancelada') }}</span>
           </button>
         </div>
 
