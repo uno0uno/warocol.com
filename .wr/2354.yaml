@@ -1,0 +1,39 @@
+# Compact Codex plan. Keep <=80 lines.
+issue: 2354
+title: "Require a cancel note and persist the bitácora event"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2354-cancel-note-bitacora
+
+paths:
+  - pages/ventas/[id].vue
+  - i18n/locales/es/ventas.json
+
+ac:
+  - Cancelada shows a required note before confirm
+  - PATCH sends reason only when cancelling
+  - After cancel, status panel is hidden so Completada is not shown
+  - Editar venta remains pending-only
+
+out_of_scope:
+  - bulk Órdenes
+  - line-item delete notes
+  - FE lock
+  - collections-session 404
+
+hints:
+  entry: "pages/ventas/[id].vue status panel + updateStatus"
+  pattern: "completed payment-method extra step; PATCH /api/orders/:id/status"
+  tests: "none (no page unit test)"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Companion API PR Closes uno0uno/warocol.com#2354"

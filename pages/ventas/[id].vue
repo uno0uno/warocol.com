@@ -73,6 +73,7 @@ const productFilter = ref('')
 // Status update (mesa orders)
 const isUpdatingStatus = ref(false)
 const selectedNewStatus = ref('')
+const cancelReason = ref('')
 const selectedPaymentMethod = ref('')
 const selectedPaymentMethodId = ref<string | null>(null)
 const showFinalizeSalePanel = ref(false)
@@ -1056,6 +1057,7 @@ const isModifierDeleted = (itemId: string, modifierId: string) => {
 
 const updateStatus = async () => {
   if (!selectedNewStatus.value) return
+  if (selectedNewStatus.value === 'cancelled' && !cancelReason.value.trim()) return
   isUpdatingStatus.value = true
   try {
     await $fetch(`/api/orders/${orderId.value}/status`, {
@@ -1063,11 +1065,13 @@ const updateStatus = async () => {
       body: {
         status: selectedNewStatus.value,
         payment_method: selectedPaymentMethod.value || undefined,
+        reason: selectedNewStatus.value === 'cancelled' ? cancelReason.value.trim() : undefined,
       },
     })
     await refetchOrder()
     selectedNewStatus.value = ''
     selectedPaymentMethod.value = ''
+    cancelReason.value = ''
     useToast().success(t('ventas.detail.statusUpdated'), { title: 'Listo' })
   } catch (error: any) {
     useToast().error(error.data?.message || t('ventas.detail.statusUpdateError'), { title: t('ventas.common.error') })
@@ -1892,7 +1896,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Status Update Panel (mesa and barra orders) -->
-      <div v-if="(order.source === 'mesa' || order.source === 'barra') && !saleMutationsLocked"
+      <div v-if="(order.source === 'mesa' || order.source === 'barra') && !saleMutationsLocked && order.status !== 'cancelled'"
         class="bg-surface border border-border rounded-xl p-5 space-y-4">
         <!-- Header -->
         <div class="flex items-center gap-2">
@@ -1979,6 +1983,20 @@ onUnmounted(() => {
           </button>
         </div>
 
+        <!-- Cancel reason (required when cancelling) -->
+        <Transition name="slide-down">
+          <div v-if="selectedNewStatus === 'cancelled'" class="space-y-2">
+            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{{ t('ventas.detail.cancelReason') }}</p>
+            <textarea
+              v-model="cancelReason"
+              rows="3"
+              maxlength="500"
+              :placeholder="t('ventas.detail.cancelReasonPlaceholder')"
+              class="w-full min-h-[88px] rounded-lg border-2 border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-status-critical-text/50"
+            />
+          </div>
+        </Transition>
+
         <!-- Payment method (only when completing) -->
         <Transition name="slide-down">
           <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
@@ -1996,7 +2014,7 @@ onUnmounted(() => {
 
         <!-- Confirm button -->
         <button @click="updateStatus"
-          :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod)"
+          :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod) || (selectedNewStatus === 'cancelled' && !cancelReason.trim())"
           :class="[
             'w-full h-11 rounded-xl text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed',
             selectedNewStatus === 'cancelled'
