@@ -61,6 +61,8 @@
       "actionComandaRecalled": "تم استرجاع تذكرة المطبخ",
       "actionCustomerCreated": "تم إنشاء العميل",
       "actionCustomerUpdated": "تم تحديث العميل",
+      "actionOrderCustomerChanged": "تم تغيير عميل البيع",
+      "actionOrderEmailSent": "تم إرسال بريد البيع",
       "actionExpenseCreated": "تم إنشاء المصروف",
       "actionExpenseUpdated": "تم تحديث المصروف",
       "actionExpenseDeleted": "تم حذف المصروف",

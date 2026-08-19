@@ -119,6 +119,8 @@
       ,"actionComandaRecalled": "Kitchen ticket recalled"
       ,"actionCustomerCreated": "Customer created"
       ,"actionCustomerUpdated": "Customer updated"
+      ,"actionOrderCustomerChanged": "Sale customer changed"
+      ,"actionOrderEmailSent": "Sale email sent"
       ,"actionExpenseCreated": "Expense created"
       ,"actionExpenseUpdated": "Expense updated"
       ,"actionExpenseDeleted": "Expense deleted"
