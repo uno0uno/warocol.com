@@ -1007,10 +1007,15 @@ const printReceipt = async () => {
 
 // Edit mode functions
 const enterEditMode = () => {
+  if (order.value?.status !== 'pending') return
   isEditMode.value = true
   itemsToDelete.value = new Set()
   modifiersToDelete.value = new Map()
 }
+
+watch(() => order.value?.status, (status) => {
+  if (status !== 'pending') isEditMode.value = false
+})
 
 const cancelEdit = () => {
   isEditMode.value = false
@@ -1900,9 +1905,13 @@ onUnmounted(() => {
         </div>
 
         <!-- Status cards -->
-        <div class="grid grid-cols-3 gap-2.5">
+        <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-2' : 'grid-cols-3'">
           <!-- Pendiente -->
-          <button type="button" @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'" :class="[
+          <button
+            v-if="order.status !== 'completed'"
+            type="button"
+            @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'"
+            :class="[
             'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
             selectedNewStatus === 'pending'
               ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
@@ -2016,7 +2025,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Edit/Save Buttons -->
-          <div v-if="!saleMutationsLocked" class="flex gap-2 shrink-0">
+          <div v-if="!saleMutationsLocked && order.status === 'pending'" class="flex gap-2 shrink-0">
             <template v-if="!isEditMode">
               <button @click="enterEditMode"
                 class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2">

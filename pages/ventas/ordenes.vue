@@ -181,6 +181,14 @@ const allPageSelected = computed(() => {
   return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
 })
 
+const bulkSelectionHasCompleted = computed(() =>
+  orders.value.some((o: any) => selectedIds.value.includes(o.id) && o.status === 'completed'),
+)
+
+watch(bulkSelectionHasCompleted, (hasCompleted) => {
+  if (hasCompleted && bulkStatus.value === 'pending') bulkStatus.value = ''
+})
+
 const toggleSelect = (id: string) => {
   const idx = selectedIds.value.indexOf(id)
   if (idx >= 0) {
@@ -569,7 +577,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           >
             <option value="">{{ t('ventas.ordenes.changeStatus') }}</option>
             <option value="completed">{{ t('ventas.common.completada') }}</option>
-            <option value="pending">{{ t('ventas.common.pendiente') }}</option>
+            <option v-if="!bulkSelectionHasCompleted" value="pending">{{ t('ventas.common.pendiente') }}</option>
             <option value="cancelled">{{ t('ventas.common.cancelada') }}</option>
           </select>
 

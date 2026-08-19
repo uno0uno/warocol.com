@@ -1,0 +1,45 @@
+# Compact plan for wr-exec. Keep <=80 lines.
+issue: 2347
+issue_ref: uno0uno/warocol.com#2347
+title: "Block completed→pending; edit sale lines only while pending"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+api_cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+stack: both
+branch: wr-2347-block-completed-pending
+parent_epic: uno0uno/warocol.com#2346
+closes: "Closes uno0uno/warocol.com#2347"
+risk: low
+
+paths:
+  - pages/ventas/[id].vue
+  - pages/ventas/ordenes.vue
+  - ../api_warocol.com/app/services/orders_service.py
+  - ../api_warocol.com/tests/test_order_status_completed_pending.py
+
+ac:
+  - Completed sale cannot be set to pending in UI or API (all sources, not only POS)
+  - Completed sale can still be cancelled (subject to #2344 FE lock)
+  - Pending sale can be completed or cancelled
+  - Edit-sale / line deletes only while pending
+  - Bulk status cannot bypass completed → pending
+  - PR lists verification command
+
+out_of_scope:
+  - Journal void/reversal (#2348)
+  - Bitácora (#2349)
+  - Credit-note / FE annulment
+  - FE lock on bulk
+  - POS checkout, Productos/Propinas
+
+hints:
+  entry: "update_order_status + bulk_update_order_status; [id].vue status cards"
+  pattern: "Drop `and pos_cart_id` at orders_service.py:1346 and :1105; reuse Spanish cancel message without POS-only wording"
+  front: "Hide Pendiente card when order.status==='completed'; hide edit when completed AND !saleMutationsLocked. Do not fold completed into saleInvoiceLock.ts"
+  lines: "delete_order_item / delete_order_item_modifier SELECT must include status; reject when completed"
+  stock: "Leave _return_stock_for_order_cancellation pending arm; this batch never reaches it from completed"
+  tests: "./venv/bin/pytest tests/test_order_status_completed_pending.py tests/test_order_invoice_mutation_lock.py tests/test_orders_despacho_operation_events.py -q ; node --test utils/saleInvoiceLock.test.ts"
+
+skip:
+  audits: [color, typography]
