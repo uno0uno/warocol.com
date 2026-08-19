@@ -61,6 +61,8 @@
       "actionComandaRecalled": "किचन टिकट वापस लिया गया",
       "actionCustomerCreated": "ग्राहक बनाया गया",
       "actionCustomerUpdated": "ग्राहक अपडेट किया गया",
+      "actionOrderCustomerChanged": "बिक्री ग्राहक बदला गया",
+      "actionOrderEmailSent": "बिक्री ईमेल भेजा गया",
       "actionExpenseCreated": "खर्च बनाया गया",
       "actionExpenseUpdated": "खर्च अपडेट किया गया",
       "actionExpenseDeleted": "खर्च हटाया गया",

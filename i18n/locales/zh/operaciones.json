@@ -61,6 +61,8 @@
       "actionComandaRecalled": "厨房工单已召回",
       "actionCustomerCreated": "已创建客户",
       "actionCustomerUpdated": "已更新客户",
+      "actionOrderCustomerChanged": "已更改销售客户",
+      "actionOrderEmailSent": "已发送销售邮件",
       "actionExpenseCreated": "已创建支出",
       "actionExpenseUpdated": "已更新支出",
       "actionExpenseDeleted": "已删除支出",

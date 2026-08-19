@@ -1,0 +1,41 @@
+# Compact plan for wr-exec. Keep ≤80 lines.
+issue: 2349
+issue_ref: uno0uno/warocol.com#2349
+title: "Record Ventas bitácora for status, customer, and email"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2349-ventas-bitacora-events
+parent_epic: uno0uno/warocol.com#2346
+closes: "Closes #2349"
+companion: uno0uno/api-warolabs wr-2349-ventas-bitacora-events
+risk: low
+
+paths:
+  - composables/useOperationEvents.ts
+  - i18n/locales/es/operaciones.json
+  - i18n/locales/en/operaciones.json
+  - i18n/locales/pt/operaciones.json
+  - i18n/locales/fr/operaciones.json
+  - i18n/locales/de/operaciones.json
+  - i18n/locales/ar/operaciones.json
+  - i18n/locales/hi/operaciones.json
+  - i18n/locales/zh/operaciones.json
+
+ac:
+  - Bitácora filter/labels include order_customer_changed and order_email_sent
+  - Existing order_status_changed label unchanged
+
+out_of_scope:
+  - Ventas detail UI
+  - Status cards / edit lock
+  - New bitácora screens
+
+hints:
+  entry: "OPERATION_EVENT_ACTIONS + ACTION_LABELS + operationActionI18nKeys"
+  pattern: "composables/useOperationEvents.ts:74-80 order_status_changed / customer_updated"
+  tests: "no new front tests; labels only"
+
+skip:
+  audits: [ux, color, typography]

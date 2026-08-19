@@ -61,6 +61,8 @@
       "actionComandaRecalled": "Comanda recuperada",
       "actionCustomerCreated": "Cliente criado",
       "actionCustomerUpdated": "Cliente atualizado",
+      "actionOrderCustomerChanged": "Cliente da venda alterado",
+      "actionOrderEmailSent": "E-mail da venda enviado",
       "actionExpenseCreated": "Despesa criada",
       "actionExpenseUpdated": "Despesa atualizada",
       "actionExpenseDeleted": "Despesa excluída",

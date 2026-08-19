@@ -119,6 +119,8 @@
       ,"actionComandaRecalled": "Comanda recuperada"
       ,"actionCustomerCreated": "Cliente creado"
       ,"actionCustomerUpdated": "Cliente actualizado"
+      ,"actionOrderCustomerChanged": "Cliente de la venta cambiado"
+      ,"actionOrderEmailSent": "Correo de la venta enviado"
       ,"actionExpenseCreated": "Gasto creado"
       ,"actionExpenseUpdated": "Gasto actualizado"
       ,"actionExpenseDeleted": "Gasto eliminado"

@@ -61,6 +61,8 @@
       "actionComandaRecalled": "Ticket cuisine rappelé",
       "actionCustomerCreated": "Client créé",
       "actionCustomerUpdated": "Client mis à jour",
+      "actionOrderCustomerChanged": "Client de la vente modifié",
+      "actionOrderEmailSent": "E-mail de vente envoyé",
       "actionExpenseCreated": "Dépense créée",
       "actionExpenseUpdated": "Dépense mise à jour",
       "actionExpenseDeleted": "Dépense supprimée",

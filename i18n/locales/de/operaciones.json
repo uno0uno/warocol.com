@@ -61,6 +61,8 @@
       "actionComandaRecalled": "Küchenticket zurückgerufen",
       "actionCustomerCreated": "Kunde erstellt",
       "actionCustomerUpdated": "Kunde aktualisiert",
+      "actionOrderCustomerChanged": "Verkaufskunde geändert",
+      "actionOrderEmailSent": "Verkaufs-E-Mail gesendet",
       "actionExpenseCreated": "Ausgabe erstellt",
       "actionExpenseUpdated": "Ausgabe aktualisiert",
       "actionExpenseDeleted": "Ausgabe gelöscht",
