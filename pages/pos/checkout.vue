@@ -31,6 +31,7 @@ import {
   receiptSectionSeparator,
   collectThermalTicketText,
   compactThermalMoneyLabel,
+  type ReceiptDeliveryFields,
 } from '~/utils/receiptTicketPlainText'
 import { resolveReceiptLogoUrl } from '~/utils/receiptPrintConfig'
 import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
@@ -3119,6 +3120,7 @@ const receiptSinglePaymentLabel = computed(() => {
 const receiptLocationLabel = computed(() => {
   const context = receiptPrintContext.value
   if (!context) return null
+  if (deliveryEnabled.value) return t('ventas.common.domicilio')
   if (context.wasMesa && context.tableName) return `${tableSingular.value} ${context.tableCode} - ${context.tableName}`
   if (context.isBar) return t('pos.receipt.bar')
   return t('pos.receipt.counter')
@@ -3282,6 +3284,24 @@ const prefacturaDateTime = computed(() =>
   formatTenantDateTime()
 )
 
+const checkoutReceiptDelivery = computed((): ReceiptDeliveryFields | null => {
+  if (!deliveryEnabled.value) return null
+  const addr = addressStore.selectedAddress
+  const notes = [addr?.delivery_notes, deliveryInstructions.value]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' · ')
+  if (!addr && !notes) return null
+  return {
+    addressLine1: addr?.address_line1 ?? null,
+    addressLine2: addr?.address_line2 ?? null,
+    city: addr?.city ?? null,
+    state: addr?.state ?? null,
+    notes: notes || null,
+    timeLabel: t('pos.receipt.deliveryImmediate'),
+  }
+})
+
 const prefacturaSaleMetaLine = computed(() => {
   const session = posStore.activeTableSession
   const mesaLabel = isKitchenServiceMode.value && session?.tableName
@@ -3290,8 +3310,9 @@ const prefacturaSaleMetaLine = computed(() => {
   return joinReceiptParts([
     prefacturaDateTime.value,
     mesaLabel,
-    !mesaLabel && session?.isBar ? t('pos.receipt.bar') : null,
-    !mesaLabel && !session?.isBar ? t('pos.receipt.counter') : null,
+    deliveryEnabled.value ? t('ventas.common.domicilio') : null,
+    !deliveryEnabled.value && !mesaLabel && session?.isBar ? t('pos.receipt.bar') : null,
+    !deliveryEnabled.value && !mesaLabel && !session?.isBar ? t('pos.receipt.counter') : null,
     prefacturaWaiterName.value
       ? t('pos.receipt.waiter', { name: prefacturaWaiterName.value })
       : null,
@@ -3337,8 +3358,9 @@ const checkoutSaleMetaLine = computed(() => {
     ctx.wasMesa && ctx.tableName
       ? `${tableSingular.value} ${ctx.tableCode} — ${ctx.tableName}`
       : null,
-    !ctx.wasMesa && ctx.isBar ? t('pos.receipt.bar') : null,
-    !ctx.wasMesa && !ctx.isBar ? t('pos.receipt.counter') : null,
+    deliveryEnabled.value ? t('ventas.common.domicilio') : null,
+    !deliveryEnabled.value && !ctx.wasMesa && ctx.isBar ? t('pos.receipt.bar') : null,
+    !deliveryEnabled.value && !ctx.wasMesa && !ctx.isBar ? t('pos.receipt.counter') : null,
     ctx.waiterName ? t('pos.receipt.waiter', { name: ctx.waiterName }) : null,
   ])
 })
@@ -5866,6 +5888,7 @@ onUnmounted(() => {
       :sold-at="receiptPrintContext?.soldAt"
       :location-label="receiptLocationLabel"
       :waiter-name="receiptPrintContext?.waiterName"
+      :delivery="checkoutReceiptDelivery"
       :customer-name="receiptPrintContext?.customerName"
       :customer-phone="receiptPrintContext?.customerPhone"
       :customer-email="receiptPrintContext?.customerEmail"
@@ -5919,6 +5942,7 @@ onUnmounted(() => {
         · {{ prefacturaAcquirerLine }}
       </div>
     </template>
+    <PosReceiptDeliveryBlock :delivery="checkoutReceiptDelivery" />
     <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
@@ -6033,6 +6057,7 @@ onUnmounted(() => {
         {{ ' ' }}{{ checkoutSaleContactLine }}
       </div>
     </template>
+    <PosReceiptDeliveryBlock :delivery="checkoutReceiptDelivery" />
     <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div class="receipt-grid-header receipt-small">

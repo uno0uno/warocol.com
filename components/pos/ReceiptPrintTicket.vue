@@ -87,6 +87,14 @@ const props = defineProps<{
   soldAt?: string | null
   locationLabel?: string | null
   waiterName?: string | null
+  delivery?: {
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    notes?: string | null
+    timeLabel?: string | null
+  } | null
   customerName?: string | null
   customerPhone?: string | null
   customerEmail?: string | null
@@ -388,6 +396,8 @@ const printableItems = computed(() =>
         · {{ saleContactLine }}
       </div>
     </template>
+
+    <PosReceiptDeliveryBlock :delivery="delivery" />
 
     <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
