@@ -127,6 +127,8 @@
       "cancelOrder": "Cancel order",
       "acceptOrder": "Accept order",
       "reject": "Reject",
+      "rejectReason": "Reject reason",
+      "rejectReasonPlaceholder": "Why is this order being rejected?",
       "orderAccepted": "Order accepted.",
       "orderCompleted": "Order completed.",
       "orderCancelled": "Order cancelled.",

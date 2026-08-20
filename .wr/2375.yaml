@@ -1,0 +1,32 @@
+issue: 2375
+title: "feat(despacho): log table-QR accept/reject in Bitácora with reject reason"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2375-table-qr-bitacora
+risk: low
+
+paths:
+  - pages/despacho/en-mesa/[id].vue
+  - composables/useOperationEvents.ts
+  - i18n/locales/es/operaciones.json
+  - i18n/locales/en/operaciones.json
+  - i18n/locales/es/despacho.json
+  - i18n/locales/en/despacho.json
+
+ac:
+  - En mesa reject requires a reason before PATCH
+  - Bitácora labels for table_qr_accepted and table_qr_rejected
+  - Viewing a request does not write Bitácora
+
+out_of_scope:
+  - Domicilios and Comandas
+  - Other i18n locales
+
+hints:
+  entry: "pages/despacho/en-mesa/[id].vue rejectRequest"
+  pattern: "ventas/[id].vue cancelReason textarea"
+
+skip:
+  audits: [ux, color, typography]

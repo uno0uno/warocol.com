@@ -127,6 +127,8 @@
       "cancelOrder": "Cancelar pedido",
       "acceptOrder": "Aceptar pedido",
       "reject": "Rechazar",
+      "rejectReason": "Motivo del rechazo",
+      "rejectReasonPlaceholder": "¿Por qué se rechaza este pedido?",
       "orderAccepted": "Pedido aceptado.",
       "orderCompleted": "Pedido completado.",
       "orderCancelled": "Pedido cancelado.",
