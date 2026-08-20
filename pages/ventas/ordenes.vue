@@ -49,7 +49,8 @@ const paymentMethodIdFilter = computed(() =>
   paymentFilter.value?.startsWith('m:') ? paymentFilter.value.slice(2) : null
 )
 const statusFilter = ref<string | null>('completed')
-const deliveryOnly = ref<boolean>(false)
+const sourceFilter = ref<string | null>(null)
+const paymentStatusFilter = ref<string | null>(null)
 
 const hasActiveFilters = computed(
   () =>
@@ -57,7 +58,8 @@ const hasActiveFilters = computed(
     || !!dateRangeDates.value
     || !!paymentFilter.value
     || (statusFilter.value != null && statusFilter.value !== 'completed')
-    || deliveryOnly.value,
+    || !!sourceFilter.value
+    || !!paymentStatusFilter.value,
 )
 
 // Pagination state
@@ -82,7 +84,8 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
     sortDirection: sortDirection.value,
     dateFrom: dateRange.value.from,
     dateTo: dateRange.value.to,
-    deliveryOnly: deliveryOnly.value,
+    source: sourceFilter.value,
+    paymentStatus: paymentStatusFilter.value,
   }],
   query: () => $fetch('/api/orders', {
     params: {
@@ -97,7 +100,8 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
       sort_direction: sortDirection.value,
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
-      delivery_only: deliveryOnly.value || undefined,
+      source: sourceFilter.value || undefined,
+      payment_status: paymentStatusFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -118,7 +122,7 @@ watch(dateRangeDates, (val) => {
   }
 })
 
-watch([paymentFilter, statusFilter, deliveryOnly], () => {
+watch([paymentFilter, statusFilter, sourceFilter, paymentStatusFilter], () => {
   currentPage.value = 1
 })
 
@@ -264,7 +268,7 @@ const executeBulkUpdate = async (customerId: string | null) => {
 }
 
 // Clear selection when page/filters change
-watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange, deliveryOnly], clearSelection)
+watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange, sourceFilter, paymentStatusFilter], clearSelection)
 
 // Show discount column only when at least one order in the current page has a discount
 const hasAnyDiscount = computed(() => orders.value.some((o: any) => o.discount_amount > 0))
@@ -293,7 +297,8 @@ const clearFilters = () => {
   apiSearchField.value = 'order_number'
   paymentFilter.value = null
   statusFilter.value = 'completed'
-  deliveryOnly.value = false
+  sourceFilter.value = null
+  paymentStatusFilter.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
   currentPage.value = 1
@@ -318,7 +323,8 @@ const exportOrders = async () => {
         sort_direction: sortDirection.value,
         date_from: dateRange.value.from || undefined,
         date_to: dateRange.value.to || undefined,
-        delivery_only: deliveryOnly.value || undefined,
+        source: sourceFilter.value || undefined,
+        payment_status: paymentStatusFilter.value || undefined,
       }
     }) as { success: boolean; message: string; data?: { email: string; orders_count: number } }
 
@@ -417,6 +423,36 @@ const paymentHeaderFilter = computed({
   },
 })
 
+const sourceHeaderOptions = computed(() => [
+  { label: t('ventas.common.pos'), value: 'pos' },
+  { label: tableSingular.value, value: 'mesa' },
+  { label: t('ventas.common.barra'), value: 'barra' },
+  { label: t('ventas.common.domicilio'), value: 'delivery' },
+])
+
+const paymentStatusHeaderOptions = computed(() => [
+  { label: t('ventas.common.pagado'), value: 'paid' },
+  { label: t('ventas.common.pendiente'), value: 'unpaid' },
+  { label: t('ventas.common.credito'), value: 'credit' },
+  { label: t('ventas.common.parcial'), value: 'partial' },
+])
+
+const sourceHeaderFilter = computed({
+  get: () => sourceFilter.value ?? '',
+  set: (value: string | boolean) => {
+    sourceFilter.value = typeof value === 'string' && value ? value : null
+    currentPage.value = 1
+  },
+})
+
+const paymentStatusHeaderFilter = computed({
+  get: () => paymentStatusFilter.value ?? '',
+  set: (value: string | boolean) => {
+    paymentStatusFilter.value = typeof value === 'string' && value ? value : null
+    currentPage.value = 1
+  },
+})
+
 const { formatDateTime: formatDateCompact } = useFormatters()
 
 const getOrderSourceLabel = (order: any) => {
@@ -509,22 +545,29 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <option value="pending">{{ t('ventas.common.pendientes') }}</option>
         </select>
 
-        <!-- Delivery-only filter chip -->
-        <label
-          class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0 md:hidden"
-          :class="deliveryOnly
-            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-            : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+        <select
+          v-model="sourceFilter"
+          @change="() => { currentPage.value = 1 }"
+          :class="[filterSelectClass, 'md:hidden']"
         >
-          <input
-            v-model="deliveryOnly"
-            type="checkbox"
-            class="sr-only"
-            :aria-label="t('ventas.ordenes.deliveryOnlyAria')"
-            @change="() => { currentPage.value = 1 }"
-          />
-          <span class="text-sm font-semibold">{{ t('ventas.ordenes.deliveryOnly') }}</span>
-        </label>
+          <option :value="null">{{ t('ventas.ordenes.colSource') }}</option>
+          <option value="pos">{{ t('ventas.common.pos') }}</option>
+          <option value="mesa">{{ tableSingular }}</option>
+          <option value="barra">{{ t('ventas.common.barra') }}</option>
+          <option value="delivery">{{ t('ventas.common.domicilio') }}</option>
+        </select>
+
+        <select
+          v-model="paymentStatusFilter"
+          @change="() => { currentPage.value = 1 }"
+          :class="[filterSelectClass, 'md:hidden']"
+        >
+          <option :value="null">{{ t('ventas.ordenes.colPaymentStatus') }}</option>
+          <option value="paid">{{ t('ventas.common.pagado') }}</option>
+          <option value="unpaid">{{ t('ventas.common.pendiente') }}</option>
+          <option value="credit">{{ t('ventas.common.credito') }}</option>
+          <option value="partial">{{ t('ventas.common.parcial') }}</option>
+        </select>
         </template>
 
         <template #trailing>
@@ -684,10 +727,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #header-source>
           <UiTableHeaderFilter
-            v-model="deliveryOnly"
+            v-model="sourceHeaderFilter"
             :title="t('ventas.ordenes.colSource')"
-            filter-type="toggle"
-            :toggle-label="t('ventas.ordenes.deliveryOnly')"
+            filter-type="select"
+            :options="sourceHeaderOptions"
+            :all-label="t('ventas.ordenes.colSource')"
             align="center"
           />
         </template>
@@ -705,6 +749,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :all-label="t('ventas.common.metodoPagoShort')"
             align="left"
             @sort="handleSort"
+          />
+        </template>
+
+        <template #header-payment_status>
+          <UiTableHeaderFilter
+            v-model="paymentStatusHeaderFilter"
+            :title="t('ventas.ordenes.colPaymentStatus')"
+            filter-type="select"
+            :options="paymentStatusHeaderOptions"
+            :all-label="t('ventas.ordenes.colPaymentStatus')"
+            align="center"
           />
         </template>
 

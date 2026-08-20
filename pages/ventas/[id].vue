@@ -1841,7 +1841,7 @@ onUnmounted(() => {
       </div>
 
       <button
-        v-else-if="order.status === 'pending' && !saleMutationsLocked"
+        v-else-if="order.status === 'pending' && !saleMutationsLocked && !canShowStatusPanel"
         type="button"
         class="mb-6 w-full min-h-[44px] px-4 rounded-xl border border-crocus-200 bg-crocus-50 text-start hover:bg-crocus-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
         @click="openFinalizeSalePanel"
@@ -1908,7 +1908,8 @@ onUnmounted(() => {
             <p class="text-base font-semibold text-text-primary leading-snug">
               {{ order.scheduled_time ? formatDate(order.scheduled_time) : t('ventas.detail.immediate') }}
             </p>
-            <p v-if="!order.scheduled_time" class="text-xs text-text-secondary mt-0.5">{{ t('ventas.detail.dispatchAfterPayment') }}</p>
+            <p v-if="order.status === 'pending'" class="text-xs text-text-secondary mt-0.5">{{ t('ventas.detail.dispatchAfterPayment') }}</p>
+            <p v-else-if="order.status === 'completed'" class="text-xs text-text-secondary mt-0.5">{{ t('ventas.detail.dispatchReady') }}</p>
 
             <template v-if="order.delivery_instructions">
               <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 mt-5">{{ t('ventas.detail.courierNotes') }}</p>
@@ -2267,7 +2268,11 @@ onUnmounted(() => {
             <svg class="w-5 h-5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="text-sm text-text-tertiary">{{ t('ventas.detail.invoiceWhenComplete') }}</p>
+            <p class="text-sm text-text-tertiary">{{
+              order.status === 'pending'
+                ? t('ventas.detail.invoiceWhenComplete')
+                : t('ventas.detail.noInvoiceBodyNeutral')
+            }}</p>
           </div>
         </template>
         </div>
@@ -2309,6 +2314,9 @@ onUnmounted(() => {
           </svg>
           <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">{{ t('ventas.detail.changeStatus') }}</h2>
         </div>
+        <p class="text-sm font-semibold text-text-primary">
+          {{ t('ventas.detail.currentStatus', { status: getStatusLabel(order.status) }) }}
+        </p>
 
         <!-- Status cards -->
         <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-1' : 'grid-cols-2'">
@@ -2334,7 +2342,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">{{ t('ventas.common.pendiente') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">{{ t('ventas.detail.statusActionPending') }}</span>
           </button>
 
           <!-- Completada -->
@@ -2357,7 +2365,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">{{ t('ventas.common.completada') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">{{ t('ventas.detail.statusActionComplete') }}</span>
           </button>
 
           <!-- Cancelada -->
@@ -2379,7 +2387,7 @@ onUnmounted(() => {
               </svg>
             </div>
             <span
-              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">{{ t('ventas.common.cancelada') }}</span>
+              :class="['text-xs font-bold uppercase tracking-wider leading-none text-left transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">{{ t('ventas.detail.statusActionCancel') }}</span>
           </button>
         </div>
 
@@ -2413,7 +2421,13 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-            {{ t('ventas.detail.confirmChange') }}
+            {{
+              selectedNewStatus === 'cancelled'
+                ? t('ventas.detail.confirmCancel')
+                : selectedNewStatus === 'pending'
+                  ? t('ventas.detail.confirmPending')
+                  : t('ventas.detail.confirmChange')
+            }}
           </template>
         </button>
       </div>
