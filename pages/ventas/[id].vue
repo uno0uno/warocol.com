@@ -20,6 +20,7 @@ import {
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
 import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
+import { canShowSaleStatusPanel } from '~/utils/saleStatusPanel'
 import { publicInvoiceErrorMessage } from '~/utils/invoiceEmitError'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
@@ -179,6 +180,13 @@ watch(
 const invoiceData = computed(() => invoiceSnapshot.value ?? invoiceQueryData.value ?? null)
 const saleMutationsLocked = computed(() =>
   saleMutationsLockedByInvoice(invoiceData.value?.status),
+)
+const canShowStatusPanel = computed(() =>
+  canShowSaleStatusPanel({
+    source: order.value?.source,
+    status: order.value?.status,
+    invoiceLocked: saleMutationsLocked.value,
+  }),
 )
 watch(saleMutationsLocked, (locked) => {
   if (locked) isEditMode.value = false
@@ -1914,8 +1922,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Status Update Panel (mesa and barra orders) -->
-      <div v-if="(order.source === 'mesa' || order.source === 'barra') && !saleMutationsLocked && order.status !== 'cancelled'"
+      <!-- Status Update Panel (mesa, barra, and mostrador) -->
+      <div v-if="canShowStatusPanel"
         class="bg-surface border border-border rounded-xl p-5 space-y-4">
         <!-- Header -->
         <div class="flex items-center gap-2">
