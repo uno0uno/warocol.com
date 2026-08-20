@@ -1,0 +1,45 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2382
+title: "feat(pos): show delivery details on thermal and HTML receipts for domicilio"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2382-receipt-delivery
+
+paths:
+  - utils/receiptTicketPlainText.ts
+  - utils/receiptTicketPlainText.test.ts
+  - components/pos/ReceiptDeliveryBlock.vue
+  - components/pos/ReceiptPrintTicket.vue
+  - pages/pos/checkout.vue
+  - pages/ventas/[id].vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+
+ac:
+  - ventas/[id] thermal+HTML print shows delivery address, notes, time for domicilio
+  - checkout prefactura print shows the same when delivery is on
+  - checkout completed ReceiptPrintTicket shows the same
+  - POS/mesa/barra tickets omit the delivery block
+  - 58mm wrap without ellipsis spam
+
+out_of_scope:
+  - comanda kitchen tickets
+  - changing establishment fiscal header
+  - API schema
+
+hints:
+  entry: "formatReceiptDeliveryLines + PosReceiptDeliveryBlock after sale contact"
+  pattern: "ReceiptPrintTicket saleContact then products; checkout #pos-prefactura"
+  tests: "bun test utils/receiptTicketPlainText.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-review on the PR"

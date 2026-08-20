@@ -1080,6 +1080,24 @@ const saleReceiptLocationLabel = computed(() => {
   return t('ventas.detail.counter')
 })
 
+const saleReceiptDelivery = computed(() => {
+  const o = order.value
+  if (!o?.is_delivery) return null
+  const address = o.delivery_address
+  const notes = [address?.delivery_notes, o.delivery_instructions]
+    .map((part: unknown) => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' · ')
+  return {
+    addressLine1: address?.address_line1 ?? null,
+    addressLine2: address?.address_line2 ?? null,
+    city: address?.city ?? null,
+    state: address?.state ?? null,
+    notes: notes || null,
+    timeLabel: o.scheduled_time ? formatDate(o.scheduled_time) : t('pos.receipt.deliveryImmediate'),
+  }
+})
+
 const saleReceiptSoldAt = computed(() => {
   const o = order.value
   if (!o) return null
@@ -3129,6 +3147,7 @@ onUnmounted(() => {
       :sold-at="saleReceiptSoldAt"
       :location-label="saleReceiptLocationLabel"
       :waiter-name="order.served_by_member_name"
+      :delivery="saleReceiptDelivery"
       :customer-name="saleCustomerIdentity.contact.name"
       :customer-phone="saleCustomerIdentity.contact.phone"
       :customer-email="saleCustomerIdentity.contact.email"

@@ -227,6 +227,67 @@ export function formatReceiptModifierBlock(opts: {
  * Tax / tributary breakdown line — same indent + bullet as adicionales
  * so Detalle de impuestos / Detalle tributario matches prefatura/factura modifiers.
  */
+/** Word-wrap for 58mm ticket lines (addresses). Never truncates with "...". */
+export function wrapReceiptText(text: string, cols: number = RECEIPT_THERMAL_COLS): string[] {
+  const raw = String(text ?? '').replace(/\s+/g, ' ').trim()
+  if (!raw) return []
+  if (raw.length <= cols) return [raw]
+  const words = raw.split(' ')
+  const lines: string[] = []
+  let current = ''
+  const flushWord = (word: string) => {
+    if (word.length <= cols) {
+      current = word
+      return
+    }
+    for (let i = 0; i < word.length; i += cols) {
+      lines.push(word.slice(i, i + cols))
+    }
+    current = ''
+  }
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (next.length <= cols) {
+      current = next
+    } else {
+      if (current) lines.push(current)
+      flushWord(word)
+    }
+  }
+  if (current) lines.push(current)
+  return lines
+}
+
+export type ReceiptDeliveryFields = {
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  state?: string | null
+  notes?: string | null
+  timeLabel?: string | null
+}
+
+/** Compact domicilio block. Empty when there is no address, notes, or time. */
+export function formatReceiptDeliveryLines(
+  fields: ReceiptDeliveryFields | null | undefined,
+  labels: { title: string, time: string, notes: string },
+  cols: number = RECEIPT_THERMAL_COLS,
+): string[] {
+  if (!fields) return []
+  const street = joinReceiptParts([fields.addressLine1, fields.addressLine2])
+  const locality = joinReceiptParts([fields.city, fields.state], ', ')
+  const notes = String(fields.notes ?? '').trim()
+  const timeLabel = String(fields.timeLabel ?? '').trim()
+  if (!street && !locality && !notes && !timeLabel) return []
+
+  const lines = [labels.title]
+  lines.push(...wrapReceiptText(street, cols))
+  lines.push(...wrapReceiptText(locality, cols))
+  if (timeLabel) lines.push(...wrapReceiptText(`${labels.time}: ${timeLabel}`, cols))
+  if (notes) lines.push(...wrapReceiptText(`${labels.notes}: ${notes}`, cols))
+  return lines
+}
+
 export function formatReceiptTaxBulletLine(opts: {
   label: string
   amountLabel: string

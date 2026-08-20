@@ -11,6 +11,8 @@ import {
   receiptItemSeparator,
   receiptSectionSeparator,
   collectThermalTicketText,
+  wrapReceiptText,
+  formatReceiptDeliveryLines,
 } from './receiptTicketPlainText'
 
 describe('joinReceiptParts', () => {
@@ -194,6 +196,37 @@ describe('formatReceiptTaxBulletLine', () => {
 describe('receiptDivider', () => {
   it('emits fixed-width dashes', () => {
     expect(receiptDivider(10)).toBe('----------')
+  })
+})
+
+describe('formatReceiptDeliveryLines', () => {
+  const labels = { title: 'Entrega', time: 'Hora', notes: 'Notas' }
+
+  it('returns empty without address, notes, or time', () => {
+    expect(formatReceiptDeliveryLines({}, labels)).toEqual([])
+    expect(formatReceiptDeliveryLines(null, labels)).toEqual([])
+  })
+
+  it('prints compact domicilio lines and wraps long streets', () => {
+    const lines = formatReceiptDeliveryLines({
+      addressLine1: 'calle 39 f # 68 f 66 sur',
+      addressLine2: 'casa',
+      city: 'bogota',
+      state: 'cundinamarca',
+      notes: 'timbrar',
+      timeLabel: 'Inmediato',
+    }, labels)
+    expect(lines[0]).toBe('Entrega')
+    expect(lines.join('\n')).toContain('calle 39 f # 68 f 66 sur')
+    expect(lines.join('\n')).toContain('bogota, cundinamarca')
+    expect(lines.some(line => line.startsWith('Hora:'))).toBe(true)
+    expect(lines.some(line => line.startsWith('Notas:'))).toBe(true)
+    expect(lines.every(line => line.length <= 32)).toBe(true)
+  })
+
+  it('wraps without ellipsis', () => {
+    expect(wrapReceiptText('x'.repeat(40), 32).join('')).not.toContain('...')
+    expect(wrapReceiptText('x'.repeat(40), 32).every(line => line.length <= 32)).toBe(true)
   })
 })
 
