@@ -652,7 +652,7 @@ const showFinalizeDuePreview = computed(() =>
   || mesaAdvanceAppliedEstimate.value > 0
 )
 const mesaAdvanceAvailable = computed(() => {
-  if (!order.value?.table_session_id || finalizeSplitMode.value) return 0
+  if (!order.value?.table_session_id || finalizeSplitMode.value || isWompiTender.value) return 0
   return Number(order.value?.available_advance) || 0
 })
 const mesaAdvanceAppliedEstimate = computed(() =>
@@ -1605,9 +1605,11 @@ const finalizePendingSale = async () => {
     await refetchOrder()
     await refetchInvoice()
     if (isWompiTender.value) {
-      wompiCollectAmount.value = cashAmountToCharge.value
+      wompiCollectAmount.value = productAmountToCharge.value
+        + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value)
       showFinalizeSalePanel.value = false
       showWompiSlideover.value = true
+      void refetchWompiSession()
       return
     }
     showFinalizeSalePanel.value = false
