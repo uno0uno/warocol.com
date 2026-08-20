@@ -117,6 +117,8 @@
       ,"actionOrderItemModifierDeleted": "Modificador eliminado de la venta"
       ,"actionComandaStatusChanged": "Estado de comanda cambiado"
       ,"actionComandaRecalled": "Comanda recuperada"
+      ,"actionTableQrAccepted": "Pedido QR en mesa aceptado"
+      ,"actionTableQrRejected": "Pedido QR en mesa rechazado"
       ,"actionCustomerCreated": "Cliente creado"
       ,"actionCustomerUpdated": "Cliente actualizado"
       ,"actionOrderCustomerChanged": "Cliente de la venta cambiado"

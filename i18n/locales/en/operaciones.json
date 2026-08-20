@@ -117,6 +117,8 @@
       ,"actionOrderItemModifierDeleted": "Modifier removed from sale"
       ,"actionComandaStatusChanged": "Kitchen ticket status changed"
       ,"actionComandaRecalled": "Kitchen ticket recalled"
+      ,"actionTableQrAccepted": "Table QR order accepted"
+      ,"actionTableQrRejected": "Table QR order rejected"
       ,"actionCustomerCreated": "Customer created"
       ,"actionCustomerUpdated": "Customer updated"
       ,"actionOrderCustomerChanged": "Sale customer changed"

@@ -85,6 +85,7 @@ const paymentLabel = computed(() => request.value ? formatTableQrPayment(request
 
 const isWorking = ref(false)
 const actionError = ref<string | null>(null)
+const rejectReason = ref('')
 const pendingListRoute = { path: '/despacho/en-mesa' }
 
 function invalidateAfterAction() {
@@ -154,10 +155,18 @@ async function acceptRequest() {
 
 async function rejectRequest() {
   if (!request.value || isWorking.value || !isPending.value) return
+  const reason = rejectReason.value.trim()
+  if (!reason) {
+    actionError.value = t('despacho.detail.rejectReasonPlaceholder')
+    return
+  }
   isWorking.value = true
   actionError.value = null
   try {
-    await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, { method: 'PATCH' })
+    await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, {
+      method: 'PATCH',
+      body: { reason },
+    })
     toast.success(t('despacho.detail.rejectedToast'), { title: t('despacho.comandas.done') })
     await dismissTableQrNotification(requestId.value)
     invalidateAfterAction()
@@ -333,11 +342,21 @@ async function printQrComanda() {
 
       <div v-else-if="isPending" class="bg-surface border border-border rounded-xl p-4 sm:p-6">
         <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">{{ t('despacho.detail.actions') }}</p>
+        <div class="space-y-3 mb-4">
+          <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{{ t('despacho.detail.rejectReason') }}</p>
+          <textarea
+            v-model="rejectReason"
+            rows="3"
+            maxlength="500"
+            :placeholder="t('despacho.detail.rejectReasonPlaceholder')"
+            class="w-full min-h-[88px] rounded-lg border-2 border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-status-critical-text/50"
+          />
+        </div>
         <div class="flex flex-col sm:flex-row gap-3">
           <UiButton size="lg" :disabled="isWorking" @click="acceptRequest">
             {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.acceptOrder') }}
           </UiButton>
-          <UiButton variant="destructive" size="lg" :disabled="isWorking" @click="rejectRequest">
+          <UiButton variant="destructive" size="lg" :disabled="isWorking || !rejectReason.trim()" @click="rejectRequest">
             {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.reject') }}
           </UiButton>
           <UiButton
