@@ -334,6 +334,8 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 const authStore = useAuthStore()
+const tenantsStore = useTenantsStore()
+const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const userName = computed(() => authStore.displayUser.name)
 const userEmail = computed(() => authStore.displayUser.email || t('perfil.navigation.noEmail'))
 const userAvatar = computed(() => authStore.displayUser.avatar)

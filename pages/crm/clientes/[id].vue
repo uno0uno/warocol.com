@@ -124,8 +124,8 @@ const goToOrdersPage = (page: number) => {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const formatDate = (isoDate: string) => {
-  if (!isoDate) return '-'
+const formatDate = (isoDate?: string | null) => {
+  if (!isoDate) return null
   try {
     return /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
       ? formatCalendarDate(isoDate)
@@ -135,6 +135,9 @@ const formatDate = (isoDate: string) => {
 }
 
 const formatWaros = (value: number) => formatNumber(value || 0, { maximumFractionDigits: 0 })
+const emptyFieldChipClass = 'inline-flex max-w-full items-center rounded-md border border-badge-neutral-border bg-badge-neutral-bg px-2 py-0.5 text-xs font-medium text-badge-neutral-text'
+const firstPurchaseLabel = computed(() => formatDate(customer.value?.first_purchase))
+const lastPurchaseLabel = computed(() => formatDate(customer.value?.last_purchase))
 const formatProductCount = (count: number) =>
   t(count === 1 ? 'analitica.customerDetail.productCountOne' : 'analitica.customerDetail.productCountMany', { count })
 const formatManualWarosDescription = (description: string | null | undefined) => {
@@ -492,36 +495,33 @@ onUnmounted(() => {
 
       <!-- Customer Header Card -->
       <div class="bg-white border border-border rounded-xl overflow-hidden">
-        <!-- Top: Identity + Total -->
-        <div class="p-5 sm:p-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <!-- Avatar + Name -->
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span class="text-lg font-bold text-primary">{{ customer.name?.[0]?.toUpperCase() || '?' }}</span>
-              </div>
-              <div class="min-w-0">
-                <h2 class="text-xl font-bold text-text-primary truncate">{{ customer.name }}</h2>
-                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">{{ t('analitica.customerDetail.posCustomer') }}</p>
-              </div>
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+              <span class="text-base font-bold text-primary">{{ customer.name?.[0]?.toUpperCase() || '?' }}</span>
             </div>
-            <!-- Total purchased + edit button -->
-            <div class="flex items-center gap-3 flex-shrink-0">
-              <div class="text-start sm:text-end">
-                <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
-                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">{{ t('analitica.clientes.totalBought') }}</p>
-              </div>
-              <button
-                type="button"
-                :aria-label="t('analitica.customerDetail.editCustomer')"
-                @click="openEditForm"
-                class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
+            <div class="min-w-0">
+              <h2 class="text-lg font-bold text-text-primary truncate leading-snug">
+                {{ customer.name || t('ventas.common.sinNombre') }}
+              </h2>
+              <p class="text-xs text-text-secondary leading-snug">{{ t('analitica.customerDetail.posCustomer') }}</p>
             </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="text-end">
+              <p class="text-lg font-bold text-text-primary tabular-nums leading-snug">{{ formatCurrency(customer.total_spent) }}</p>
+              <p class="text-xs text-text-secondary leading-snug">{{ t('analitica.clientes.totalBought') }}</p>
+            </div>
+            <button
+              type="button"
+              :aria-label="t('analitica.customerDetail.editCustomer')"
+              @click="openEditForm"
+              class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -584,105 +584,90 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Info Grid (factura style) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-border divide-border">
-          <!-- Phone -->
-          <div class="p-4 border-b sm:border-b-0 border-r border-border">
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.clientes.phone') }}</p>
-            </div>
-            <p class="text-sm font-semibold text-text-primary">{{ customer.phone || '-' }}</p>
+        <dl class="grid grid-cols-2 lg:grid-cols-5 border-t border-border">
+          <div class="px-4 py-3 border-b lg:border-b-0 border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.clientes.phone') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums truncate">
+              <a
+                v-if="customer.phone"
+                :href="`tel:${customer.phone}`"
+                class="hover:underline focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+              >{{ customer.phone }}</a>
+              <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinTelefono') }}</span>
+            </dd>
           </div>
-          <!-- Email -->
-          <div class="p-4 border-b sm:border-b-0 sm:border-r border-border">
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.clientes.email') }}</p>
-            </div>
-            <p class="text-sm font-semibold text-text-primary truncate">{{ realEmail || '-' }}</p>
+          <div class="px-4 py-3 border-b lg:border-b-0 lg:border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.clientes.email') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary truncate">
+              <a
+                v-if="realEmail"
+                :href="`mailto:${realEmail}`"
+                class="hover:underline focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+              >{{ realEmail }}</a>
+              <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinCorreo') }}</span>
+            </dd>
           </div>
-          <!-- First purchase -->
-          <div class="p-4 border-r border-border">
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.customerDetail.firstPurchase') }}</p>
-            </div>
-            <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.first_purchase) }}</p>
+          <div class="px-4 py-3 border-b lg:border-b-0 border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.firstPurchase') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
+              <span v-if="firstPurchaseLabel">{{ firstPurchaseLabel }}</span>
+              <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinDatos') }}</span>
+            </dd>
           </div>
-          <!-- Last purchase -->
-          <div class="p-4">
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ t('analitica.customerDetail.lastPurchase') }}</p>
-            </div>
-            <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
+          <div class="px-4 py-3 border-b lg:border-b-0 lg:border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.lastPurchase') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
+              <span v-if="lastPurchaseLabel">{{ lastPurchaseLabel }}</span>
+              <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinDatos') }}</span>
+            </dd>
+          </div>
+          <div class="px-4 py-3 col-span-2 lg:col-span-1 min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.waros.points') }}</dt>
+            <dd class="m-0 flex items-center justify-between gap-2">
+              <span v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</span>
+              <span v-else class="text-sm font-semibold text-text-primary tabular-nums">{{ formatWaros(warosBalance) }}</span>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button
+                  v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
+                  type="button"
+                  :aria-label="t('analitica.customerDetail.waros.viewManualAria')"
+                  @click="showManualPanel = true"
+                  class="min-h-[44px] px-2.5 text-xs font-medium rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  {{ t('analitica.customerDetail.waros.viewManual') }}
+                </button>
+                <button
+                  type="button"
+                  :aria-label="t('analitica.customerDetail.waros.assignAria')"
+                  @click="showWarosModal = true"
+                  class="min-h-[44px] px-2.5 text-xs font-semibold rounded-lg bg-state-warning-bg text-state-warning-text border border-state-warning-border hover:opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  {{ t('analitica.customerDetail.waros.assign') }}
+                </button>
+              </div>
+            </dd>
+          </div>
+        </dl>
+
+        <div v-if="hasFiscalInfo" class="border-t border-border px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div v-if="fiscalDocumentLabel">
+            <p class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.fiscalDocument') }}</p>
+            <p class="text-sm font-semibold text-text-primary">{{ fiscalDocumentLabel }}</p>
+          </div>
+          <div v-if="customer.fiscal_business_name">
+            <p class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.fiscalBusinessName') }}</p>
+            <p class="text-sm font-semibold text-text-primary">{{ customer.fiscal_business_name }}</p>
+          </div>
+          <div v-if="customer.fiscal_email" class="min-w-0">
+            <p class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.fiscalEmail') }}</p>
+            <p class="text-sm font-semibold text-text-primary truncate">{{ customer.fiscal_email }}</p>
           </div>
         </div>
-
-        <!-- Fiscal info (only when present) -->
-        <div v-if="hasFiscalInfo" class="border-t border-border px-5 py-4">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-3">{{ t('analitica.customerDetail.fiscalInfo') }}</p>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div v-if="fiscalDocumentLabel">
-              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalDocument') }}</p>
-              <p class="text-sm font-semibold text-text-primary">{{ fiscalDocumentLabel }}</p>
-            </div>
-            <div v-if="customer.fiscal_business_name">
-              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalBusinessName') }}</p>
-              <p class="text-sm font-semibold text-text-primary">{{ customer.fiscal_business_name }}</p>
-            </div>
-            <div v-if="customer.fiscal_email">
-              <p class="text-xs text-text-secondary mb-0.5">{{ t('analitica.customerDetail.fiscalEmail') }}</p>
-              <p class="text-sm font-semibold text-text-primary truncate">{{ customer.fiscal_email }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Waros section -->
-        <div class="border-t border-border px-5 py-4">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.waros.points') }}</p>
-              <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</p>
-              <p v-else class="text-sm font-semibold text-amber-700">{{ formatWaros(warosBalance) }}</p>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <button
-                v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
-                type="button"
-                :aria-label="t('analitica.customerDetail.waros.viewManualAria')"
-                @click="showManualPanel = true"
-                class="min-h-[44px] px-3 text-sm font-medium rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                {{ t('analitica.customerDetail.waros.viewManual') }}
-              </button>
-              <button
-                type="button"
-                :aria-label="t('analitica.customerDetail.waros.assignAria')"
-                @click="showWarosModal = true"
-                class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/50"
-              >
-                {{ t('analitica.customerDetail.waros.assign') }}
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      <!-- Stats -->
-      <div class="grid grid-cols-2 gap-4">
-        <MetricCard :title="t('analitica.customerDetail.totalOrders')" :value="customer.total_orders" format="number" variant="primary" />
-        <MetricCard :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
+      <div class="grid grid-cols-2 gap-3">
+        <MetricCard size="compact" :title="t('analitica.customerDetail.totalOrders')" :value="customer.total_orders" format="number" variant="primary" />
+        <MetricCard size="compact" :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
       <!-- 1. Historial de pedidos (open by default) -->
