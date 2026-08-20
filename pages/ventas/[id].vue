@@ -5,7 +5,7 @@ import QRCode from 'qrcode'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
-import { mergePosPaymentGroupsFromApi, type ApiPaymentGroup } from '~/utils/paymentDefaults'
+import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 import { modifierLineTotal as sharedModifierLineTotal } from '~/utils/saleModifierOption'
 import {
   buildCustomerIdentityPresentation,
@@ -20,7 +20,12 @@ import {
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
 import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
-import { canShowSaleStatusPanel } from '~/utils/saleStatusPanel'
+import {
+  canShowSaleStatusPanel,
+  isFinalizePaymentGroupVisible,
+  isIdentifiedSaleCustomer,
+  isSaleStatusActionVisible,
+} from '~/utils/saleStatusPanel'
 import { publicInvoiceErrorMessage } from '~/utils/invoiceEmitError'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 
@@ -491,6 +496,49 @@ const order = computed(() => {
 })
 
 const orderCustomer = computed(() => order.value?.customer ?? null)
+const identifiedSaleCustomer = computed(() => isIdentifiedSaleCustomer(orderCustomer.value))
+const finalizeWalletCustomerId = computed(() =>
+  identifiedSaleCustomer.value ? String(orderCustomer.value?.id || '') : '',
+)
+const { wallet: finalizeWallet } = useCustomerWallet(finalizeWalletCustomerId, { scope: 'ventas' })
+const finalizeWalletBalanceCop = computed(() => Number(finalizeWallet.value?.balance_cop ?? 0))
+const finalizePaymentGroups = computed(() =>
+  paymentGroups.value.filter(group =>
+    isFinalizePaymentGroupVisible(group, {
+      identifiedCustomer: identifiedSaleCustomer.value,
+      walletBalanceCop: finalizeWalletBalanceCop.value,
+    }),
+  ),
+)
+const { data: teamMembersData } = useQuery({
+  key: () => ['team-members', currentTenant.value?.id ?? null],
+  query: () => $fetch<{ success?: boolean, data?: any[] }>('/api/tenants/members'),
+  enabled: () => !!currentTenant.value && showFinalizeSalePanel.value,
+  staleTime: 30_000,
+})
+const finalizeWaiterMembers = computed(() => {
+  const list = Array.isArray(teamMembersData.value?.data) ? teamMembersData.value.data : []
+  return list
+    .filter((member: any) => member?.is_active !== false && !member?.terminated_at)
+    .map((member: any) => ({
+      id: String(member.id),
+      name: member.profile?.name || member.profile?.user_name || t('ventas.detail.assigned'),
+      role: member.role || '',
+    }))
+})
+const cashReceivedInput = ref(0)
+const creditDueDate = ref('')
+const servedByMemberId = ref<string | null>(null)
+const isCashFinalizeMethod = computed(() => isCashPaymentSlug(selectedPaymentMethod.value))
+const isCreditFinalizeMethod = computed(() =>
+  Boolean(finalizeSelectedGroup.value?.triggersCartera || selectedPaymentMethod.value === 'credit'),
+)
+const cashAmountToCharge = computed(() => Number(order.value?.total_amount) || 0)
+const cashIsValid = computed(() =>
+  !isCashFinalizeMethod.value
+  || cashAmountToCharge.value <= 0.01
+  || ((cashReceivedInput.value || 0) + 0.01 >= cashAmountToCharge.value),
+)
 const invoiceAcquirer = computed(() =>
   (invoiceData.value as any)?.presentation?.acquirer ?? null,
 )
@@ -575,7 +623,8 @@ const openCustomerModal = () => {
 }
 
 const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
-  if (!customer?.id || isAssociatingCustomer.value || !canAssociateOrderCustomer.value) return
+  if (!customer?.id || isAssociatingCustomer.value) return
+  if (!order.value || order.value.status === 'cancelled' || invoiceData.value) return
   isAssociatingCustomer.value = true
   customerAssociationError.value = ''
   try {
@@ -583,8 +632,6 @@ const onSaleCustomerIdentified = async (customer: SelectedCustomer) => {
       method: 'PATCH',
       body: { customer_id: customer.id },
     })
-    // Only refresh order — refetchInvoice here always 404s (no FE yet) and
-    // was racing/poisoning the invoice query cache before emit.
     await refetchOrder()
     toast.success(t('ventas.detail.customerAssociated'), { title: t('ventas.common.listo') })
   } catch (error: any) {
@@ -1107,10 +1154,21 @@ const updateStatus = async () => {
   }
 }
 
+watch(finalizePaymentGroups, (groups) => {
+  if (!selectedPaymentMethod.value) return
+  if (!groups.some(group => group.slug === selectedPaymentMethod.value)) {
+    selectedPaymentMethod.value = ''
+    selectedPaymentMethodId.value = null
+  }
+})
+
 const openFinalizeSalePanel = () => {
   selectedNewStatus.value = ''
   selectedPaymentMethod.value = ''
   selectedPaymentMethodId.value = null
+  cashReceivedInput.value = 0
+  creditDueDate.value = ''
+  servedByMemberId.value = order.value?.served_by_member_id || null
   finalizeSaleError.value = ''
   showFinalizeSalePanel.value = true
 }
@@ -1130,6 +1188,14 @@ const finalizePendingSale = async () => {
     finalizeSaleError.value = t('ventas.detail.selectSpecificPayment')
     return
   }
+  if (isCashFinalizeMethod.value && !cashIsValid.value) {
+    finalizeSaleError.value = t('ventas.detail.cashReceivedShort')
+    return
+  }
+  if (isCreditFinalizeMethod.value && !identifiedSaleCustomer.value) {
+    finalizeSaleError.value = t('ventas.detail.identifyCustomerForPayment')
+    return
+  }
   isFinalizingSale.value = true
   finalizeSaleError.value = ''
   try {
@@ -1140,6 +1206,11 @@ const finalizePendingSale = async () => {
         payment_method: selectedPaymentMethod.value,
         payment_method_id: selectedPaymentMethodId.value || undefined,
         customer_id: order.value?.customer?.id || undefined,
+        ...(isCashFinalizeMethod.value ? { cash_received: Number(cashReceivedInput.value) } : {}),
+        ...(isCreditFinalizeMethod.value && creditDueDate.value
+          ? { credit_due_date: creditDueDate.value }
+          : {}),
+        ...(servedByMemberId.value ? { served_by_member_id: servedByMemberId.value } : {}),
       },
     })
     await refetchOrder()
@@ -1936,14 +2007,14 @@ onUnmounted(() => {
         </div>
 
         <!-- Status cards -->
-        <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-1' : 'grid-cols-3'">
-          <!-- Pendiente -->
+        <div class="grid gap-2.5" :class="order.status === 'completed' ? 'grid-cols-1' : 'grid-cols-2'">
+          <!-- Pendiente (hidden when already pending) -->
           <button
-            v-if="order.status !== 'completed'"
+            v-if="isSaleStatusActionVisible('pending', order.status)"
             type="button"
             @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'"
             :class="[
-            'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+            'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-status-warning-text/30',
             selectedNewStatus === 'pending'
               ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
               : 'bg-surface border-border'
@@ -1964,14 +2035,12 @@ onUnmounted(() => {
 
           <!-- Completada -->
           <button
-            v-if="order.status !== 'completed'"
+            v-if="isSaleStatusActionVisible('completed', order.status)"
             type="button"
-            @click="() => { selectedNewStatus = selectedNewStatus === 'completed' ? '' : 'completed'; selectedPaymentMethod = '' }"
+            @click="openFinalizeSalePanel"
             :class="[
-              'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
-              selectedNewStatus === 'completed'
-                ? 'bg-status-success-bg border-status-success-text/50 shadow-sm'
-                : 'bg-surface border-border'
+              'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-status-success-text/30',
+              'bg-surface border-border'
             ]">
             <div
               :class="['w-9 h-9 shrink-0 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
@@ -1990,7 +2059,7 @@ onUnmounted(() => {
           <!-- Cancelada -->
           <button type="button" @click="selectedNewStatus = selectedNewStatus === 'cancelled' ? '' : 'cancelled'"
             :class="[
-              'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+            'group flex flex-row items-center gap-3 min-h-[44px] py-3 px-3.5 rounded-xl border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-status-critical-text/30',
               selectedNewStatus === 'cancelled'
                 ? 'bg-status-critical-bg border-status-critical-text/50 shadow-sm'
                 : 'bg-surface border-border'
@@ -2024,24 +2093,9 @@ onUnmounted(() => {
           </div>
         </Transition>
 
-        <!-- Payment method (only when completing) -->
-        <Transition name="slide-down">
-          <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
-            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{{ t('ventas.common.metodoPago') }}</p>
-            <div class="flex flex-wrap gap-2">
-              <button v-for="group in paymentGroups" :key="group.slug" type="button"
-                @click="selectedPaymentMethod = selectedPaymentMethod === group.slug ? '' : group.slug"
-                :class="selectedPaymentMethod === group.slug ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:border-primary/40'"
-                class="flex-1 min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors">
-                {{ group.name }}
-              </button>
-            </div>
-          </div>
-        </Transition>
-
         <!-- Confirm button -->
         <button @click="updateStatus"
-          :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod) || (selectedNewStatus === 'cancelled' && !cancelReason.trim())"
+          :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'cancelled' && !cancelReason.trim())"
           :class="[
             'w-full h-11 rounded-xl text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed',
             selectedNewStatus === 'cancelled'
@@ -2416,7 +2470,7 @@ onUnmounted(() => {
                 </p>
               </div>
               <button @click="closeFinalizeSalePanel" type="button" :aria-label="t('ventas.common.cerrarPanel')"
-                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
+                class="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -2429,10 +2483,52 @@ onUnmounted(() => {
               <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
               <PaymentsPaymentMethodSelector
                 v-model="finalizePaymentSelection"
-                :groups="paymentGroups"
+                :groups="finalizePaymentGroups"
                 :disabled="isFinalizingSale"
               />
             </div>
+
+            <div
+              v-if="!identifiedSaleCustomer"
+              class="rounded-xl border border-border bg-surface-secondary/50 p-3 space-y-2"
+            >
+              <p class="text-sm text-text-secondary">{{ t('ventas.detail.identifyCustomerForPayment') }}</p>
+              <button
+                type="button"
+                class="min-h-[44px] px-4 rounded-xl border border-border text-sm font-semibold text-text-primary hover:bg-surface-secondary"
+                @click="showCustomerModal = true"
+              >
+                {{ t('ventas.detail.identifyCustomerCta') }}
+              </button>
+            </div>
+
+            <CheckoutCashTenderPanel
+              v-if="isCashFinalizeMethod"
+              v-model="cashReceivedInput"
+              input-id="sale-finalize-cash-received"
+              :amount-to-charge="cashAmountToCharge"
+            />
+
+            <div
+              v-if="isCreditFinalizeMethod && identifiedSaleCustomer"
+              class="p-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
+            >
+              <label for="sale-finalize-credit-due" class="block text-xs font-semibold text-state-warning-text mb-1.5">
+                {{ t('pos.checkout.paymentDueOptional') }}
+                <span class="font-normal">{{ t('pos.checkout.optional') }}</span>
+              </label>
+              <input
+                id="sale-finalize-credit-due"
+                v-model="creditDueDate"
+                type="date"
+                class="w-full min-h-[44px] px-3 rounded-lg border border-state-warning-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-state-warning-border"
+              />
+            </div>
+
+            <CheckoutWaiterSelector
+              v-model="servedByMemberId"
+              :members="finalizeWaiterMembers"
+            />
 
             <p v-if="finalizeSaleError" class="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
               {{ finalizeSaleError }}
@@ -2443,7 +2539,7 @@ onUnmounted(() => {
             <button
               type="button"
               @click="finalizePendingSale"
-              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection"
+              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection || !cashIsValid"
               class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isFinalizingSale" size="9px" />
