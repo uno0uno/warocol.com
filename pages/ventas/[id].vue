@@ -17,6 +17,7 @@ import { displayedTipPercent } from '~/utils/tipPercentDisplay'
 import {
   collectionMailtoHref,
   isValidCollectionEmail,
+  isWompiPaymentMethod,
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
 import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
@@ -555,6 +556,18 @@ const isVoidingTenderId = ref<string | null>(null)
 const remainingTenderAmount = ref<number | null>(null)
 const remainingTenderError = ref('')
 const isCashFinalizeMethod = computed(() => isCashPaymentSlug(selectedPaymentMethod.value))
+const isWompiTender = computed(() => {
+  const group = finalizeSelectedGroup.value
+  if (!group) return false
+  const method = selectedPaymentMethodId.value
+    ? group.methods?.find(m => m.id === selectedPaymentMethodId.value)
+    : null
+  if (method) return isWompiPaymentMethod(method)
+  if ((group.methods?.length ?? 0) === 1) return isWompiPaymentMethod(group.methods[0])
+  return isWompiPaymentMethod(group)
+})
+const showWompiSlideover = ref(false)
+const wompiCollectAmount = ref(0)
 const isCreditFinalizeMethod = computed(() =>
   Boolean(finalizeSelectedGroup.value?.triggersCartera || selectedPaymentMethod.value === 'credit'),
 )
@@ -636,10 +649,22 @@ const showFinalizeDuePreview = computed(() =>
   || finalizeTipTaxAmount.value > 0
   || finalizeWaroDiscount.value > 0
   || finalizeDiscountAmount.value > 0
+  || mesaAdvanceAppliedEstimate.value > 0
+)
+const mesaAdvanceAvailable = computed(() => {
+  if (!order.value?.table_session_id || finalizeSplitMode.value || isWompiTender.value) return 0
+  return Number(order.value?.available_advance) || 0
+})
+const mesaAdvanceAppliedEstimate = computed(() =>
+  Math.min(productAmountToCharge.value + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value), mesaAdvanceAvailable.value),
 )
 const cashAmountToCharge = computed(() =>
-  productAmountToCharge.value
-  + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value),
+  Math.max(
+    0,
+    productAmountToCharge.value
+    + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value)
+    - mesaAdvanceAppliedEstimate.value,
+  ),
 )
 const cashIsValid = computed(() =>
   !isCashFinalizeMethod.value
@@ -1508,6 +1533,10 @@ const finalizePendingSale = async () => {
     finalizeSaleError.value = t('pos.checkout.discount.greaterThanZero')
     return
   }
+  if (isWompiTender.value && finalizeSplitMode.value) {
+    finalizeSaleError.value = 'Wompi no admite cobro dividido. Cobra el total con Wompi.'
+    return
+  }
   isFinalizingSale.value = true
   finalizeSaleError.value = ''
   try {
@@ -1540,6 +1569,7 @@ const finalizePendingSale = async () => {
             }
           : {}),
         ...(selectedWaroReward.value?.id ? { waro_reward_id: selectedWaroReward.value.id } : {}),
+        ...(isWompiTender.value ? { wompi_collection: true } : {}),
         ...(finalizeSplitIsComplete.value
           ? {
               payments: finalizeSplitPayments.value.map(payment => ({
@@ -1574,6 +1604,14 @@ const finalizePendingSale = async () => {
     })
     await refetchOrder()
     await refetchInvoice()
+    if (isWompiTender.value) {
+      wompiCollectAmount.value = productAmountToCharge.value
+        + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value)
+      showFinalizeSalePanel.value = false
+      showWompiSlideover.value = true
+      void refetchWompiSession()
+      return
+    }
     showFinalizeSalePanel.value = false
     selectedPaymentMethod.value = ''
     selectedPaymentMethodId.value = null
@@ -3046,6 +3084,13 @@ onUnmounted(() => {
                 <span class="text-text-secondary">{{ t('ventas.detail.tipTax') }}</span>
                 <span class="tabular-nums text-text-primary">+{{ formatCurrency(finalizeTipTaxAmount) }}</span>
               </div>
+              <div
+                v-if="mesaAdvanceAppliedEstimate > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">Anticipo mesa</span>
+                <span class="tabular-nums text-state-success-text">-{{ formatCurrency(mesaAdvanceAppliedEstimate) }}</span>
+              </div>
               <div class="flex items-center justify-between gap-3 text-sm font-semibold pt-1 border-t border-border">
                 <span class="text-text-primary">{{ t('ventas.common.total') }}</span>
                 <span class="tabular-nums text-text-primary">{{ formatCurrency(cashAmountToCharge) }}</span>
@@ -3324,6 +3369,13 @@ onUnmounted(() => {
       :payments="saleReceiptPayments"
       :single-payment-label="saleReceiptSinglePaymentLabel"
       :invoice="saleReceiptInvoice"
+    />
+    <PosWompiCollectionSlideover
+      v-model="showWompiSlideover"
+      :order-id="orderId"
+      :amount="wompiCollectAmount"
+      :customer-id="order.customer?.id"
+      :email="order.customer?.email"
     />
   </div>
 </template>
