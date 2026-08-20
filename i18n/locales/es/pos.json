@@ -77,6 +77,8 @@
       "applyPromo": "Aplicar promoción",
       "identifyCustomer": "Buscar o identificar cliente",
       "searchMethod": "Buscar método...",
+      "searchAllMethods": "Buscar método de pago",
+      "subMethodScrollHint": "{total} métodos · deslizá para ver más",
       "paymentDueOptional": "Fecha límite de pago",
       "optional": "(opcional)",
       "customerNoData": "Cliente sin datos",

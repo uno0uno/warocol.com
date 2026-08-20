@@ -49,7 +49,7 @@ const { isMatiasDian } = useTenantFinancialProfile()
 const queryCache = useQueryCache()
 
 // Payment groups for label resolution and method buttons
-const { data: paymentGroupsData } = useQuery({
+const { data: paymentGroupsData, asyncStatus: paymentGroupsAsyncStatus } = useQuery({
   key: () => ['payments', 'pos-methods', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: ApiPaymentGroup[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
@@ -478,7 +478,6 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const handleRefresh = async () => {
   await Promise.all([refetchOrder(), refetchItems(), refetchInvoice(), refetchWompiSession()])
 }
-registerProgressiveLoading(isRefreshing)
 
 const order = computed(() => {
   if (!orderData.value) return null
@@ -495,7 +494,7 @@ const identifiedSaleCustomer = computed(() => isIdentifiedSaleCustomer(orderCust
 const finalizeWalletCustomerId = computed(() =>
   identifiedSaleCustomer.value ? String(orderCustomer.value?.id || '') : '',
 )
-const { wallet: finalizeWallet } = useCustomerWallet(finalizeWalletCustomerId, { scope: 'ventas' })
+const { wallet: finalizeWallet, isLoading: isLoadingFinalizeWallet } = useCustomerWallet(finalizeWalletCustomerId, { scope: 'ventas' })
 const finalizeWalletBalanceCop = computed(() => Number(finalizeWallet.value?.balance_cop ?? 0))
 const finalizePaymentGroups = computed(() =>
   paymentGroups.value.filter(group =>
@@ -505,7 +504,7 @@ const finalizePaymentGroups = computed(() =>
     }),
   ),
 )
-const { data: teamMembersData } = useQuery({
+const { data: teamMembersData, asyncStatus: teamMembersAsyncStatus } = useQuery({
   key: () => ['team-members', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success?: boolean, data?: any[] }>('/api/tenants/members'),
   enabled: () => !!currentTenant.value && showFinalizeSalePanel.value,
@@ -601,6 +600,16 @@ const {
   fetchSummary: fetchWarosSummary,
   resetSummary: resetWarosSummary,
 } = useWarosCliente()
+const isFinalizePanelHydrating = computed(() => {
+  if (!showFinalizeSalePanel.value) return false
+  const methodsBusy = paymentGroupsAsyncStatus.value === 'loading' && !paymentGroupsData.value
+  const waitersBusy = teamMembersAsyncStatus.value === 'loading' && !teamMembersData.value
+  const warosBusy = identifiedSaleCustomer.value && isLoadingWaros.value
+  const walletBusy = identifiedSaleCustomer.value && isLoadingFinalizeWallet.value
+  return methodsBusy || waitersBusy || warosBusy || walletBusy
+})
+const isHeaderMatrixLoading = computed(() => isRefreshing.value || isFinalizePanelHydrating.value)
+registerProgressiveLoading(isHeaderMatrixLoading)
 const finalizeWaroDiscount = computed(() => Number(waroPreview.value?.total_waro_discount_cop) || 0)
 const productAmountToCharge = computed(() => {
   let amount = Number(order.value?.total_amount) || 0
@@ -1816,16 +1825,17 @@ onUnmounted(() => {
       <button
         v-else-if="order.status === 'pending' && !saleMutationsLocked"
         type="button"
-        class="mb-6 bg-status-success-bg border border-status-success-text/30 rounded-xl p-4 text-start w-full hover:bg-status-success-text hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-status-success-text/30 group"
+        class="mb-6 w-full min-h-[44px] px-4 rounded-xl border border-crocus-200 bg-crocus-50 text-start hover:bg-crocus-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
         @click="openFinalizeSalePanel"
       >
-        <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.pendingAction') }}</p>
-        <div class="flex items-center justify-between gap-3">
-          <span class="text-base font-bold leading-tight">{{ t('ventas.detail.finalizeSale') }}</span>
-          <svg class="w-5 h-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        <span class="flex items-center justify-between gap-3 min-w-0">
+          <span class="text-sm font-semibold text-text-primary truncate whitespace-nowrap">
+            {{ t('ventas.detail.pendingFinalizeCta') }}
+          </span>
+          <svg class="w-4 h-4 flex-shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
-        </div>
+        </span>
       </button>
 
       <!-- Delivery Info Section (only for delivery orders) -->
@@ -2687,28 +2697,6 @@ onUnmounted(() => {
           </div>
 
           <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-            <div>
-              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">{{ t('ventas.common.metodoPago') }}</p>
-              <PaymentsPaymentMethodSelector
-                v-model="finalizePaymentSelection"
-                :groups="finalizePaymentGroups"
-                :disabled="isFinalizingSale"
-              />
-              <div class="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
-                  :class="finalizeSplitMode
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
-                  :aria-pressed="finalizeSplitMode"
-                  @click="finalizeSplitMode = !finalizeSplitMode"
-                >
-                  {{ t('ventas.crear.splitAction') }}
-                </button>
-              </div>
-            </div>
-
             <div
               v-if="!identifiedSaleCustomer"
               class="rounded-xl border border-border bg-surface-secondary/50 p-3 space-y-2"
@@ -2723,6 +2711,112 @@ onUnmounted(() => {
               </button>
             </div>
 
+            <div>
+              <p class="text-sm font-semibold text-text-primary mb-2">{{ t('ventas.common.metodoPago') }}</p>
+              <PaymentsPaymentMethodSelector
+                v-model="finalizePaymentSelection"
+                :groups="finalizePaymentGroups"
+                layout="search"
+                :disabled="isFinalizingSale"
+              />
+              <div class="mt-4">
+                <div class="flex items-center justify-between gap-3">
+                  <p class="text-sm font-semibold text-text-primary">{{ t('ventas.crear.splitPayment') }}</p>
+                  <button
+                    type="button"
+                    role="switch"
+                    :aria-checked="finalizeSplitMode"
+                    :aria-label="t('ventas.crear.splitAction')"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    :class="finalizeSplitMode ? 'bg-crocus-300' : 'bg-border'"
+                    @click="finalizeSplitMode = !finalizeSplitMode"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 rounded-full bg-control-toggle-thumb shadow transform ring-0 transition duration-200"
+                      :class="finalizeSplitMode ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+
+                <div
+                  v-if="finalizeSplitMode"
+                  class="mt-3 space-y-3"
+                >
+                  <div v-if="finalizeSplitPayments.length > 0" class="space-y-2">
+                    <div
+                      v-for="payment in finalizeSplitPayments"
+                      :key="payment.id"
+                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-xl border border-border px-3"
+                    >
+                      <span class="truncate text-sm text-text-secondary">{{ finalizePaymentLabel(payment) }}</span>
+                      <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(payment.amount) }}</span>
+                        <button
+                          type="button"
+                          class="text-sm font-medium text-destructive min-h-[44px] px-1"
+                          @click="removeFinalizeSplitPayment(payment.id)"
+                        >
+                          {{ t('ventas.common.quitar') }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-if="!finalizeSplitIsComplete" class="space-y-2">
+                    <label class="sr-only" for="sale-finalize-split-amount">{{ t('ventas.crear.amountPlaceholder') }}</label>
+                    <input
+                      id="sale-finalize-split-amount"
+                      v-model.number="finalizeSplitAmountInput"
+                      type="number"
+                      min="1"
+                      :max="Math.round(finalizeSplitRemaining || cashAmountToCharge)"
+                      class="min-h-[44px] w-full px-4 rounded-xl border border-border bg-background text-sm text-text-primary tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      :placeholder="t('ventas.crear.amountPlaceholder')"
+                    />
+                    <button
+                      type="button"
+                      class="min-h-[44px] w-full rounded-xl border border-crocus-200 bg-crocus-50 text-sm font-semibold text-primary hover:bg-crocus-100 disabled:opacity-50"
+                      :disabled="finalizeSplitAmountToAdd <= 0"
+                      @click="addFinalizeSplitPayment"
+                    >
+                      {{ t('ventas.common.agregar') }}
+                    </button>
+                  </div>
+                  <p v-if="finalizeSplitAmountError" class="text-sm text-destructive">{{ finalizeSplitAmountError }}</p>
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-sm text-text-secondary">{{ finalizeSplitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
+                    <span
+                      class="text-sm font-semibold tabular-nums"
+                      :class="finalizeSplitIsComplete ? 'text-state-success-text' : 'text-text-primary'"
+                    >{{ formatCurrency(finalizeSplitRemaining) }}</span>
+                  </div>
+                  <p v-if="finalizeSequentialFirst" class="text-sm text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</p>
+                </div>
+              </div>
+            </div>
+
+            <CheckoutCashTenderPanel
+              v-if="isCashFinalizeMethod"
+              v-model="cashReceivedInput"
+              input-id="sale-finalize-cash-received"
+              :amount-to-charge="finalizeSplitMode ? finalizeSplitAmountToAdd || cashAmountToCharge : cashAmountToCharge"
+            />
+
+            <div
+              v-if="isCreditFinalizeMethod && identifiedSaleCustomer"
+              class="p-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
+            >
+              <label for="sale-finalize-credit-due" class="block text-xs font-semibold text-state-warning-text mb-1.5">
+                {{ t('pos.checkout.paymentDueOptional') }}
+                <span class="font-normal">{{ t('pos.checkout.optional') }}</span>
+              </label>
+              <input
+                id="sale-finalize-credit-due"
+                v-model="creditDueDate"
+                type="date"
+                class="w-full min-h-[44px] px-3 rounded-lg border border-state-warning-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-state-warning-border"
+              />
+            </div>
+
             <CheckoutManualDiscountPanel
               v-model:enabled="discountEnabled"
               v-model:discount-type="discountType"
@@ -2732,30 +2826,30 @@ onUnmounted(() => {
 
             <div
               v-if="warosPanelVisible"
-              class="rounded-xl border border-border bg-surface px-4 py-3 space-y-3"
+              class="space-y-3"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Waros</p>
-                <span v-if="!isLoadingWaros" class="text-xs font-bold tabular-nums text-state-warning-text">
+                <p class="text-sm font-semibold text-text-primary">Waros</p>
+                <span v-if="!isLoadingWaros" class="text-sm font-semibold tabular-nums text-text-primary">
                   {{ t('pos.wallet.warosBalance', { amount: warosBalance.toLocaleString(uiLocale) }) }}
                 </span>
               </div>
               <template v-if="waroRedemptionEnabled">
                 <p
                   v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward"
-                  class="text-xs text-text-tertiary animate-pulse"
+                  class="text-sm text-text-secondary"
                 >
                   {{ t('pos.wallet.calculatingRedemption') }}
                 </p>
-                <ul v-if="activeWaroRewards.length" class="space-y-1.5">
+                <ul v-if="activeWaroRewards.length" class="space-y-2">
                   <li v-for="reward in activeWaroRewards" :key="reward.id">
                     <label
-                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-xl border border-border px-3 py-2"
                       :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
                     >
-                      <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
+                      <span class="text-sm font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
                       <span class="flex items-center gap-3 flex-shrink-0">
-                        <span class="text-xs tabular-nums text-text-secondary">{{ waroRewardSubtitle(reward) }}</span>
+                        <span class="text-sm tabular-nums text-text-secondary">{{ waroRewardSubtitle(reward) }}</span>
                         <input
                           type="checkbox"
                           class="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/30"
@@ -2768,8 +2862,8 @@ onUnmounted(() => {
                     </label>
                   </li>
                 </ul>
-                <p v-else class="text-xs text-text-secondary">{{ t('pos.wallet.noActiveRewards') }}</p>
-                <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
+                <p v-else class="text-sm text-text-secondary">{{ t('pos.wallet.noActiveRewards') }}</p>
+                <p v-if="waroPreviewError" class="text-sm text-destructive">{{ waroPreviewError }}</p>
               </template>
             </div>
 
@@ -2856,79 +2950,6 @@ onUnmounted(() => {
                 <span class="text-text-primary">{{ t('ventas.common.total') }}</span>
                 <span class="tabular-nums text-text-primary">{{ formatCurrency(cashAmountToCharge) }}</span>
               </div>
-            </div>
-
-            <CheckoutCashTenderPanel
-              v-if="isCashFinalizeMethod"
-              v-model="cashReceivedInput"
-              input-id="sale-finalize-cash-received"
-              :amount-to-charge="finalizeSplitMode ? finalizeSplitAmountToAdd || cashAmountToCharge : cashAmountToCharge"
-            />
-
-            <div v-if="finalizeSplitMode" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.crear.splitPayment') }}</span>
-                <button
-                  type="button"
-                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
-                  @click="finalizeSplitMode = false"
-                >
-                  {{ t('ventas.common.quitar') }}
-                </button>
-              </div>
-              <div v-if="finalizeSplitPayments.length > 0" class="flex flex-col gap-1">
-                <div
-                  v-for="payment in finalizeSplitPayments"
-                  :key="payment.id"
-                  class="flex items-center justify-between gap-2 text-sm"
-                >
-                  <span class="truncate text-text-secondary">{{ finalizePaymentLabel(payment) }}</span>
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(payment.amount) }}</span>
-                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeFinalizeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
-                  </div>
-                </div>
-              </div>
-              <div v-if="!finalizeSplitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <input
-                  v-model.number="finalizeSplitAmountInput"
-                  type="number"
-                  min="1"
-                  :max="Math.round(finalizeSplitRemaining || cashAmountToCharge)"
-                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
-                  :placeholder="t('ventas.crear.amountPlaceholder')"
-                />
-                <button
-                  type="button"
-                  class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
-                  :disabled="finalizeSplitAmountToAdd <= 0"
-                  @click="addFinalizeSplitPayment"
-                >
-                  {{ t('ventas.common.agregar') }}
-                </button>
-              </div>
-              <p v-if="finalizeSplitAmountError" class="text-xs text-destructive">{{ finalizeSplitAmountError }}</p>
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-text-secondary">{{ finalizeSplitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
-                <span class="font-semibold tabular-nums" :class="finalizeSplitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(finalizeSplitRemaining) }}</span>
-              </div>
-              <p v-if="finalizeSequentialFirst" class="text-xs text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</p>
-            </div>
-
-            <div
-              v-if="isCreditFinalizeMethod && identifiedSaleCustomer"
-              class="p-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
-            >
-              <label for="sale-finalize-credit-due" class="block text-xs font-semibold text-state-warning-text mb-1.5">
-                {{ t('pos.checkout.paymentDueOptional') }}
-                <span class="font-normal">{{ t('pos.checkout.optional') }}</span>
-              </label>
-              <input
-                id="sale-finalize-credit-due"
-                v-model="creditDueDate"
-                type="date"
-                class="w-full min-h-[44px] px-3 rounded-lg border border-state-warning-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-state-warning-border"
-              />
             </div>
 
             <p v-if="finalizeSaleError" class="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
@@ -3039,6 +3060,7 @@ onUnmounted(() => {
               <PaymentsPaymentMethodSelector
                 v-model="finalizePaymentSelection"
                 :groups="finalizePaymentGroups"
+                layout="search"
                 :disabled="isAddingRemainingTender"
               />
               <input
