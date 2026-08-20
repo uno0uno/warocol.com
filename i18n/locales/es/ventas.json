@@ -244,6 +244,7 @@
       "liquorVat": "IVA licores 5%",
       "counter": "Mostrador",
       "pendingAction": "Acción pendiente",
+      "pendingFinalizeCta": "Acción pendiente · Finalizar venta",
       "finalizeSale": "Finalizar venta",
       "finalizePendingSale": "Finalizar venta pendiente",
       "identifyCustomerForPayment": "Identifica un cliente para cobrar a crédito o con wallet",

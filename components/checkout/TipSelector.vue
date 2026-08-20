@@ -134,7 +134,7 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
 </script>
 
 <template>
-  <div v-if="enabled" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border-2 border-border">
+  <div v-if="enabled" class="flex flex-col gap-3">
     <div class="flex flex-col gap-0.5">
       <p class="text-sm font-semibold text-text-primary">{{ t('pos.tip.optional') }}</p>
       <p class="text-xs leading-snug text-text-secondary">
@@ -143,29 +143,29 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
     </div>
 
     <!-- Chip row: presets + custom + no tip -->
-    <div role="group" :aria-label="t('pos.tip.optionsAria')" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <div role="group" :aria-label="t('pos.tip.optionsAria')" class="grid grid-cols-2 gap-2">
       <button
         v-for="(p, i) in presets"
         :key="`preset-${i}`"
         type="button"
         :aria-pressed="isActivePreset(i)"
-        class="min-h-[56px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all active:scale-95"
+        class="min-h-[52px] min-w-0 w-full flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl border text-sm font-semibold transition-all active:scale-95"
         :class="isActivePreset(i)
-          ? 'border-primary bg-primary/10 text-primary shadow-sm'
-          : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+          ? 'border-crocus-200 bg-crocus-50 text-primary'
+          : 'border-border bg-background text-text-secondary hover:border-crocus-200 hover:text-text-primary'"
         @click="selectPreset(i)"
       >
-        <span>{{ formatPercentLabel(p) }}</span>
-        <span class="text-xs font-normal opacity-70 tabular-nums">{{ formatCurrency(presetAmount(i)) }}</span>
+        <span class="leading-tight">{{ formatPercentLabel(p) }}</span>
+        <span class="w-full text-center text-xs font-normal tabular-nums leading-tight truncate" :class="isActivePreset(i) ? 'text-primary/80' : 'text-text-tertiary'">{{ formatCurrency(presetAmount(i)) }}</span>
       </button>
 
       <button
         type="button"
         :aria-pressed="isActiveCustom"
-        class="min-h-[56px] px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all active:scale-95"
+        class="min-h-[52px] min-w-0 w-full px-2 py-2 rounded-xl border text-sm font-semibold transition-all active:scale-95"
         :class="isActiveCustom
-          ? 'border-primary bg-primary/10 text-primary shadow-sm'
-          : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+          ? 'border-crocus-200 bg-crocus-50 text-primary'
+          : 'border-border bg-background text-text-secondary hover:border-crocus-200 hover:text-text-primary'"
         @click="selectCustom"
       >
         {{ t('pos.tip.custom') }}
@@ -174,10 +174,10 @@ const isActiveNone = computed(() => activeMode.value.kind === 'none')
       <button
         type="button"
         :aria-pressed="isActiveNone"
-        class="min-h-[56px] px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all active:scale-95"
+        class="min-h-[52px] min-w-0 w-full px-2 py-2 rounded-xl border text-sm font-semibold transition-all active:scale-95"
         :class="isActiveNone
-          ? 'border-primary bg-primary/10 text-primary shadow-sm'
-          : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+          ? 'border-crocus-200 bg-crocus-50 text-primary'
+          : 'border-border bg-background text-text-secondary hover:border-crocus-200 hover:text-text-primary'"
         @click="selectNone"
       >
         {{ t('pos.tip.none') }}

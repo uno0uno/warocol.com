@@ -60,7 +60,7 @@ function clearInput() {
 <template>
   <div class="space-y-3">
     <div class="flex items-center justify-between gap-3">
-      <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+      <p class="text-sm font-semibold text-text-primary">
         {{ t('pos.checkout.discount.title') }}
       </p>
       <button
@@ -69,7 +69,7 @@ function clearInput() {
         :aria-checked="enabled"
         :aria-label="t('pos.checkout.discount.title')"
         class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-        :class="enabled ? 'bg-primary' : 'bg-border'"
+        :class="enabled ? 'bg-crocus-300' : 'bg-border'"
         @click="toggleEnabled"
       >
         <span
@@ -84,7 +84,7 @@ function clearInput() {
         <button
           type="button"
           class="flex-1 min-h-[44px] text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/30"
-          :class="discountType === 'percent' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+          :class="discountType === 'percent' ? 'bg-crocus-50 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
           @click="selectType('percent')"
         >
           %
@@ -92,7 +92,7 @@ function clearInput() {
         <button
           type="button"
           class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/30"
-          :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+          :class="discountType === 'fixed' ? 'bg-crocus-50 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
           @click="selectType('fixed')"
         >
           {{ t('pos.checkout.discount.fixed') }}
@@ -137,10 +137,10 @@ function clearInput() {
 
       <div
         v-if="discountAmount > 0"
-        class="flex items-center justify-between px-4 py-2.5 bg-primary/10 rounded-lg"
+        class="flex items-center justify-between px-4 py-2.5 bg-crocus-50 rounded-lg"
       >
         <span class="text-sm font-medium text-primary">{{ t('pos.checkout.discount.applied') }}</span>
-        <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
+        <span class="text-sm font-semibold text-primary">-{{ formatCurrency(discountAmount) }}</span>
       </div>
     </div>
   </div>

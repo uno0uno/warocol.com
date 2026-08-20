@@ -77,6 +77,8 @@
       "applyPromo": "Apply promotion",
       "identifyCustomer": "Search or identify customer",
       "searchMethod": "Search method...",
+      "searchAllMethods": "Search payment method",
+      "subMethodScrollHint": "{total} methods · swipe to see more",
       "paymentDueOptional": "Payment due date",
       "optional": "(optional)",
       "customerNoData": "Customer without details",
