@@ -1,11 +1,11 @@
 <script setup lang="ts">
-const { t } = useI18n({ useScope: 'global' })
+const { t, locale: uiLocale } = useI18n({ useScope: 'global' })
 import { ref, computed, nextTick, watch } from 'vue'
 import QRCode from 'qrcode'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
-import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, type ApiPaymentGroup } from '~/utils/paymentDefaults'
+import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, WALLET_PAYMENT_SLUG, type ApiPaymentGroup } from '~/utils/paymentDefaults'
 import { modifierLineTotal as sharedModifierLineTotal } from '~/utils/saleModifierOption'
 import {
   buildCustomerIdentityPresentation,
@@ -29,6 +29,7 @@ import {
 import { publicInvoiceErrorMessage } from '~/utils/invoiceEmitError'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 import { computeTipTaxAmount, tipSettlementTotal } from '~/composables/useTipTax'
+import type { WaroReward } from '~/composables/useWaroRewards'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -538,6 +539,21 @@ const finalizeTipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'no
   source: 'none',
 })
 const finalizeTipTaxable = ref(false)
+interface FinalizeSplitPayment {
+  id: string
+  amount: number
+  payment_method: string
+  payment_method_id: string | null
+  cash_received?: number | null
+}
+const finalizeSplitMode = ref(false)
+const finalizeSplitPayments = ref<FinalizeSplitPayment[]>([])
+const finalizeSplitAmountInput = ref<number | null>(null)
+const selectedWaroReward = ref<WaroReward | null>(null)
+const isAddingRemainingTender = ref(false)
+const isVoidingTenderId = ref<string | null>(null)
+const remainingTenderAmount = ref<number | null>(null)
+const remainingTenderError = ref('')
 const isCashFinalizeMethod = computed(() => isCashPaymentSlug(selectedPaymentMethod.value))
 const isCreditFinalizeMethod = computed(() =>
   Boolean(finalizeSelectedGroup.value?.triggersCartera || selectedPaymentMethod.value === 'credit'),
@@ -562,11 +578,31 @@ const finalizeDiscountIsValid = computed(() => {
   if (discountType.value === 'percent') return val <= 100
   return Math.round(val) <= Math.round(finalizeDiscountBase.value)
 })
+const { config: redemptionConfig } = useRedemptionConfig()
+const {
+  rewards: waroRewardsCatalog,
+  refreshRewards: refreshWaroRewardsCatalog,
+} = useWaroRewards()
+const {
+  preview: waroPreview,
+  isLoading: isLoadingWaroPreview,
+  error: waroPreviewError,
+  schedulePreview,
+  resetPreview: resetWaroPreview,
+} = useWaroRedemptionPreview()
+const {
+  summary: warosSummary,
+  isLoadingSummary: isLoadingWaros,
+  fetchSummary: fetchWarosSummary,
+  resetSummary: resetWarosSummary,
+} = useWarosCliente()
+const finalizeWaroDiscount = computed(() => Number(waroPreview.value?.total_waro_discount_cop) || 0)
 const productAmountToCharge = computed(() => {
+  let amount = Number(order.value?.total_amount) || 0
   if (discountEnabled.value && finalizeDiscountAmount.value > 0) {
-    return Math.max(0, Math.round(finalizeDiscountBase.value) - finalizeDiscountAmount.value)
+    amount = Math.max(0, Math.round(finalizeDiscountBase.value) - finalizeDiscountAmount.value)
   }
-  return Number(order.value?.total_amount) || 0
+  return Math.max(0, amount - finalizeWaroDiscount.value)
 })
 const finalizeTipEnabled = computed(() => settingsData.value?.data?.tip_enabled === true)
 const finalizeTipPresets = computed<number[]>(() => settingsData.value?.data?.tip_default_percentages ?? [10])
@@ -597,7 +633,9 @@ const showFinalizeDuePreview = computed(() =>
   Number(order.value?.standard_tax) > 0
   || Number(order.value?.liquor_tax) > 0
   || finalizeTipModel.value.amount > 0
-  || finalizeTipTaxAmount.value > 0,
+  || finalizeTipTaxAmount.value > 0
+  || finalizeWaroDiscount.value > 0
+  || finalizeDiscountAmount.value > 0
 )
 const cashAmountToCharge = computed(() =>
   productAmountToCharge.value
@@ -605,9 +643,81 @@ const cashAmountToCharge = computed(() =>
 )
 const cashIsValid = computed(() =>
   !isCashFinalizeMethod.value
+  || finalizeSplitMode.value
   || cashAmountToCharge.value <= 0.01
   || ((cashReceivedInput.value || 0) + 0.01 >= cashAmountToCharge.value),
 )
+const finalizeSplitPaidTotal = computed(() =>
+  finalizeSplitPayments.value.reduce((sum, payment) => sum + payment.amount, 0),
+)
+const finalizeSplitRemaining = computed(() =>
+  Math.max(0, cashAmountToCharge.value - finalizeSplitPaidTotal.value),
+)
+const finalizeSplitIsComplete = computed(() =>
+  finalizeSplitMode.value
+  && finalizeSplitPayments.value.length > 0
+  && Math.abs(finalizeSplitPaidTotal.value - cashAmountToCharge.value) <= 0.01,
+)
+const finalizeSplitAmountToAdd = computed(() => Number(finalizeSplitAmountInput.value) || 0)
+const finalizeSplitAmountError = computed(() => {
+  if (!finalizeSplitMode.value || finalizeSplitIsComplete.value) return ''
+  if (finalizeSplitPayments.value.length > 0) {
+    if (finalizeSplitAmountToAdd.value <= 0) return t('ventas.crear.amountGtZero')
+    if (finalizeSplitAmountToAdd.value - finalizeSplitRemaining.value > 0.01) return t('ventas.crear.paymentExceeds')
+  }
+  if (selectedPaymentMethod.value !== WALLET_PAYMENT_SLUG) return ''
+  if (!identifiedSaleCustomer.value) return t('ventas.crear.identifyForWallet')
+  const walletAmount = finalizeSplitPayments.value.length > 0
+    ? finalizeSplitAmountToAdd.value
+    : (finalizeSplitAmountToAdd.value || cashAmountToCharge.value)
+  if (walletAmount > finalizeWalletBalanceCop.value) return t('ventas.crear.walletInsufficient')
+  return ''
+})
+const finalizeSequentialFirst = computed(() =>
+  finalizeSplitMode.value
+  && finalizeSplitPayments.value.length === 0
+  && finalizeSplitAmountToAdd.value > 0
+  && finalizeSplitAmountToAdd.value + 0.01 < cashAmountToCharge.value,
+)
+const finalizeSplitCoversDue = computed(() =>
+  finalizeSplitMode.value
+  && finalizeSplitPayments.value.length === 0
+  && finalizeSplitAmountToAdd.value > 0
+  && Math.abs(finalizeSplitAmountToAdd.value - cashAmountToCharge.value) <= 0.01,
+)
+const canFinalizePendingSale = computed(() => {
+  if (!selectedPaymentMethod.value || finalizeRequiresMethodSelection.value || !finalizeDiscountIsValid.value) {
+    return false
+  }
+  if (!finalizeSplitMode.value) return cashIsValid.value
+  if (finalizeSplitIsComplete.value || finalizeSplitCoversDue.value) return true
+  if (finalizeSequentialFirst.value && !finalizeSplitAmountError.value) return true
+  return false
+})
+const waroRedemptionEnabled = computed(() => {
+  const cfg = redemptionConfig.value
+  if (!cfg?.is_enabled) return false
+  return Boolean(cfg.redemption_enabled)
+})
+const warosPanelVisible = computed(() => {
+  if (!identifiedSaleCustomer.value) return false
+  if (redemptionConfig.value == null) return true
+  return redemptionConfig.value.is_enabled
+})
+const activeWaroRewards = computed(() => waroRewardsCatalog.value.filter(reward => reward.is_active))
+const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
+const isPartialSplitSale = computed(() =>
+  order.value?.status === 'completed' && order.value?.payment_status === 'partial',
+)
+const recordedSplitPaid = computed(() =>
+  (order.value?.split_payments ?? []).reduce((sum: number, payment: any) => sum + (Number(payment.amount) || 0), 0),
+)
+const remainingSplitDue = computed(() => {
+  const o = order.value
+  if (!o) return 0
+  const due = Number(o.total_amount) + Number(o.tip_amount || 0) + Number(o.tip_tax_amount || 0)
+  return Math.max(0, Math.round(due - recordedSplitPaid.value))
+})
 const invoiceAcquirer = computed(() =>
   (invoiceData.value as any)?.presentation?.acquirer ?? null,
 )
@@ -1231,6 +1341,121 @@ watch(finalizePaymentGroups, (groups) => {
   }
 })
 
+function finalizePaymentLabel(payment: Pick<FinalizeSplitPayment, 'payment_method' | 'payment_method_id'>) {
+  return resolveLabel(payment.payment_method, payment.payment_method_id)
+}
+
+function addFinalizeSplitPayment() {
+  if (finalizeSplitAmountError.value || finalizeSplitAmountToAdd.value <= 0) {
+    if (finalizeSplitAmountError.value) {
+      useToast().warning(finalizeSplitAmountError.value, { title: t('ventas.crear.splitPayment') })
+    }
+    return
+  }
+  finalizeSplitPayments.value.push({
+    id: crypto.randomUUID(),
+    amount: finalizeSplitAmountToAdd.value,
+    payment_method: selectedPaymentMethod.value,
+    payment_method_id: selectedPaymentMethodId.value,
+    cash_received: isCashFinalizeMethod.value ? Number(cashReceivedInput.value) || finalizeSplitAmountToAdd.value : null,
+  })
+  finalizeSplitAmountInput.value = finalizeSplitRemaining.value > 0 ? Math.round(finalizeSplitRemaining.value) : null
+}
+
+function removeFinalizeSplitPayment(id: string) {
+  finalizeSplitPayments.value = finalizeSplitPayments.value.filter(payment => payment.id !== id)
+}
+
+function waroRewardSubtitle(reward: WaroReward) {
+  if (reward.reward_type === 'fixed_cop_off' && reward.fixed_cop_off) {
+    return `${reward.waros_cost.toLocaleString(uiLocale.value)} ${t('pos.wallet.pointsShort')} · ${formatCurrency(reward.fixed_cop_off)}`
+  }
+  return `${reward.waros_cost.toLocaleString(uiLocale.value)} ${t('pos.wallet.pointsShort')}`
+}
+
+function setWaroRewardSelected(reward: WaroReward, selected: boolean) {
+  if (warosBalance.value < reward.waros_cost) return
+  if (selected) selectedWaroReward.value = reward
+  else if (selectedWaroReward.value?.id === reward.id) selectedWaroReward.value = null
+}
+
+function buildFinalizeRedemptionLines() {
+  return items.value
+    .map((item: any) => ({
+      id: String(item.id || ''),
+      product_id: String(item.product?.id || item.product_id || ''),
+      category_id: item.product?.category_id ?? item.category_id ?? null,
+      quantity: Number(item.quantity) || 1,
+      subtotal: Number(item.subtotal) || 0,
+    }))
+    .filter((line: { id: string, product_id: string }) => line.id && line.product_id)
+}
+
+function refreshFinalizeWaroPreview() {
+  if (!identifiedSaleCustomer.value || !waroRedemptionEnabled.value) {
+    resetWaroPreview()
+    return
+  }
+  const lines = buildFinalizeRedemptionLines()
+  if (!lines.length) {
+    resetWaroPreview()
+    return
+  }
+  schedulePreview({
+    lines,
+    customerId: String(orderCustomer.value?.id || ''),
+    manualDiscountAmount: finalizeDiscountAmount.value,
+    discountType: discountEnabled.value ? discountType.value : null,
+    discountValue: discountEnabled.value && discountInput.value ? Number(discountInput.value) : null,
+    waroRewardId: selectedWaroReward.value?.id ?? null,
+  })
+}
+
+watch(cashAmountToCharge, (due) => {
+  if (!finalizeSplitMode.value) return
+  finalizeSplitPayments.value = []
+  finalizeSplitAmountInput.value = due > 0 ? Math.round(due) : null
+})
+
+watch(finalizeSplitMode, (enabled) => {
+  finalizeSplitPayments.value = []
+  finalizeSplitAmountInput.value = enabled && cashAmountToCharge.value > 0
+    ? Math.round(cashAmountToCharge.value)
+    : null
+})
+
+watch(
+  () => [
+    showFinalizeSalePanel.value,
+    identifiedSaleCustomer.value,
+    discountEnabled.value,
+    discountType.value,
+    discountInput.value,
+    selectedWaroReward.value?.id,
+    items.value.length,
+  ],
+  () => {
+    if (!showFinalizeSalePanel.value) {
+      resetWaroPreview()
+      return
+    }
+    refreshFinalizeWaroPreview()
+  },
+)
+
+watch(
+  () => [showFinalizeSalePanel.value, identifiedSaleCustomer.value, orderCustomer.value?.id],
+  () => {
+    if (!showFinalizeSalePanel.value || !identifiedSaleCustomer.value) {
+      resetWarosSummary()
+      selectedWaroReward.value = null
+      return
+    }
+    fetchWarosSummary(String(orderCustomer.value?.id || ''))
+    refreshWaroRewardsCatalog()
+  },
+)
+
 const openFinalizeSalePanel = () => {
   selectedNewStatus.value = ''
   selectedPaymentMethod.value = ''
@@ -1243,6 +1468,11 @@ const openFinalizeSalePanel = () => {
   discountInput.value = ''
   finalizeTipModel.value = { amount: 0, source: 'none' }
   finalizeTipTaxable.value = false
+  finalizeSplitMode.value = false
+  finalizeSplitPayments.value = []
+  finalizeSplitAmountInput.value = null
+  selectedWaroReward.value = null
+  resetWaroPreview()
   finalizeSaleError.value = ''
   showFinalizeSalePanel.value = true
 }
@@ -1262,8 +1492,12 @@ const finalizePendingSale = async () => {
     finalizeSaleError.value = t('ventas.detail.selectSpecificPayment')
     return
   }
-  if (isCashFinalizeMethod.value && !cashIsValid.value) {
+  if (!finalizeSplitMode.value && isCashFinalizeMethod.value && !cashIsValid.value) {
     finalizeSaleError.value = t('ventas.detail.cashReceivedShort')
+    return
+  }
+  if (finalizeSplitMode.value && !finalizeSplitIsComplete.value && !finalizeSequentialFirst.value && !finalizeSplitCoversDue.value) {
+    finalizeSaleError.value = t('pos.checkout.split.enterAmount')
     return
   }
   if (isCreditFinalizeMethod.value && !identifiedSaleCustomer.value) {
@@ -1281,10 +1515,16 @@ const finalizePendingSale = async () => {
       method: 'PATCH',
       body: {
         status: 'completed',
-        payment_method: selectedPaymentMethod.value,
-        payment_method_id: selectedPaymentMethodId.value || undefined,
+        payment_method: finalizeSplitIsComplete.value
+          ? finalizeSplitPayments.value[0]?.payment_method ?? selectedPaymentMethod.value
+          : selectedPaymentMethod.value,
+        payment_method_id: finalizeSplitIsComplete.value
+          ? finalizeSplitPayments.value[0]?.payment_method_id || undefined
+          : selectedPaymentMethodId.value || undefined,
         customer_id: order.value?.customer?.id || undefined,
-        ...(isCashFinalizeMethod.value ? { cash_received: Number(cashReceivedInput.value) } : {}),
+        ...(!finalizeSplitMode.value && isCashFinalizeMethod.value
+          ? { cash_received: Number(cashReceivedInput.value) }
+          : {}),
         ...(isCreditFinalizeMethod.value && creditDueDate.value
           ? { credit_due_date: creditDueDate.value }
           : {}),
@@ -1299,6 +1539,37 @@ const finalizePendingSale = async () => {
               tip_taxable: finalizeTipTaxable.value,
             }
           : {}),
+        ...(selectedWaroReward.value?.id ? { waro_reward_id: selectedWaroReward.value.id } : {}),
+        ...(finalizeSplitIsComplete.value
+          ? {
+              payments: finalizeSplitPayments.value.map(payment => ({
+                amount: payment.amount,
+                payment_method: payment.payment_method,
+                payment_method_id: payment.payment_method_id,
+                cash_received: payment.cash_received,
+              })),
+            }
+          : finalizeSplitCoversDue.value
+            ? {
+                payments: [{
+                  amount: finalizeSplitAmountToAdd.value,
+                  payment_method: selectedPaymentMethod.value,
+                  payment_method_id: selectedPaymentMethodId.value,
+                  cash_received: isCashFinalizeMethod.value
+                    ? Number(cashReceivedInput.value) || finalizeSplitAmountToAdd.value
+                    : null,
+                }],
+              }
+          : {}),
+        ...(finalizeSequentialFirst.value
+          ? {
+              split_mode: true,
+              split_first_amount: finalizeSplitAmountToAdd.value,
+              ...(isCashFinalizeMethod.value
+                ? { split_first_cash_received: Number(cashReceivedInput.value) || finalizeSplitAmountToAdd.value }
+                : {}),
+            }
+          : {}),
       },
     })
     await refetchOrder()
@@ -1311,6 +1582,56 @@ const finalizePendingSale = async () => {
     finalizeSaleError.value = error.data?.message || error.data?.detail || t('ventas.detail.saleCompleteError')
   } finally {
     isFinalizingSale.value = false
+  }
+}
+
+const addRemainingTender = async () => {
+  const amount = Number(remainingTenderAmount.value) || 0
+  if (!selectedPaymentMethod.value || amount <= 0) {
+    remainingTenderError.value = t('pos.checkout.split.enterAmount')
+    return
+  }
+  if (amount - remainingSplitDue.value > 0.01) {
+    remainingTenderError.value = t('ventas.crear.paymentExceeds')
+    return
+  }
+  isAddingRemainingTender.value = true
+  remainingTenderError.value = ''
+  try {
+    await $fetch(`/api/orders/${orderId.value}/tenders`, {
+      method: 'POST',
+      body: {
+        amount,
+        payment_method: selectedPaymentMethod.value,
+        payment_method_id: selectedPaymentMethodId.value || undefined,
+        ...(isCashFinalizeMethod.value
+          ? { cash_received: Number(cashReceivedInput.value) || amount }
+          : {}),
+      },
+    })
+    remainingTenderAmount.value = null
+    await refetchOrder()
+    useToast().success(t('ventas.detail.statusUpdated'), { title: 'Listo' })
+  } catch (error: any) {
+    remainingTenderError.value = error.data?.message || error.data?.detail || t('pos.checkout.split.partialPaymentError')
+  } finally {
+    isAddingRemainingTender.value = false
+  }
+}
+
+const voidSaleTender = async (paymentId: string) => {
+  isVoidingTenderId.value = paymentId
+  remainingTenderError.value = ''
+  try {
+    await $fetch(`/api/orders/${orderId.value}/tenders/${paymentId}`, {
+      method: 'DELETE',
+      body: { reason: t('pos.checkout.split.deletePayment') },
+    })
+    await refetchOrder()
+  } catch (error: any) {
+    remainingTenderError.value = error.data?.message || error.data?.detail || t('pos.checkout.split.deletePaymentError')
+  } finally {
+    isVoidingTenderId.value = null
   }
 }
 
@@ -2574,6 +2895,19 @@ onUnmounted(() => {
                 :groups="finalizePaymentGroups"
                 :disabled="isFinalizingSale"
               />
+              <div class="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  class="h-8 px-3 rounded-lg text-xs font-semibold border transition-colors"
+                  :class="finalizeSplitMode
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+                  :aria-pressed="finalizeSplitMode"
+                  @click="finalizeSplitMode = !finalizeSplitMode"
+                >
+                  {{ t('ventas.crear.splitAction') }}
+                </button>
+              </div>
             </div>
 
             <div
@@ -2596,6 +2930,49 @@ onUnmounted(() => {
               v-model:discount-input="discountInput"
               :base-amount="finalizeDiscountBase"
             />
+
+            <div
+              v-if="warosPanelVisible"
+              class="rounded-xl border border-border bg-surface px-4 py-3 space-y-3"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Waros</p>
+                <span v-if="!isLoadingWaros" class="text-xs font-bold tabular-nums text-state-warning-text">
+                  {{ t('pos.wallet.warosBalance', { amount: warosBalance.toLocaleString(uiLocale) }) }}
+                </span>
+              </div>
+              <template v-if="waroRedemptionEnabled">
+                <p
+                  v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward"
+                  class="text-xs text-text-tertiary animate-pulse"
+                >
+                  {{ t('pos.wallet.calculatingRedemption') }}
+                </p>
+                <ul v-if="activeWaroRewards.length" class="space-y-1.5">
+                  <li v-for="reward in activeWaroRewards" :key="reward.id">
+                    <label
+                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+                      :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+                    >
+                      <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
+                      <span class="flex items-center gap-3 flex-shrink-0">
+                        <span class="text-xs tabular-nums text-text-secondary">{{ waroRewardSubtitle(reward) }}</span>
+                        <input
+                          type="checkbox"
+                          class="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/30"
+                          :checked="selectedWaroReward?.id === reward.id"
+                          :disabled="warosBalance < reward.waros_cost"
+                          :aria-label="t('pos.wallet.redeemReward')"
+                          @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
+                        />
+                      </span>
+                    </label>
+                  </li>
+                </ul>
+                <p v-else class="text-xs text-text-secondary">{{ t('pos.wallet.noActiveRewards') }}</p>
+                <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
+              </template>
+            </div>
 
             <CheckoutWaiterSelector
               v-model="servedByMemberId"
@@ -2649,6 +3026,13 @@ onUnmounted(() => {
                 <span class="tabular-nums text-text-primary">{{ formatCurrency(order.liquor_tax) }}</span>
               </div>
               <div
+                v-if="finalizeWaroDiscount > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">{{ t('pos.checkout.summary.waroRedeem') }}</span>
+                <span class="tabular-nums text-primary font-medium">-{{ formatCurrency(finalizeWaroDiscount) }}</span>
+              </div>
+              <div
                 v-if="finalizeTipModel.amount > 0"
                 class="flex items-center justify-between gap-3 text-sm"
               >
@@ -2672,8 +3056,58 @@ onUnmounted(() => {
               v-if="isCashFinalizeMethod"
               v-model="cashReceivedInput"
               input-id="sale-finalize-cash-received"
-              :amount-to-charge="cashAmountToCharge"
+              :amount-to-charge="finalizeSplitMode ? finalizeSplitAmountToAdd || cashAmountToCharge : cashAmountToCharge"
             />
+
+            <div v-if="finalizeSplitMode" class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{{ t('ventas.crear.splitPayment') }}</span>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-text-secondary hover:text-destructive transition-colors"
+                  @click="finalizeSplitMode = false"
+                >
+                  {{ t('ventas.common.quitar') }}
+                </button>
+              </div>
+              <div v-if="finalizeSplitPayments.length > 0" class="flex flex-col gap-1">
+                <div
+                  v-for="payment in finalizeSplitPayments"
+                  :key="payment.id"
+                  class="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span class="truncate text-text-secondary">{{ finalizePaymentLabel(payment) }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(payment.amount) }}</span>
+                    <button type="button" class="text-destructive text-xs font-semibold" @click="removeFinalizeSplitPayment(payment.id)">{{ t('ventas.common.quitar') }}</button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="!finalizeSplitIsComplete" class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  v-model.number="finalizeSplitAmountInput"
+                  type="number"
+                  min="1"
+                  :max="Math.round(finalizeSplitRemaining || cashAmountToCharge)"
+                  class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                  :placeholder="t('ventas.crear.amountPlaceholder')"
+                />
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                  :disabled="finalizeSplitAmountToAdd <= 0"
+                  @click="addFinalizeSplitPayment"
+                >
+                  {{ t('ventas.common.agregar') }}
+                </button>
+              </div>
+              <p v-if="finalizeSplitAmountError" class="text-xs text-destructive">{{ finalizeSplitAmountError }}</p>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-text-secondary">{{ finalizeSplitIsComplete ? t('ventas.crear.paymentComplete') : t('ventas.crear.remainingBalance') }}</span>
+                <span class="font-semibold tabular-nums" :class="finalizeSplitIsComplete ? 'text-state-success-text' : 'text-primary'">{{ formatCurrency(finalizeSplitRemaining) }}</span>
+              </div>
+              <p v-if="finalizeSequentialFirst" class="text-xs text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</p>
+            </div>
 
             <div
               v-if="isCreditFinalizeMethod && identifiedSaleCustomer"
@@ -2700,7 +3134,7 @@ onUnmounted(() => {
             <button
               type="button"
               @click="finalizePendingSale"
-              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection || !cashIsValid || !finalizeDiscountIsValid"
+              :disabled="isFinalizingSale || !canFinalizePendingSale"
               class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isFinalizingSale" size="9px" />
@@ -2779,6 +3213,51 @@ onUnmounted(() => {
               </div>
               <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount)
               }}</span>
+              <button
+                v-if="isPartialSplitSale"
+                type="button"
+                class="text-xs font-semibold text-destructive disabled:opacity-50"
+                :disabled="isVoidingTenderId === p.id"
+                :aria-label="t('pos.checkout.split.deletePaymentAria', { number: Number(idx) + 1, amount: formatCurrency(p.amount) })"
+                @click="voidSaleTender(p.id)"
+              >
+                {{ t('pos.checkout.split.deletePayment') }}
+              </button>
+            </div>
+
+            <div v-if="isPartialSplitSale" class="pt-3 space-y-3 border-t border-border">
+              <p class="text-sm font-semibold text-text-primary">
+                {{ t('pos.checkout.split.pendingBalance') }}
+                <span class="tabular-nums text-primary">{{ formatCurrency(remainingSplitDue) }}</span>
+              </p>
+              <PaymentsPaymentMethodSelector
+                v-model="finalizePaymentSelection"
+                :groups="finalizePaymentGroups"
+                :disabled="isAddingRemainingTender"
+              />
+              <input
+                v-model.number="remainingTenderAmount"
+                type="number"
+                min="1"
+                :max="remainingSplitDue"
+                class="h-11 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary"
+                :placeholder="t('pos.checkout.split.amountNow')"
+              />
+              <CheckoutCashTenderPanel
+                v-if="isCashFinalizeMethod"
+                v-model="cashReceivedInput"
+                input-id="sale-remaining-cash-received"
+                :amount-to-charge="Number(remainingTenderAmount) || remainingSplitDue"
+              />
+              <p v-if="remainingTenderError" class="text-sm text-destructive">{{ remainingTenderError }}</p>
+              <button
+                type="button"
+                class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40"
+                :disabled="isAddingRemainingTender || !selectedPaymentMethod || !(Number(remainingTenderAmount) > 0)"
+                @click="addRemainingTender"
+              >
+                {{ t('pos.checkout.split.chargeAmount', { amount: formatCurrency(Number(remainingTenderAmount) || 0), method: resolveLabel(selectedPaymentMethod, selectedPaymentMethodId) }) }}
+              </button>
             </div>
           </div>
         </div>
