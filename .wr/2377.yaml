@@ -1,0 +1,39 @@
+issue: 2377
+title: "Sale detail: remove line-item edit; keep status transitions only"
+repo: both
+repo_remote: uno0uno/warocol.com
+api_remote: uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+api_cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+stack: both
+branch: wr-2377-sale-detail-no-line-edit
+api_branch: wr-2377-sale-detail-no-line-edit
+
+paths:
+  - pages/ventas/[id].vue
+  - app/services/orders_service.py
+  - tests/test_order_status_completed_pending.py
+
+ac:
+  - No edit-items mode on sale detail (no add/remove products or modifiers)
+  - Pending to completed and pending to cancelled still work
+  - Completed to cancelled still works
+  - DELETE /orders/{id}/items and modifier delete rejected (not only when completed)
+  - Complete/cancel does not use line-edit inventory adjustment
+
+out_of_scope:
+  - POS cart / mesa tab item edits
+  - FE emit
+  - Reopening cancelled sales
+
+hints:
+  entry: "pages/ventas/[id].vue isEditMode enterEditMode ~1284; save deletes ~1683"
+  api: "orders_service._assert_order_status_allows_line_edit:1379 — today pending allowed; POS uses /pos/cart and /tables/.../tab/items"
+  tests: "pytest tests/test_order_status_completed_pending.py -v -k delete_order_item"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]

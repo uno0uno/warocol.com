@@ -73,11 +73,6 @@ const missingOrderNumber = computed(() => {
 // Split payments slide-over
 const showSplitPaymentsPanel = ref(false)
 
-// Edit mode state
-const isEditMode = ref(false)
-const isSaving = ref(false)
-const itemsToDelete = ref<Set<string>>(new Set())
-const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
 const productFilter = ref('')
 
 // Status update (mesa orders)
@@ -196,9 +191,6 @@ const canShowStatusPanel = computed(() =>
     invoiceLocked: saleMutationsLocked.value,
   }),
 )
-watch(saleMutationsLocked, (locked) => {
-  if (locked) isEditMode.value = false
-})
 const trimmedCufe = computed(() => {
   const cufe = String(invoiceData.value?.cufe ?? '').trim()
   if (cufe.length <= 32) return cufe
@@ -926,11 +918,6 @@ const items = computed(() => itemsData.value || [])
 const modifierLineTotal = (mod: { price: number; quantity?: number; included_quantity?: number }) =>
   sharedModifierLineTotal(mod)
 
-const editableItems = computed(() => {
-  if (!isEditMode.value) return items.value
-  return items.value.filter((item: any) => !itemsToDelete.value.has(item.id))
-})
-
 const productHeaderOptions = computed(() => {
   const products = new Map<string, string>()
   items.value.forEach((item: any) => {
@@ -945,38 +932,14 @@ const productHeaderOptions = computed(() => {
 
 const visibleItems = computed(() => {
   const product = productFilter.value
-  if (!product) return editableItems.value
-  return editableItems.value.filter((item: any) =>
+  if (!product) return items.value
+  return items.value.filter((item: any) =>
     String(item.product?.id || item.product_id || item.id || '') === product
   )
 })
 
-// Calculate adjusted total
-const adjustedTotal = computed(() => {
-  let total = 0
-  for (const item of editableItems.value) {
-    let itemTotal = Number(item.price_at_purchase) * Number(item.quantity)
-
-    // Add modifiers that aren't deleted
-    const deletedMods = modifiersToDelete.value.get(item.id) || new Set()
-    for (const mod of (item.modifiers || [])) {
-      if (!deletedMods.has(mod.id)) {
-        itemTotal += modifierLineTotal(mod)
-      }
-    }
-    total += itemTotal
-  }
-  return total
-})
-
 // Gross subtotal (before discount) — sum of all item subtotals
 const grossSubtotal = computed(() => items.value.reduce((sum: number, item: any) => sum + Number(item.subtotal), 0))
-
-// Check if there are changes
-const hasChanges = computed(() => {
-  return itemsToDelete.value.size > 0 ||
-    Array.from(modifiersToDelete.value.values()).some(set => set.size > 0)
-})
 
 const { formatDateTime: formatDate, formatCurrency } = useFormatters()
 
@@ -1278,55 +1241,6 @@ const printReceipt = async () => {
   window.addEventListener('afterprint', cleanup)
   window.print()
   window.setTimeout(cleanup, 1500)
-}
-
-// Edit mode functions
-const enterEditMode = () => {
-  if (order.value?.status !== 'pending') return
-  isEditMode.value = true
-  itemsToDelete.value = new Set()
-  modifiersToDelete.value = new Map()
-}
-
-watch(() => order.value?.status, (status) => {
-  if (status !== 'pending') isEditMode.value = false
-})
-
-const cancelEdit = () => {
-  isEditMode.value = false
-  itemsToDelete.value = new Set()
-  modifiersToDelete.value = new Map()
-}
-
-const markItemForDeletion = (itemId: string) => {
-  // Check if this would delete all items
-  const remainingItems = items.value.filter((item: any) =>
-    !itemsToDelete.value.has(item.id) && item.id !== itemId
-  )
-
-  if (remainingItems.length === 0) {
-    useToast().error(t('ventas.detail.needOneProduct'), { title: t('ventas.detail.notAllowed') })
-    return
-  }
-
-  const newSet = new Set(itemsToDelete.value)
-  newSet.add(itemId)
-  itemsToDelete.value = newSet
-}
-
-const markModifierForDeletion = (itemId: string, modifierId: string) => {
-  const newMap = new Map(modifiersToDelete.value)
-  if (!newMap.has(itemId)) {
-    newMap.set(itemId, new Set())
-  }
-  const modSet = new Set(newMap.get(itemId))
-  modSet.add(modifierId)
-  newMap.set(itemId, modSet)
-  modifiersToDelete.value = newMap
-}
-
-const isModifierDeleted = (itemId: string, modifierId: string) => {
-  return modifiersToDelete.value.get(itemId)?.has(modifierId) || false
 }
 
 const updateStatus = async () => {
@@ -1670,47 +1584,6 @@ const voidSaleTender = async (paymentId: string) => {
     remainingTenderError.value = error.data?.message || error.data?.detail || t('pos.checkout.split.deletePaymentError')
   } finally {
     isVoidingTenderId.value = null
-  }
-}
-
-// Save changes - backend handles inventory restock automatically
-const saveChanges = async () => {
-  if (!hasChanges.value) return
-
-  isSaving.value = true
-  try {
-    // Delete items (backend automatically returns ingredients to stock)
-    for (const itemId of itemsToDelete.value) {
-      await $fetch(`/api/orders/${orderId.value}/items/${itemId}`, {
-        method: 'DELETE'
-      })
-    }
-
-    // Delete modifiers (backend automatically returns ingredients to stock)
-    for (const [itemId, modifierIds] of modifiersToDelete.value) {
-      // Skip if item was already deleted
-      if (itemsToDelete.value.has(itemId)) continue
-
-      for (const modifierId of modifierIds) {
-        await $fetch(`/api/orders/${orderId.value}/items/${itemId}/modifiers/${modifierId}`, {
-          method: 'DELETE'
-        })
-      }
-    }
-
-    // Refresh data
-    await Promise.all([refetchOrder(), refetchItems()])
-
-    isEditMode.value = false
-    itemsToDelete.value = new Set()
-    modifiersToDelete.value = new Map()
-
-    useToast().success(t('ventas.detail.saleAdjusted'), { title: t('ventas.detail.changesSaved') })
-  } catch (error: any) {
-    console.error('Error saving changes:', error)
-    useToast().error(error.data?.message || t('ventas.detail.saveError'), { title: t('ventas.common.error') })
-  } finally {
-    isSaving.value = false
   }
 }
 
@@ -2571,52 +2444,6 @@ onUnmounted(() => {
               {{ saleReceiptSoldAt }}
             </p>
           </div>
-
-          <!-- Edit/Save Buttons -->
-          <div v-if="!saleMutationsLocked && order.status === 'pending'" class="flex gap-2 shrink-0">
-            <template v-if="!isEditMode">
-              <button @click="enterEditMode"
-                class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                {{ t('ventas.detail.editSale') }}
-              </button>
-            </template>
-            <template v-else>
-              <button @click="cancelEdit"
-                class="px-4 py-2 border border-border text-text-secondary hover:bg-surface-secondary rounded-lg text-sm font-medium transition-colors">
-                {{ t('ventas.common.cancelar') }}
-              </button>
-              <button @click="saveChanges" :disabled="!hasChanges || isSaving"
-                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg v-if="isSaving" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
-                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {{ isSaving ? t('ventas.common.guardando') : t('ventas.common.guardar') }}
-              </button>
-            </template>
-          </div>
-        </div>
-
-        <!-- Edit Mode Warning -->
-        <div v-if="isEditMode"
-          class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3">
-          <p class="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span><strong>{{ t('ventas.detail.editModeTitle') }}</strong> {{ t('ventas.detail.editModeHint') }}</span>
-          </p>
         </div>
 
         <!-- Loading Items -->
@@ -2625,11 +2452,10 @@ onUnmounted(() => {
         </div>
 
         <!-- Items Table with Expandable Modifiers -->
-        <div v-else-if="editableItems.length > 0" class="overflow-x-auto">
+        <div v-else-if="items.length > 0" class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-surface-secondary">
               <tr>
-                <th v-if="isEditMode" class="px-4 py-3 w-12"></th>
                 <th class="px-6 py-3 text-start">
                   <UiTableHeaderFilter
                     v-model="productFilter"
@@ -2674,16 +2500,6 @@ onUnmounted(() => {
               <template v-for="item in visibleItems" :key="item.id">
                 <!-- Product Row (Main) -->
                 <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
-                  <td v-if="isEditMode" class="px-4 py-4">
-                    <button @click="markItemForDeletion(item.id)"
-                      class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
-                      :title="t('ventas.detail.deleteProduct')">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
                       <div
@@ -2718,19 +2534,9 @@ onUnmounted(() => {
 
                 <!-- Modifier Rows (Sub-rows) -->
                 <template v-for="modifier in (item.modifiers || [])" :key="`${item.id}-mod-${modifier.id}`">
-                  <tr v-if="!isModifierDeleted(item.id, modifier.id)" class="bg-surface-secondary/30">
-                    <td v-if="isEditMode" class="px-4 py-2">
-                      <button @click="markModifierForDeletion(item.id, modifier.id)"
-                        class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ms-2"
-                        :title="t('ventas.detail.deleteAddition')">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </td>
-                    <td class="px-6 py-2" :class="isEditMode ? '' : 'ps-14'">
-                      <div class="flex items-center gap-2" :class="isEditMode ? 'ps-8' : ''">
+                  <tr class="bg-surface-secondary/30">
+                    <td class="px-6 py-2 ps-14">
+                      <div class="flex items-center gap-2">
                         <span class="text-primary text-xs">+</span>
                         <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
                       </div>
@@ -2752,7 +2558,7 @@ onUnmounted(() => {
               </template>
               <tr v-if="visibleItems.length === 0">
                 <td
-                  :colspan="isEditMode ? 6 : 5"
+                  colspan="5"
                   class="px-6 py-12 text-center text-sm text-text-secondary"
                 >
                   {{ t('ventas.detail.noProductsForFilter') }}
@@ -2761,13 +2567,12 @@ onUnmounted(() => {
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
-                <td v-if="isEditMode"></td>
                 <td colspan="4" class="px-6 py-4 text-end text-sm font-semibold text-text-primary">
                   {{ t('ventas.detail.orderTotalLabel') }}
                 </td>
                 <td class="px-6 py-4 text-end">
                   <span class="text-xl font-bold text-primary">
-                    {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
+                    {{ formatCurrency(order.total_amount) }}
                   </span>
                 </td>
               </tr>
