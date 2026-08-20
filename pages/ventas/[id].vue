@@ -529,11 +529,39 @@ const finalizeWaiterMembers = computed(() => {
 const cashReceivedInput = ref(0)
 const creditDueDate = ref('')
 const servedByMemberId = ref<string | null>(null)
+const discountEnabled = ref(false)
+const discountType = ref<'percent' | 'fixed'>('percent')
+const discountInput = ref('')
 const isCashFinalizeMethod = computed(() => isCashPaymentSlug(selectedPaymentMethod.value))
 const isCreditFinalizeMethod = computed(() =>
   Boolean(finalizeSelectedGroup.value?.triggersCartera || selectedPaymentMethod.value === 'credit'),
 )
-const cashAmountToCharge = computed(() => Number(order.value?.total_amount) || 0)
+const finalizeDiscountBase = computed(() =>
+  (Number(order.value?.total_amount) || 0) + (Number(order.value?.discount_amount) || 0),
+)
+const finalizeDiscountAmount = computed(() => {
+  if (!discountEnabled.value || !discountInput.value) return 0
+  const val = Number(discountInput.value)
+  if (!Number.isFinite(val) || val <= 0) return 0
+  const base = Math.round(finalizeDiscountBase.value)
+  if (discountType.value === 'percent') {
+    return Math.min(Math.round(base * val / 100), base)
+  }
+  return Math.min(Math.round(val), base)
+})
+const finalizeDiscountIsValid = computed(() => {
+  if (!discountEnabled.value || !discountInput.value) return true
+  const val = Number(discountInput.value)
+  if (!Number.isFinite(val) || val <= 0) return false
+  if (discountType.value === 'percent') return val <= 100
+  return Math.round(val) <= Math.round(finalizeDiscountBase.value)
+})
+const cashAmountToCharge = computed(() => {
+  if (discountEnabled.value && finalizeDiscountAmount.value > 0) {
+    return Math.max(0, Math.round(finalizeDiscountBase.value) - finalizeDiscountAmount.value)
+  }
+  return Number(order.value?.total_amount) || 0
+})
 const cashIsValid = computed(() =>
   !isCashFinalizeMethod.value
   || cashAmountToCharge.value <= 0.01
@@ -1169,6 +1197,9 @@ const openFinalizeSalePanel = () => {
   cashReceivedInput.value = 0
   creditDueDate.value = ''
   servedByMemberId.value = order.value?.served_by_member_id || null
+  discountEnabled.value = false
+  discountType.value = 'percent'
+  discountInput.value = ''
   finalizeSaleError.value = ''
   showFinalizeSalePanel.value = true
 }
@@ -1196,6 +1227,10 @@ const finalizePendingSale = async () => {
     finalizeSaleError.value = t('ventas.detail.identifyCustomerForPayment')
     return
   }
+  if (!finalizeDiscountIsValid.value) {
+    finalizeSaleError.value = t('pos.checkout.discount.greaterThanZero')
+    return
+  }
   isFinalizingSale.value = true
   finalizeSaleError.value = ''
   try {
@@ -1211,6 +1246,9 @@ const finalizePendingSale = async () => {
           ? { credit_due_date: creditDueDate.value }
           : {}),
         ...(servedByMemberId.value ? { served_by_member_id: servedByMemberId.value } : {}),
+        ...(discountEnabled.value && finalizeDiscountAmount.value > 0
+          ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+          : {}),
       },
     })
     await refetchOrder()
@@ -2466,7 +2504,7 @@ onUnmounted(() => {
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">{{ t('ventas.detail.finalizeSale') }}</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ t('ventas.detail.orderNumber', { number: order.order_number }) }} · {{ formatCurrency(order.total_amount) }}
+                  {{ t('ventas.detail.orderNumber', { number: order.order_number }) }} · {{ formatCurrency(cashAmountToCharge) }}
                 </p>
               </div>
               <button @click="closeFinalizeSalePanel" type="button" :aria-label="t('ventas.common.cerrarPanel')"
@@ -2501,6 +2539,13 @@ onUnmounted(() => {
                 {{ t('ventas.detail.identifyCustomerCta') }}
               </button>
             </div>
+
+            <CheckoutManualDiscountPanel
+              v-model:enabled="discountEnabled"
+              v-model:discount-type="discountType"
+              v-model:discount-input="discountInput"
+              :base-amount="finalizeDiscountBase"
+            />
 
             <CheckoutCashTenderPanel
               v-if="isCashFinalizeMethod"
@@ -2539,7 +2584,7 @@ onUnmounted(() => {
             <button
               type="button"
               @click="finalizePendingSale"
-              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection || !cashIsValid"
+              :disabled="isFinalizingSale || !selectedPaymentMethod || finalizeRequiresMethodSelection || !cashIsValid || !finalizeDiscountIsValid"
               class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               <UiLoadingDots v-if="isFinalizingSale" size="9px" />
