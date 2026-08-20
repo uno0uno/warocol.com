@@ -28,6 +28,7 @@ import {
 } from '~/utils/saleStatusPanel'
 import { publicInvoiceErrorMessage } from '~/utils/invoiceEmitError'
 import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
+import { computeTipTaxAmount, tipSettlementTotal } from '~/composables/useTipTax'
 
 definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
@@ -532,6 +533,11 @@ const servedByMemberId = ref<string | null>(null)
 const discountEnabled = ref(false)
 const discountType = ref<'percent' | 'fixed'>('percent')
 const discountInput = ref('')
+const finalizeTipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({
+  amount: 0,
+  source: 'none',
+})
+const finalizeTipTaxable = ref(false)
 const isCashFinalizeMethod = computed(() => isCashPaymentSlug(selectedPaymentMethod.value))
 const isCreditFinalizeMethod = computed(() =>
   Boolean(finalizeSelectedGroup.value?.triggersCartera || selectedPaymentMethod.value === 'credit'),
@@ -556,12 +562,47 @@ const finalizeDiscountIsValid = computed(() => {
   if (discountType.value === 'percent') return val <= 100
   return Math.round(val) <= Math.round(finalizeDiscountBase.value)
 })
-const cashAmountToCharge = computed(() => {
+const productAmountToCharge = computed(() => {
   if (discountEnabled.value && finalizeDiscountAmount.value > 0) {
     return Math.max(0, Math.round(finalizeDiscountBase.value) - finalizeDiscountAmount.value)
   }
   return Number(order.value?.total_amount) || 0
 })
+const finalizeTipEnabled = computed(() => settingsData.value?.data?.tip_enabled === true)
+const finalizeTipPresets = computed<number[]>(() => settingsData.value?.data?.tip_default_percentages ?? [10])
+const showFinalizeTipSelector = computed(
+  () => finalizeTipEnabled.value && Boolean(servedByMemberId.value),
+)
+const finalizeTipTaxableDefault = computed(() => settingsData.value?.data?.tip_taxable_default === true)
+const tenantTaxConfig = computed(() => settingsData.value?.data?.tax_config ?? null)
+watch(() => finalizeTipModel.value.amount, (amt, prev) => {
+  if (amt > 0 && !(prev && prev > 0)) finalizeTipTaxable.value = finalizeTipTaxableDefault.value
+  if (amt === 0) finalizeTipTaxable.value = false
+})
+watch(showFinalizeTipSelector, (show) => {
+  if (show) return
+  finalizeTipModel.value = { amount: 0, source: 'none' }
+  finalizeTipTaxable.value = false
+})
+const finalizeTipTaxAmount = computed(() =>
+  computeTipTaxAmount(finalizeTipModel.value.amount, finalizeTipTaxable.value, tenantTaxConfig.value),
+)
+const finalizeTipTaxLabel = computed(() => {
+  const cfg = tenantTaxConfig.value
+  if (cfg?.inc_applicable) return 'INC propina'
+  if (cfg?.iva_applicable) return 'IVA propina'
+  return t('pos.receipt.tipTax')
+})
+const showFinalizeDuePreview = computed(() =>
+  Number(order.value?.standard_tax) > 0
+  || Number(order.value?.liquor_tax) > 0
+  || finalizeTipModel.value.amount > 0
+  || finalizeTipTaxAmount.value > 0,
+)
+const cashAmountToCharge = computed(() =>
+  productAmountToCharge.value
+  + tipSettlementTotal(finalizeTipModel.value.amount, finalizeTipTaxAmount.value),
+)
 const cashIsValid = computed(() =>
   !isCashFinalizeMethod.value
   || cashAmountToCharge.value <= 0.01
@@ -1200,6 +1241,8 @@ const openFinalizeSalePanel = () => {
   discountEnabled.value = false
   discountType.value = 'percent'
   discountInput.value = ''
+  finalizeTipModel.value = { amount: 0, source: 'none' }
+  finalizeTipTaxable.value = false
   finalizeSaleError.value = ''
   showFinalizeSalePanel.value = true
 }
@@ -1248,6 +1291,13 @@ const finalizePendingSale = async () => {
         ...(servedByMemberId.value ? { served_by_member_id: servedByMemberId.value } : {}),
         ...(discountEnabled.value && finalizeDiscountAmount.value > 0
           ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+          : {}),
+        ...(showFinalizeTipSelector.value && finalizeTipModel.value.amount > 0
+          ? {
+              tip_amount: finalizeTipModel.value.amount,
+              tip_source: finalizeTipModel.value.source,
+              tip_taxable: finalizeTipTaxable.value,
+            }
           : {}),
       },
     })
@@ -2547,6 +2597,77 @@ onUnmounted(() => {
               :base-amount="finalizeDiscountBase"
             />
 
+            <CheckoutWaiterSelector
+              v-model="servedByMemberId"
+              :members="finalizeWaiterMembers"
+            />
+
+            <CheckoutTipSelector
+              v-if="showFinalizeTipSelector"
+              :enabled="finalizeTipEnabled"
+              :presets="finalizeTipPresets"
+              :preselect-index="null"
+              :subtotal="productAmountToCharge"
+              v-model="finalizeTipModel"
+            />
+            <div
+              v-if="showFinalizeTipSelector && finalizeTipModel.amount > 0"
+              class="rounded-xl border border-border bg-surface px-4 py-3 flex flex-col gap-2"
+            >
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  v-model="finalizeTipTaxable"
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/30"
+                  :aria-label="t('pos.checkout.tipTax.aria')"
+                />
+                <span class="text-sm text-text-primary leading-snug">
+                  {{ t('pos.checkout.tipTax.title') }}
+                  <span class="block text-xs text-text-secondary mt-0.5">
+                    {{ t('pos.checkout.tipTax.body', { tax: finalizeTipTaxLabel.toLowerCase() }) }}
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div
+              v-if="showFinalizeDuePreview"
+              class="rounded-xl border border-border bg-surface-secondary/40 px-4 py-3 space-y-2"
+            >
+              <div
+                v-if="Number(order.standard_tax) > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">{{ order.standard_tax_label }}</span>
+                <span class="tabular-nums text-text-primary">{{ formatCurrency(order.standard_tax) }}</span>
+              </div>
+              <div
+                v-if="Number(order.liquor_tax) > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">{{ order.liquor_tax_label || t('ventas.detail.liquorVat') }}</span>
+                <span class="tabular-nums text-text-primary">{{ formatCurrency(order.liquor_tax) }}</span>
+              </div>
+              <div
+                v-if="finalizeTipModel.amount > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">{{ t('ventas.common.propina') }}</span>
+                <span class="tabular-nums text-primary font-medium">+{{ formatCurrency(finalizeTipModel.amount) }}</span>
+              </div>
+              <div
+                v-if="finalizeTipTaxAmount > 0"
+                class="flex items-center justify-between gap-3 text-sm"
+              >
+                <span class="text-text-secondary">{{ t('ventas.detail.tipTax') }}</span>
+                <span class="tabular-nums text-text-primary">+{{ formatCurrency(finalizeTipTaxAmount) }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3 text-sm font-semibold pt-1 border-t border-border">
+                <span class="text-text-primary">{{ t('ventas.common.total') }}</span>
+                <span class="tabular-nums text-text-primary">{{ formatCurrency(cashAmountToCharge) }}</span>
+              </div>
+            </div>
+
             <CheckoutCashTenderPanel
               v-if="isCashFinalizeMethod"
               v-model="cashReceivedInput"
@@ -2569,11 +2690,6 @@ onUnmounted(() => {
                 class="w-full min-h-[44px] px-3 rounded-lg border border-state-warning-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-state-warning-border"
               />
             </div>
-
-            <CheckoutWaiterSelector
-              v-model="servedByMemberId"
-              :members="finalizeWaiterMembers"
-            />
 
             <p v-if="finalizeSaleError" class="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
               {{ finalizeSaleError }}
