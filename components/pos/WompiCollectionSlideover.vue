@@ -206,6 +206,7 @@ const siteOrigin = siteUrl
 
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)
+const sessionOrderId = ref<string | null>(null)
 const creating = ref(false)
 const verifying = ref(false)
 const copied = ref(false)
@@ -245,7 +246,10 @@ async function pollSessionStatus () {
       { query: { orderId: props.orderId } },
     )
     const status = String(res.data?.status || '').toLowerCase()
-    if (res.data?.id) sessionId.value = res.data.id
+    if (res.data?.id) {
+      sessionId.value = res.data.id
+      sessionOrderId.value = props.orderId
+    }
     if (status === 'approved') markApproved()
   } catch {
     /* still pending or session not created yet */
@@ -275,16 +279,14 @@ async function verifySession () {
   verifying.value = true
   errorMessage.value = ''
   try {
-    const result = await $fetch<{ success: boolean; data: { applied?: boolean; status?: string } }>(
+    await $fetch(
       `/api/collections/sessions/${sessionId.value}/verify`,
       { method: 'POST', body: {} },
     )
-    const status = String(result.data?.status || '').toLowerCase()
-    if (result.data?.applied || status === 'approved') {
-      markApproved()
-      return
+    await pollSessionStatus()
+    if (!paid.value) {
+      errorMessage.value = 'Wompi aún no aprueba este cobro'
     }
-    errorMessage.value = 'Wompi aún no aprueba este cobro'
   } catch (error: any) {
     const message = error?.data?.detail || error?.data?.message || error?.message || 'No se pudo comprobar el pago'
     errorMessage.value = typeof message === 'string' ? message : 'No se pudo comprobar el pago'
@@ -294,7 +296,8 @@ async function verifySession () {
 }
 
 async function createSession () {
-  if (!props.orderId || creating.value || sessionId.value) return
+  if (!props.orderId || creating.value) return
+  if (sessionId.value && sessionOrderId.value === props.orderId) return
   creating.value = true
   errorMessage.value = ''
   try {
@@ -303,6 +306,7 @@ async function createSession () {
       body: sessionBody(),
     })
     sessionId.value = res.data.id
+    sessionOrderId.value = props.orderId
   } catch (error: any) {
     const message = error?.data?.message || error?.data?.detail || error?.message || 'No se pudo crear el cobro Wompi'
     errorMessage.value = typeof message === 'string' ? message : 'No se pudo crear el cobro Wompi'
@@ -322,6 +326,7 @@ async function regenerateSession () {
       body: sessionBody(),
     })
     sessionId.value = res.data.id
+    sessionOrderId.value = props.orderId
     copied.value = false
   } catch (error: any) {
     const message = error?.data?.message || error?.data?.detail || error?.message || 'No se pudo generar un enlace nuevo'
@@ -354,6 +359,7 @@ watch(() => props.modelValue, (open) => {
   if (!open) {
     stopWatchingApproval()
     sessionId.value = null
+    sessionOrderId.value = null
     copied.value = false
     paid.value = false
     verifying.value = false
@@ -361,6 +367,16 @@ watch(() => props.modelValue, (open) => {
     return
   }
   emailDraft.value = props.email || ''
+  startWatchingApproval()
+  void createSession()
+})
+
+watch(() => props.orderId, (orderId, prev) => {
+  if (!props.modelValue || !orderId || orderId === prev) return
+  sessionId.value = null
+  sessionOrderId.value = null
+  paid.value = false
+  errorMessage.value = ''
   startWatchingApproval()
   void createSession()
 })

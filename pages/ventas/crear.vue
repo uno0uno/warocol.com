@@ -578,7 +578,8 @@ const canSubmit = computed(() =>
   !discountValidationError.value &&
   !singlePaymentValidationError.value &&
   (!splitMode.value || splitIsComplete.value) &&
-  !loading.value
+  !loading.value &&
+  !showWompiSlideover.value
 )
 
 const totalItemCount = computed(() =>
@@ -670,6 +671,7 @@ watch(selectedCustomer, () => {
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
 async function submit() {
+  if (showWompiSlideover.value) return
   if (!canSubmit.value) return
   if (isWompiTender.value && splitMode.value) {
     useToast().error('Wompi no admite cobro dividido. Cobra el total con Wompi.', { title: t('ventas.common.error') })

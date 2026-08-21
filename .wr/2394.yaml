@@ -1,0 +1,36 @@
+issue: 2394
+title: "fix(cobro): bind one Wompi link to one sale; block another register"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2394-wompi-one-sale-link
+
+paths:
+  - components/pos/WompiCollectionSlideover.vue
+  - pages/ventas/crear.vue
+  - pages/pos/checkout.vue
+
+ac:
+  - slideover open blocks Registrar/Continuar on crear and checkout
+  - verify/poll only complete the orderId the sheet was opened with
+  - approved session is not reused for a new sale
+  - same sheet on checkout and venta libre
+
+out_of_scope:
+  - Wompi payment_link deactivate API
+
+hints:
+  entry: "WompiCollectionSlideover sessionOrderId"
+  pattern: "crear canSubmit !showWompiSlideover"
+  tests: "bun test utils/wompiCollections.test.ts"
+
+risk:
+  sensitive: true
+  areas: [payments]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: ""
