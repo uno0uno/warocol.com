@@ -171,7 +171,9 @@
       "reduceQty": "Reducir cantidad de {name}",
       "increaseQty": "Aumentar cantidad de {name}",
       "removeItem": "Eliminar {name}",
-      "productFallback": "producto"
+      "productFallback": "producto",
+      "wompiApprovedRedirecting": "Redirigiendo…",
+      "wompiApprovedHint": "Cobro Wompi confirmado. Abriendo la venta."
     },
     "detail": {
       "electronicInvoice": "Factura Electrónica",

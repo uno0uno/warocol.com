@@ -171,7 +171,9 @@
       "reduceQty": "Decrease quantity of {name}",
       "increaseQty": "Increase quantity of {name}",
       "removeItem": "Remove {name}",
-      "productFallback": "product"
+      "productFallback": "product",
+      "wompiApprovedRedirecting": "Redirecting…",
+      "wompiApprovedHint": "Wompi payment confirmed. Opening the sale."
     },
     "detail": {
       "electronicInvoice": "Electronic invoice",
