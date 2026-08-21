@@ -137,7 +137,6 @@ import { computed, ref, watch } from 'vue'
 import {
   isValidCollectionEmail,
   waroCollectionLandingUrl,
-  waroCollectionSiteOrigin,
   waroCollectionThankYouUrl,
 } from '~/utils/wompiCollections'
 
@@ -156,10 +155,8 @@ const emit = defineEmits<{
 }>()
 
 const { formatCurrency } = useFormatters()
-const runtimeConfig = useRuntimeConfig()
-const siteOrigin = computed(() =>
-  waroCollectionSiteOrigin(String(runtimeConfig.public.siteUrl || 'https://warocol.com')),
-)
+const { siteUrl } = usePublicSiteUrl()
+const siteOrigin = siteUrl
 
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)

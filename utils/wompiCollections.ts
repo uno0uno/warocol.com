@@ -46,11 +46,8 @@ function siteOrigin (siteOriginOrUrl: string): string {
   return String(siteOriginOrUrl || '').trim().replace(/\/+$/, '')
 }
 
-/** Same rule as table QR: browser origin in the current environment, configured site URL as fallback. */
+/** Public cobro origin from NUXT_PUBLIC_SITE_URL (same as usePublicSiteUrl). */
 export function waroCollectionSiteOrigin (configuredSiteUrl: string): string {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin.replace(/\/+$/, '')
-  }
   return siteOrigin(configuredSiteUrl || 'https://warocol.com')
 }
 

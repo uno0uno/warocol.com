@@ -87,7 +87,11 @@ test('builds WARO cobro URLs without Wompi or API hosts', () => {
   assert.equal(thanks.includes('checkout.wompi.co'), false)
 })
 
-test('falls back to configured site origin when window is unavailable', () => {
+test('uses configured NUXT_PUBLIC_SITE_URL origin, not a hardcoded host', () => {
+  assert.equal(
+    waroCollectionSiteOrigin('http://localhost:8080'),
+    'http://localhost:8080',
+  )
   assert.equal(
     waroCollectionSiteOrigin('https://warocol.com/'),
     'https://warocol.com',
