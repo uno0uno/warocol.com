@@ -140,8 +140,30 @@
           <button
             v-if="sessionId && !paid"
             type="button"
+            class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl border border-border font-semibold text-text-primary transition-all duration-150 hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+            :disabled="creating || verifying"
+            @click="verifySession"
+          >
+            <CommonsTheCustomLoader v-if="verifying" size="small" :show-phrase="false" />
+            <svg
+              v-else
+              class="w-5 h-5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            {{ verifying ? 'Confirmando…' : 'Comprobar pago' }}
+          </button>
+          <button
+            v-if="sessionId && !paid"
+            type="button"
             class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-text-secondary transition-all duration-150 hover:text-text-primary hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-            :disabled="creating"
+            :disabled="creating || verifying"
             @click="regenerateSession"
           >
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -185,6 +207,7 @@ const siteOrigin = siteUrl
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)
 const creating = ref(false)
+const verifying = ref(false)
 const copied = ref(false)
 const paid = ref(false)
 const errorMessage = ref('')
@@ -245,6 +268,29 @@ function startWatchingApproval () {
   })
   void pollSessionStatus()
   pollTimer = setInterval(() => { void pollSessionStatus() }, 2500)
+}
+
+async function verifySession () {
+  if (!sessionId.value || verifying.value || paid.value) return
+  verifying.value = true
+  errorMessage.value = ''
+  try {
+    const result = await $fetch<{ success: boolean; data: { applied?: boolean; status?: string } }>(
+      `/api/collections/sessions/${sessionId.value}/verify`,
+      { method: 'POST', body: {} },
+    )
+    const status = String(result.data?.status || '').toLowerCase()
+    if (result.data?.applied || status === 'approved') {
+      markApproved()
+      return
+    }
+    errorMessage.value = 'Wompi aún no aprueba este cobro'
+  } catch (error: any) {
+    const message = error?.data?.detail || error?.data?.message || error?.message || 'No se pudo comprobar el pago'
+    errorMessage.value = typeof message === 'string' ? message : 'No se pudo comprobar el pago'
+  } finally {
+    verifying.value = false
+  }
 }
 
 async function createSession () {
@@ -310,6 +356,7 @@ watch(() => props.modelValue, (open) => {
     sessionId.value = null
     copied.value = false
     paid.value = false
+    verifying.value = false
     errorMessage.value = ''
     return
   }
