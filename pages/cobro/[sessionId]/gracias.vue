@@ -78,7 +78,7 @@ const transactionId = computed(() => {
   return value ? String(value) : ''
 })
 
-const verifying = ref(false)
+const verifying = ref(true)
 const status = ref('pending')
 const errorMessage = ref('')
 
@@ -92,7 +92,10 @@ const description = computed(() => (
 ))
 
 async function verify () {
-  if (!sessionId.value || verifying.value) return
+  if (!sessionId.value) {
+    verifying.value = false
+    return
+  }
   verifying.value = true
   errorMessage.value = ''
   try {
