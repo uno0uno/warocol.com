@@ -2152,6 +2152,7 @@ const finishWompiSale = async () => {
 }
 
 const processWompiCollection = async () => {
+  if (showWompiSlideover.value) return
   if (splitMode.value) {
     processingError.value = 'Wompi no admite cobro dividido. Cobra el total con Wompi.'
     return
@@ -2228,6 +2229,7 @@ const processWompiCollection = async () => {
 }
 
 const processOrder = async () => {
+  if (showWompiSlideover.value) return
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
     processingError.value = t('pos.checkout.errors.selectCustomer')
@@ -4997,7 +4999,7 @@ onUnmounted(() => {
           <button
             @click="processOrder"
             v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
+            :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
             class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -5328,7 +5330,7 @@ onUnmounted(() => {
         <button
           @click="processOrder"
           v-if="!splitMode"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
+          :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
