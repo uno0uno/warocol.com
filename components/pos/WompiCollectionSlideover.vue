@@ -71,6 +71,8 @@
           <div
             v-if="creating"
             class="flex items-center justify-center min-h-[280px]"
+            aria-busy="true"
+            aria-live="polite"
           >
             <CommonsTheCustomLoader size="large" />
           </div>
@@ -113,27 +115,36 @@
         <div class="flex-shrink-0 border-t border-border px-6 py-4 space-y-2">
           <button
             type="button"
-            class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+            class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-semibold transition-all duration-150 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
             :disabled="creating || !landingUrl"
             @click="copyLandingUrl"
           >
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75m9 10.5V7.875c0-.621-.504-1.125-1.125-1.125H9.375c-.621 0-1.125.504-1.125 1.125v9.375m9 0h1.5a1.125 1.125 0 0 0 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125h-3.375m-6.75 0H6.375c-.621 0-1.125.504-1.125 1.125v1.5" />
+            </svg>
             {{ copied ? 'Enlace copiado' : 'Copiar enlace' }}
           </button>
           <button
             type="button"
-            class="w-full min-h-[44px] rounded-xl border border-border font-semibold text-text-primary disabled:opacity-50"
+            class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl border border-border font-semibold text-text-primary transition-all duration-150 hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
             :disabled="creating || !canSend"
             @click="sendLandingUrl"
           >
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+            </svg>
             Enviar por correo
           </button>
           <button
             v-if="sessionId"
             type="button"
-            class="w-full min-h-[44px] rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+            class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-text-secondary transition-all duration-150 hover:text-text-primary hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
             :disabled="creating"
             @click="regenerateSession"
           >
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+            </svg>
             Generar enlace nuevo
           </button>
         </div>
