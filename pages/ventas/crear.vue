@@ -217,11 +217,17 @@ const isWompiTender = computed(() => {
 const showWompiSlideover = ref(false)
 const wompiOrderId = ref<string | null>(null)
 const wompiAmount = ref(0)
+function onWompiCollectionApproved () {
+  const orderId = wompiOrderId.value
+  if (!orderId) return
+  showWompiSlideover.value = false
+  wompiOrderId.value = null
+  useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
+  void navigateTo(`/ventas/${orderId}`)
+}
 let unsubscribeWompiPayment: (() => void) | null = subscribeOrderPaymentApproved((payload) => {
   if (payload.order_id && payload.order_id === wompiOrderId.value) {
-    showWompiSlideover.value = false
-    useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
-    void navigateTo(`/ventas/${payload.order_id}`)
+    onWompiCollectionApproved()
   }
 })
 
@@ -1649,6 +1655,7 @@ async function submit() {
         :amount="wompiAmount"
         :customer-id="selectedCustomer?.id"
         :email="selectedCustomer?.email"
+        @approved="onWompiCollectionApproved"
       />
     </Teleport>
 

@@ -4542,6 +4542,7 @@ onUnmounted(() => {
           :amount="wompiAmount"
           :customer-id="selectedCustomer?.id"
           :email="selectedCustomer?.email"
+          @approved="() => { void finishWompiSale() }"
           @error="(message) => { processingError = message }"
         />
 
