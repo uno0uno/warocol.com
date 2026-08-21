@@ -73,28 +73,40 @@
             <p class="text-lg font-bold text-text-primary mt-1">{{ formatCurrency(amount) }}</p>
           </div>
 
-          <label class="block">
-            <span class="text-sm font-medium text-text-primary">Correo del comensal</span>
-            <input
-              v-model="emailDraft"
-              type="email"
-              autocomplete="email"
-              class="mt-1.5 w-full px-3 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
-              placeholder="correo@ejemplo.com"
-            />
-            <span class="mt-1 block text-xs text-text-tertiary">
-              Obligatorio para enviar el enlace. Copiar no requiere correo.
-            </span>
-          </label>
-
-          <div v-if="landingUrl" class="rounded-xl border border-dashed border-border px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Enlace WARO</p>
-            <p class="mt-1 text-sm break-all text-text-primary">{{ landingUrl }}</p>
+          <div
+            v-if="creating"
+            class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-4 py-10"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <UiLoadingMatrix size="8px" />
+            <p class="text-sm text-text-secondary">Generando enlace de cobro…</p>
           </div>
 
-          <p v-if="waiting" class="text-sm text-text-secondary">
-            Esperando aprobación de Wompi. No marques esta venta como pagada.
-          </p>
+          <template v-else>
+            <label class="block">
+              <span class="text-sm font-medium text-text-primary">Correo del comensal</span>
+              <input
+                v-model="emailDraft"
+                type="email"
+                autocomplete="email"
+                class="mt-1.5 w-full px-3 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
+                placeholder="correo@ejemplo.com"
+              />
+              <span class="mt-1 block text-xs text-text-tertiary">
+                Obligatorio para enviar el enlace. Copiar no requiere correo.
+              </span>
+            </label>
+
+            <div v-if="landingUrl" class="rounded-xl border border-dashed border-border px-4 py-3">
+              <p class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Enlace WARO</p>
+              <p class="mt-1 text-sm break-all text-text-primary">{{ landingUrl }}</p>
+            </div>
+
+            <p v-if="waiting" class="text-sm text-text-secondary">
+              Esperando aprobación de Wompi. No marques esta venta como pagada.
+            </p>
+          </template>
         </div>
 
         <div class="flex-shrink-0 border-t border-border px-6 py-4 space-y-2">
@@ -125,6 +137,7 @@ import { computed, ref, watch } from 'vue'
 import {
   isValidCollectionEmail,
   waroCollectionLandingUrl,
+  waroCollectionSiteOrigin,
   waroCollectionThankYouUrl,
 } from '~/utils/wompiCollections'
 
@@ -144,7 +157,9 @@ const emit = defineEmits<{
 
 const { formatCurrency } = useFormatters()
 const runtimeConfig = useRuntimeConfig()
-const siteOrigin = computed(() => String(runtimeConfig.public.siteUrl || 'https://warocol.com'))
+const siteOrigin = computed(() =>
+  waroCollectionSiteOrigin(String(runtimeConfig.public.siteUrl || 'https://warocol.com')),
+)
 
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)
@@ -181,7 +196,7 @@ async function createSession () {
     sessionId.value = res.data.id
     waiting.value = true
   } catch (error: any) {
-    const message = error?.data?.detail || error?.data?.message || error?.message || 'No se pudo crear el cobro Wompi'
+    const message = error?.data?.message || error?.data?.detail || error?.message || 'No se pudo crear el cobro Wompi'
     errorMessage.value = typeof message === 'string' ? message : 'No se pudo crear el cobro Wompi'
     emit('error', errorMessage.value)
   } finally {

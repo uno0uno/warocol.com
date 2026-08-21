@@ -19,6 +19,22 @@ export function pasarelaEnvironmentLabelKey (environment: string | null | undefi
     : 'integraciones.pasarela.envTest'
 }
 
+export function pasarelaConnectionBadgeVariant (
+  status: PasarelaStatus | null,
+): 'success' | 'warning' | 'secondary' {
+  if (!status) return 'secondary'
+  if (status.isActive) return 'success'
+  return 'warning'
+}
+
+export function pasarelaEnvironmentBadgeVariant (
+  environment: string | null | undefined,
+): 'info' | 'warning' | 'secondary' {
+  if (!environment) return 'secondary'
+  if (environment === 'prod') return 'warning'
+  return 'info'
+}
+
 export function isWompiPaymentMethod (
   method: { name?: string | null } | string | null | undefined,
 ): boolean {
@@ -28,6 +44,14 @@ export function isWompiPaymentMethod (
 
 function siteOrigin (siteOriginOrUrl: string): string {
   return String(siteOriginOrUrl || '').trim().replace(/\/+$/, '')
+}
+
+/** Same rule as table QR: browser origin in the current environment, configured site URL as fallback. */
+export function waroCollectionSiteOrigin (configuredSiteUrl: string): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/+$/, '')
+  }
+  return siteOrigin(configuredSiteUrl || 'https://warocol.com')
 }
 
 export function waroCollectionLandingUrl (origin: string, sessionId: string): string {

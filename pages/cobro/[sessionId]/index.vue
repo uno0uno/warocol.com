@@ -6,24 +6,17 @@
         Serás enviado a Wompi para completar el pago. WARO no recibe tu dinero.
       </p>
       <p v-if="errorMessage" class="text-sm text-state-danger-text" role="alert">{{ errorMessage }}</p>
-      <p v-else-if="loading" class="text-sm text-text-secondary">Cargando cobro…</p>
-      <p v-else-if="approved" class="text-sm text-state-success-text">Este cobro ya fue aprobado.</p>
-      <button
+      <div
         v-else
-        type="button"
-        class="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50"
-        :disabled="!checkoutUrl"
-        @click="goToWompi"
+        class="flex flex-col items-center justify-center gap-3 py-6"
+        aria-busy="true"
+        aria-live="polite"
       >
-        Continuar a Wompi
-      </button>
-      <NuxtLink
-        v-if="approved"
-        :to="`/cobro/${sessionId}/gracias`"
-        class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-border px-4 font-semibold text-text-primary"
-      >
-        Ver confirmación
-      </NuxtLink>
+        <UiLoadingMatrix size="8px" />
+        <p class="text-sm text-text-secondary">
+          {{ approved ? 'Este cobro ya fue aprobado.' : 'Abriendo Wompi…' }}
+        </p>
+      </div>
     </div>
   </main>
 </template>
@@ -39,35 +32,31 @@ const route = useRoute()
 const router = useRouter()
 const sessionId = computed(() => String(route.params.sessionId || ''))
 
-const loading = ref(true)
 const errorMessage = ref('')
-const checkoutUrl = ref('')
 const approved = ref(false)
-
-const goToWompi = () => {
-  if (!checkoutUrl.value) return
-  window.location.href = checkoutUrl.value
-}
 
 onMounted(async () => {
   if (!sessionId.value) {
     errorMessage.value = 'Cobro no encontrado'
-    loading.value = false
     return
   }
   try {
     const res = await $fetch<{ success: boolean; data: { checkoutUrl: string; status: string } }>(
       `/api/collections/sessions/${sessionId.value}`,
     )
-    checkoutUrl.value = res.data.checkoutUrl
     approved.value = res.data.status === 'approved'
     if (approved.value) {
       await router.replace(`/cobro/${sessionId.value}/gracias`)
+      return
     }
+    const checkoutUrl = res.data.checkoutUrl
+    if (!checkoutUrl) {
+      errorMessage.value = 'No encontramos este cobro'
+      return
+    }
+    window.location.href = checkoutUrl
   } catch (error: any) {
-    errorMessage.value = error?.data?.detail || error?.data?.message || 'No encontramos este cobro'
-  } finally {
-    loading.value = false
+    errorMessage.value = error?.data?.message || error?.data?.detail || 'No encontramos este cobro'
   }
 })
 </script>

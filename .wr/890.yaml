@@ -1,0 +1,45 @@
+issue: 890
+title: "test(collections): regression-guard restaurant Wompi cobro 500s"
+repo: both
+repo_remote: uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/api_warocol.com
+stack: both
+branch: wr-890-wompi-cobro-guards
+
+paths:
+  - app/services/wompi_collections_service.py
+  - app/routers/wompi_collections.py
+  - tests/test_wompi_collections.py
+  - ../front_nuxt/utils/wompiCollections.ts
+  - ../front_nuxt/utils/wompiCollections.test.ts
+  - ../front_nuxt/components/pos/WompiCollectionSlideover.vue
+  - ../front_nuxt/pages/cobro/[sessionId]/index.vue
+
+ac:
+  - tenant_customers uses profile_id
+  - Wompi data object or list
+  - redirect_url follows current origin (localhost vs warocol.com)
+  - POST sessions POS or Ventas
+  - slideover matrix + API message
+  - /cobro/:id auto-redirects to Wompi, no button
+  - gracias stays public; local pay returns to localhost
+
+out_of_scope:
+  - Tickets/Paddle WOMPI_* env
+  - OpenBao unseal
+  - pasarela UI polish unrelated to cobro
+
+hints:
+  entry: "create_collection_session / waroCollectionSiteOrigin"
+  pattern: "useTableQrLink.ts:window.location.origin"
+  tests: "./venv/bin/python -m pytest tests/test_wompi_collections.py -q; bun test utils/wompiCollections.test.ts"
+
+risk:
+  sensitive: true
+  areas: [payments]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: "companion PR on warocol.com"
