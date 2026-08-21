@@ -1,0 +1,43 @@
+issue: 2386
+title: "fix(links): public guest URLs from NUXT_PUBLIC_SITE_URL not window.origin"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2386-public-site-url-links
+
+paths:
+  - composables/usePublicSiteUrl.ts
+  - composables/usePublicSiteUrl.test.ts
+  - composables/useTableQrLink.ts
+  - pages/abastecimiento/proveedores.vue
+  - pages/abastecimiento/compra/[id]/index.vue
+  - pages/operaciones/comandas.vue
+
+ac:
+  - table QR from usePublicSiteUrl
+  - supplier portal copy from siteUrl
+  - purchase portal copy from siteUrl
+  - KDS URL from siteUrl
+  - no new env keys
+  - unit test publicSiteOriginFromConfig
+
+out_of_scope:
+  - Wompi cobro
+  - receiptPrintConfig
+  - API
+
+hints:
+  entry: "usePublicSiteUrl / useTableQrLink"
+  pattern: "composables/usePublicSiteUrl.ts:never window.location.origin"
+  tests: "bun test composables/usePublicSiteUrl.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: ""

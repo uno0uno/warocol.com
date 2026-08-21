@@ -524,6 +524,7 @@
 
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
+const { siteUrl } = usePublicSiteUrl()
 import {
   FireIcon,
   QueueListIcon,
@@ -881,10 +882,6 @@ const handleToggleExpediter = async (event: Event) => {
   }
 }
 
-const kdsBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://warocol.com'
-
-// Local writable mirror of the kds-tokens query above — kept so generate /
-// revoke mutations can update the UI optimistically without an extra refetch.
 const kdsTokens = ref<Record<string, string>>({})
 const generatingToken = ref<string | null>(null)
 const revokingToken = ref<string | null>(null)
@@ -925,9 +922,10 @@ const revokeKdsToken = async (stationId: string) => {
 
 const buildKdsUrl = (stationId: string) => {
   const token = kdsTokens.value[stationId]
+  const base = siteUrl.value
   return token
-    ? `${kdsBaseUrl}/cocina/${stationId}?token=${token}`
-    : `${kdsBaseUrl}/cocina/${stationId}`
+    ? `${base}/cocina/${stationId}?token=${token}`
+    : `${base}/cocina/${stationId}`
 }
 
 const copyKdsUrl = (stationId: string) => {

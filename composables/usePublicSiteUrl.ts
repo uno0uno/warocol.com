@@ -1,13 +1,15 @@
 /**
  * Public site origin from NUXT_PUBLIC_SITE_URL → runtimeConfig.public.siteUrl.
- * Use for storefront / table QR links (never window.location.origin).
+ * Use for storefront / table QR / guest portal / KDS links (never window.location.origin).
  */
+export function publicSiteOriginFromConfig (siteUrl: string | null | undefined): string {
+  return String(siteUrl || 'https://warocol.com').replace(/\/+$/, '')
+}
+
 export function usePublicSiteUrl() {
   const config = useRuntimeConfig()
 
-  const siteUrl = computed(() =>
-    String(config.public.siteUrl || 'https://warocol.com').replace(/\/$/, ''),
-  )
+  const siteUrl = computed(() => publicSiteOriginFromConfig(config.public.siteUrl as string | undefined))
 
   return { siteUrl }
 }
