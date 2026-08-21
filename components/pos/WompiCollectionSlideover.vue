@@ -48,7 +48,7 @@
                   Cobro Wompi
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  El comensal paga en Wompi. Esta venta sigue pendiente.
+                  {{ paid ? 'Wompi ya aprobó este cobro.' : 'El comensal paga en Wompi. Esta venta sigue pendiente.' }}
                 </p>
               </div>
             </div>
@@ -80,7 +80,9 @@
           <template v-else>
             <div class="flex items-center justify-between gap-3">
               <p class="text-sm font-medium text-text-primary">Estado</p>
-              <UiStatusBadge variant="warning">Pendiente en Wompi</UiStatusBadge>
+              <UiStatusBadge :variant="paid ? 'success' : 'warning'">
+                {{ paid ? 'Pago recibido' : 'Pendiente en Wompi' }}
+              </UiStatusBadge>
             </div>
 
             <dl class="rounded-xl border border-border bg-background px-4 py-3">
@@ -136,10 +138,32 @@
             Enviar por correo
           </button>
           <button
-            v-if="sessionId"
+            v-if="sessionId && !paid"
+            type="button"
+            class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl border border-border font-semibold text-text-primary transition-all duration-150 hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+            :disabled="creating || verifying"
+            @click="verifySession"
+          >
+            <CommonsTheCustomLoader v-if="verifying" size="small" :show-phrase="false" />
+            <svg
+              v-else
+              class="w-5 h-5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            {{ verifying ? 'Confirmando…' : 'Comprobar pago' }}
+          </button>
+          <button
+            v-if="sessionId && !paid"
             type="button"
             class="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-text-secondary transition-all duration-150 hover:text-text-primary hover:bg-surface-secondary active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-            :disabled="creating"
+            :disabled="creating || verifying"
             @click="regenerateSession"
           >
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -154,7 +178,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { subscribeOrderPaymentApproved } from '~/composables/useNotifications'
 import {
   isValidCollectionEmail,
   waroCollectionLandingUrl,
@@ -182,8 +207,12 @@ const siteOrigin = siteUrl
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)
 const creating = ref(false)
+const verifying = ref(false)
 const copied = ref(false)
+const paid = ref(false)
 const errorMessage = ref('')
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let unsubscribeApproved: (() => void) | null = null
 
 const landingUrl = computed(() => (
   sessionId.value ? waroCollectionLandingUrl(siteOrigin.value, sessionId.value) : ''
@@ -200,6 +229,68 @@ const sessionBody = () => ({
 
 const handleClose = () => {
   emit('update:modelValue', false)
+}
+
+function markApproved () {
+  if (paid.value) return
+  paid.value = true
+  emit('approved')
+}
+
+async function pollSessionStatus () {
+  if (!props.orderId || paid.value) return
+  try {
+    const res = await $fetch<{ success: boolean; data: { id?: string; status?: string } }>(
+      '/api/collections/sessions',
+      { query: { orderId: props.orderId } },
+    )
+    const status = String(res.data?.status || '').toLowerCase()
+    if (res.data?.id) sessionId.value = res.data.id
+    if (status === 'approved') markApproved()
+  } catch {
+    /* still pending or session not created yet */
+  }
+}
+
+function stopWatchingApproval () {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  unsubscribeApproved?.()
+  unsubscribeApproved = null
+}
+
+function startWatchingApproval () {
+  stopWatchingApproval()
+  unsubscribeApproved = subscribeOrderPaymentApproved((payload) => {
+    if (payload.order_id && payload.order_id === props.orderId) markApproved()
+  })
+  void pollSessionStatus()
+  pollTimer = setInterval(() => { void pollSessionStatus() }, 2500)
+}
+
+async function verifySession () {
+  if (!sessionId.value || verifying.value || paid.value) return
+  verifying.value = true
+  errorMessage.value = ''
+  try {
+    const result = await $fetch<{ success: boolean; data: { applied?: boolean; status?: string } }>(
+      `/api/collections/sessions/${sessionId.value}/verify`,
+      { method: 'POST', body: {} },
+    )
+    const status = String(result.data?.status || '').toLowerCase()
+    if (result.data?.applied || status === 'approved') {
+      markApproved()
+      return
+    }
+    errorMessage.value = 'Wompi aún no aprueba este cobro'
+  } catch (error: any) {
+    const message = error?.data?.detail || error?.data?.message || error?.message || 'No se pudo comprobar el pago'
+    errorMessage.value = typeof message === 'string' ? message : 'No se pudo comprobar el pago'
+  } finally {
+    verifying.value = false
+  }
 }
 
 async function createSession () {
@@ -261,16 +352,24 @@ function sendLandingUrl () {
 
 watch(() => props.modelValue, (open) => {
   if (!open) {
+    stopWatchingApproval()
     sessionId.value = null
     copied.value = false
+    paid.value = false
+    verifying.value = false
     errorMessage.value = ''
     return
   }
   emailDraft.value = props.email || ''
+  startWatchingApproval()
   void createSession()
 })
 
 watch(() => props.email, (value) => {
   if (!sessionId.value) emailDraft.value = value || ''
+})
+
+onUnmounted(() => {
+  stopWatchingApproval()
 })
 </script>

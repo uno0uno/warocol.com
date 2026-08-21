@@ -1,0 +1,36 @@
+issue: 2393
+title: "feat(cobro): add Comprobar pago on the Wompi slideover"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-wompi-slideover-poll-approved
+
+paths:
+  - components/pos/WompiCollectionSlideover.vue
+
+ac:
+  - Comprobar pago on pending slideover
+  - POST /collections/sessions/{id}/verify
+  - approved emits approved; still pending stays with message
+  - checkout and ventas/crear share the sheet
+  - do not mark paid from UI without verify/SSE
+
+out_of_scope:
+  - new verify API
+  - Wompi link deactivate
+
+hints:
+  entry: "verifySession in WompiCollectionSlideover.vue"
+  pattern: "pages/ventas/[id].vue verifyWompiCollection"
+  tests: "bun test utils/wompiCollections.test.ts"
+
+risk:
+  sensitive: true
+  areas: [payments]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: ""

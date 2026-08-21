@@ -3192,6 +3192,7 @@ onUnmounted(() => {
       :amount="wompiCollectAmount"
       :customer-id="order?.customer?.id"
       :email="order?.customer?.email"
+      @approved="() => { void Promise.all([refetchOrder(), refetchWompiSession()]) }"
     />
   </div>
 </template>
