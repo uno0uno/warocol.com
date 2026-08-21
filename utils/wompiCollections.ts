@@ -42,6 +42,19 @@ export function isWompiPaymentMethod (
   return String(name || '').trim().toLowerCase() === WOMPI_METHOD_NAME.toLowerCase()
 }
 
+/** Split-payment row shows Wompi cobro when a session exists and the tender is Wompi or digital (Wompi slug). */
+export function splitPaymentShowsWompiDetail (opts: {
+  hasCollectionSession: boolean
+  paymentMethod?: string | null
+  paymentMethodLabel?: string | null
+}): boolean {
+  if (!opts.hasCollectionSession) return false
+  if (isWompiPaymentMethod(opts.paymentMethodLabel) || isWompiPaymentMethod(opts.paymentMethod)) {
+    return true
+  }
+  return String(opts.paymentMethod || '').trim().toLowerCase() === 'digital'
+}
+
 function siteOrigin (siteOriginOrUrl: string): string {
   return String(siteOriginOrUrl || '').trim().replace(/\/+$/, '')
 }

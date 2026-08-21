@@ -7,6 +7,7 @@ import {
   collectionsWebhookUrl,
   isValidCollectionEmail,
   isWompiPaymentMethod,
+  splitPaymentShowsWompiDetail,
   pasarelaConnectionBadgeVariant,
   pasarelaEnvironmentBadgeVariant,
   pasarelaEnvironmentLabelKey,
@@ -74,6 +75,24 @@ test('detects Wompi by method name, not the digital group', () => {
   assert.equal(isWompiPaymentMethod({ name: 'Nequi' }), false)
   assert.equal(isWompiPaymentMethod({ name: 'QR' }), false)
   assert.equal(isWompiPaymentMethod({ name: 'digital' }), false)
+})
+
+test('split payment shows Wompi detail for Wompi or digital tender when a session exists', () => {
+  assert.equal(splitPaymentShowsWompiDetail({
+    hasCollectionSession: true,
+    paymentMethod: 'digital',
+    paymentMethodLabel: 'Wompi',
+  }), true)
+  assert.equal(splitPaymentShowsWompiDetail({
+    hasCollectionSession: true,
+    paymentMethod: 'cash',
+    paymentMethodLabel: 'Efectivo',
+  }), false)
+  assert.equal(splitPaymentShowsWompiDetail({
+    hasCollectionSession: false,
+    paymentMethod: 'digital',
+    paymentMethodLabel: 'Wompi',
+  }), false)
 })
 
 test('builds WARO cobro URLs without Wompi or API hosts', () => {
