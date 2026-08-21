@@ -1,0 +1,40 @@
+issue: 2388
+title: "feat(cobro): regenerate expired Wompi link and clarify slideover"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2388-wompi-regenerate-slideover
+
+paths:
+  - ../api_warocol.com/app/services/wompi_collections_service.py
+  - ../api_warocol.com/app/routers/wompi_collections.py
+  - ../api_warocol.com/tests/test_wompi_collections.py
+  - components/pos/WompiCollectionSlideover.vue
+  - pages/cobro/[sessionId]/index.vue
+
+ac:
+  - explicit regenerate expires pending then new payment_link
+  - refuse if approved
+  - POST /sessions still reuses pending
+  - slideover hierarchy + CommonsTheCustomLoader
+  - Generar enlace nuevo button
+
+out_of_scope:
+  - Wompi hosted checkout
+  - dropping unique pending index
+
+hints:
+  entry: "regenerate_collection_session"
+  pattern: "_create_or_reuse_session_row reuse vs expire"
+  tests: "./venv/bin/python -m pytest tests/test_wompi_collections.py -q"
+
+risk:
+  sensitive: true
+  areas: [payments]
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: ""
