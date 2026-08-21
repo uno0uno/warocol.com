@@ -509,7 +509,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const showComandaPrintActions = computed(
-  () => props.comandaPrintEnabled ?? props.comandasEnabled,
+  () => props.comandaPrintEnabled || props.comandasEnabled,
 )
 
 const hasCartItems = computed(() => props.items.length > 0)
