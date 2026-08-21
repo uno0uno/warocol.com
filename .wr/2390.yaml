@@ -1,0 +1,37 @@
+issue: 2390
+title: "feat(cobro): polish thank-you confirming state and slideover actions"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2390-cobro-confirm-slideover
+
+paths:
+  - pages/cobro/[sessionId]/gracias.vue
+  - components/pos/WompiCollectionSlideover.vue
+
+ac:
+  - gracias pending wait uses CommonsTheCustomLoader, not a failure look
+  - Confirmando via matrix loader; retry after with icon
+  - approved shows Pago recibido without verify button
+  - slideover copy/email/regenerate have icons and subtle press/hover
+  - no mark paid; no API change
+
+out_of_scope:
+  - Wompi link deactivate
+  - webhook/verify API
+
+hints:
+  entry: "pages/cobro/[sessionId]/gracias.vue"
+  pattern: "CommonsTheCustomLoader like cobro index / auth verify"
+  tests: "bun test utils/wompiCollections.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [color, typography]
+
+next:
+  after_pr: ""
