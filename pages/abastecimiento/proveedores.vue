@@ -234,6 +234,7 @@ import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 
 const { t } = useI18n({ useScope: 'global' })
 const { taxIdLabel } = useSupplierTaxIdLabel()
+const { siteUrl } = usePublicSiteUrl()
 
 // Plan quota gate: Nuevo stays clickable; Mi Plan modal at tenant_suppliers cap (#1818)
 const {
@@ -533,7 +534,7 @@ const editProveedor = (proveedor) => {
 
 const copyPortalLink = async (proveedor) => {
   try {
-    const baseUrl = window.location.origin
+    const baseUrl = siteUrl.value
     const portalUrl = `${baseUrl}/proveedor/${proveedor.access_token}`
 
     // Try modern clipboard API

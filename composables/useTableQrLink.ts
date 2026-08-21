@@ -6,19 +6,14 @@ import { usePublicSiteUrl, usePublicStorefrontSlug } from '~/composables/usePubl
  * Token must come from the API — never derived in the browser.
  *
  * Slug: tenant_public_profiles.slug via usePublicStorefrontSlug (same as /negocio).
- * Base URL: NUXT_PUBLIC_SITE_URL in prod; on localhost falls back to window.origin for testing.
+ * Base URL: NUXT_PUBLIC_SITE_URL via usePublicSiteUrl (never window.location.origin).
  */
 export function useTableQrLink() {
   const { siteUrl } = usePublicSiteUrl()
   const { publicSlug } = usePublicStorefrontSlug()
   const toast = useToast()
 
-  const linkBase = computed(() => {
-    if (typeof window !== 'undefined' && window.location?.origin) {
-      return window.location.origin.replace(/\/$/, '')
-    }
-    return siteUrl.value
-  })
+  const linkBase = computed(() => siteUrl.value)
 
   const buildTableQrUrl = (token: string | null | undefined): string | null => {
     const slug = publicSlug.value

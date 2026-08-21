@@ -682,6 +682,7 @@ import { formatDomainQuantity } from '~/utils/domainNumberFormat'
 const route = useRoute()
 const router = useRouter()
 const purchaseId = route.params.id as string
+const { siteUrl } = usePublicSiteUrl()
 const QUANTITY_PRECISION = 6
 
 const formatQuantity = (value: number | string | null | undefined) =>
@@ -1397,7 +1398,7 @@ const cancelBlockedReason = computed(() => {
 const copyPortalLink = async () => {
   const toast = useToast()
   try {
-    const baseUrl = window.location.origin
+    const baseUrl = siteUrl.value
     const portalUrl = `${baseUrl}/proveedor/${currentSupplier.value.access_token}/${purchaseId}`
 
     // Try modern clipboard API
@@ -1427,7 +1428,7 @@ const copyPortalLink = async () => {
 const copyPurchaseLink = async () => {
   const toast = useToast()
   try {
-    const baseUrl = window.location.origin
+    const baseUrl = siteUrl.value
     const purchaseUrl = `${baseUrl}/abastecimiento/compra/${purchaseId}`
 
     // Try modern clipboard API
