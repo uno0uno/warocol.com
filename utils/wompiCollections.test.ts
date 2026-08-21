@@ -7,9 +7,12 @@ import {
   collectionsWebhookUrl,
   isValidCollectionEmail,
   isWompiPaymentMethod,
+  pasarelaConnectionBadgeVariant,
+  pasarelaEnvironmentBadgeVariant,
   pasarelaEnvironmentLabelKey,
   ventasPaymentStatusIsUnpaid,
   waroCollectionLandingUrl,
+  waroCollectionSiteOrigin,
   waroCollectionThankYouUrl,
 } from './wompiCollections.ts'
 
@@ -40,6 +43,31 @@ test('maps Wompi environment to i18n keys', () => {
   assert.equal(pasarelaEnvironmentLabelKey(null), 'integraciones.pasarela.envTest')
 })
 
+test('connection and environment badges use semantic variants, not color-only meaning', () => {
+  assert.equal(pasarelaConnectionBadgeVariant(null), 'secondary')
+  assert.equal(
+    pasarelaConnectionBadgeVariant({
+      fingerprint: 'x',
+      environment: 'test',
+      isActive: true,
+      paymentMethodId: null,
+    }),
+    'success',
+  )
+  assert.equal(
+    pasarelaConnectionBadgeVariant({
+      fingerprint: 'x',
+      environment: 'test',
+      isActive: false,
+      paymentMethodId: null,
+    }),
+    'warning',
+  )
+  assert.equal(pasarelaEnvironmentBadgeVariant(null), 'secondary')
+  assert.equal(pasarelaEnvironmentBadgeVariant('test'), 'info')
+  assert.equal(pasarelaEnvironmentBadgeVariant('prod'), 'warning')
+})
+
 test('detects Wompi by method name, not the digital group', () => {
   assert.equal(isWompiPaymentMethod({ name: 'Wompi' }), true)
   assert.equal(isWompiPaymentMethod('Wompi'), true)
@@ -57,6 +85,17 @@ test('builds WARO cobro URLs without Wompi or API hosts', () => {
   assert.equal(thanks.includes('/api/'), false)
   assert.equal(landing.includes('checkout.wompi.co'), false)
   assert.equal(thanks.includes('checkout.wompi.co'), false)
+})
+
+test('uses configured NUXT_PUBLIC_SITE_URL origin, not a hardcoded host', () => {
+  assert.equal(
+    waroCollectionSiteOrigin('http://localhost:8080'),
+    'http://localhost:8080',
+  )
+  assert.equal(
+    waroCollectionSiteOrigin('https://warocol.com/'),
+    'https://warocol.com',
+  )
 })
 
 test('validates collection email', () => {
