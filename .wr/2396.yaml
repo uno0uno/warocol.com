@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2396
+title: "feat(ventas): POS-style modifier sheet and Wompi cobro on sale detail"
+repo: front_nuxt # front_nuxt | api_warocol.com | both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt # nuxt | fastapi | both
+branch: wr-2396-ventas-pos-modifier-wompi
+
+paths:
+  - pages/ventas/crear.vue
+  - pages/ventas/[id].vue
+  - utils/wompiCollections.ts
+  - utils/wompiCollections.test.ts
+
+ac:
+  - crear.vue adiciones sheet: grid-cols-2 cards, stepper below, sticky header/footer, scrollable body (already true) and "Incluido" shown as chip so it does not crowd the stepper row
+  - Reuse existing tokens (text-text-*, primary, surface/border) — no new palette; selected state uses border + check icon, not color-only
+  - Spanish i18n via ventas.json (modifierIncluded, perAdditional, noAdditionalCost already exist)
+  - Modifier selection rules, prices, and POS product page behavior stay unchanged (POS uses 3 cols / sales uses 2 cols — keep)
+  - On /ventas/:id split-payments panel, Wompi-paid line shows cobro detail: approved status, amount, WARO /cobro/{session} link, provider_tx_id when present
+  - Pending Wompi cobro (yellow banner / comprobar) stays as today; not opening cobro from crear payment picker
+  - Non-Wompi split lines show method + amount only
+  - Define missing splitLineShowsWompi(p) and wompiSessionStatusLabel computeds referenced in template (currently would throw at runtime)
+
+out_of_scope:
+  - POS product page rewrite
+  - Wompi regenerate/email/guest /cobro
+  - checkout.wompi.co cancel
+  - opening cobro from payment-method picker on crear
+  - destructive DB changes / API changes (front has all needed fields already)
+
+hints:
+  entry: "pages/ventas/crear.vue (customization panel ~L975-1170); pages/ventas/[id].vue (split-payments panel ~L3020-3115)"
+  pattern: "pages/ventas/crear.vue:1065-1118 multi-select cards; pages/pos/producto/[id].vue:1015-1078 POS reference; pages/ventas/[id].vue:3089-3115 Wompi block already rendered but helper refs missing"
+  tests: "vitest run utils/wompiCollections.test.ts (existing) — add a test for the new wompiSessionStatusLabel mapping if added; otherwise no new test files required"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "auto-review via wr-reader (Kimi K3); ready-for-review label"

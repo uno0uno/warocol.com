@@ -18,6 +18,7 @@ import {
   collectionMailtoHref,
   isValidCollectionEmail,
   isWompiPaymentMethod,
+  splitPaymentShowsWompiDetail,
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
 import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
@@ -143,7 +144,7 @@ const { data: invoiceQueryData, status: invoiceStatus, refetch: refetchInvoice }
   staleTime: 0,
 })
 
-type WompiStaffSession = { id: string; status: string }
+type WompiStaffSession = { id: string; status: string; provider_tx_id?: string | null }
 
 const {
   data: wompiSessionData,
@@ -236,6 +237,29 @@ const wompiActionError = ref('')
 const canSendWompiLink = computed(() => (
   Boolean(wompiLandingUrl.value && isValidCollectionEmail(order.value?.customer?.email))
 ))
+
+const wompiSessionStatusLabel = computed(() => {
+  const status = String(wompiSession.value?.status || '').trim().toLowerCase()
+  if (status === 'approved') return t('ventas.detail.wompiStatusApproved')
+  if (status === 'pending') return t('ventas.detail.wompiStatusPending')
+  if (status === 'rejected' || status === 'declined' || status === 'failed') {
+    return t('ventas.detail.wompiStatusRejected')
+  }
+  if (status === 'expired' || status === 'voided' || status === 'cancelled') {
+    return t('ventas.detail.wompiStatusExpired')
+  }
+  if (status) return status.charAt(0).toUpperCase() + status.slice(1)
+  return t('ventas.detail.wompiStatusUnknown')
+})
+
+/** A split-payment line shows Wompi cobro detail when a collection session exists and the tender is Wompi or digital. */
+function splitLineShowsWompi (p: { payment_method?: { name?: string | null } | string | null; payment_method_id?: string | null }): boolean {
+  return splitPaymentShowsWompiDetail({
+    hasCollectionSession: Boolean(wompiSession.value?.id),
+    paymentMethod: p?.payment_method_id ?? null,
+    paymentMethodLabel: typeof p?.payment_method === 'string' ? p.payment_method : p?.payment_method?.name ?? null,
+  })
+}
 
 async function copyWompiLandingUrl () {
   if (!wompiLandingUrl.value) return
@@ -3055,33 +3079,63 @@ onUnmounted(() => {
           <!-- Payment list -->
           <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
             <div v-for="(p, idx) in order.split_payments" :key="p.id"
-              class="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3">
-              <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                <svg class="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                  fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd"
-                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                    clip-rule="evenodd" />
-                </svg>
+              class="bg-surface border border-border rounded-xl px-4 py-3 space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                  <svg class="h-3.5 w-3.5 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs text-text-secondary">{{ t('ventas.detail.paymentIndex', { number: Number(idx) + 1 }) }}</p>
+                  <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id)
+                  }}
+                  </p>
+                </div>
+                <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount)
+                }}</span>
+                <button
+                  v-if="isPartialSplitSale"
+                  type="button"
+                  class="text-xs font-semibold text-destructive disabled:opacity-50"
+                  :disabled="isVoidingTenderId === p.id"
+                  :aria-label="t('pos.checkout.split.deletePaymentAria', { number: Number(idx) + 1, amount: formatCurrency(p.amount) })"
+                  @click="voidSaleTender(p.id)"
+                >
+                  {{ t('pos.checkout.split.deletePayment') }}
+                </button>
               </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-xs text-text-secondary">{{ t('ventas.detail.paymentIndex', { number: Number(idx) + 1 }) }}</p>
-                <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id)
-                }}
-                </p>
-              </div>
-              <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount)
-              }}</span>
-              <button
-                v-if="isPartialSplitSale"
-                type="button"
-                class="text-xs font-semibold text-destructive disabled:opacity-50"
-                :disabled="isVoidingTenderId === p.id"
-                :aria-label="t('pos.checkout.split.deletePaymentAria', { number: Number(idx) + 1, amount: formatCurrency(p.amount) })"
-                @click="voidSaleTender(p.id)"
+
+              <div
+                v-if="splitLineShowsWompi(p)"
+                class="rounded-lg border border-border bg-surface-secondary/40 px-3 py-2.5 space-y-2"
               >
-                {{ t('pos.checkout.split.deletePayment') }}
-              </button>
+                <p class="text-xs font-semibold text-text-secondary">{{ t('ventas.detail.wompiCobro') }}</p>
+                <p class="flex items-center gap-1.5 text-sm font-medium text-text-primary">
+                  <svg class="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  <span>{{ wompiSessionStatusLabel }}</span>
+                </p>
+                <p v-if="wompiLandingUrl" class="text-xs break-all text-text-primary">
+                  <span class="text-text-secondary">{{ t('ventas.detail.wompiLanding') }}: </span>
+                  <a :href="wompiLandingUrl" class="text-primary underline" target="_blank" rel="noopener noreferrer">{{ wompiLandingUrl }}</a>
+                </p>
+                <p v-if="wompiSession?.provider_tx_id" class="text-xs text-text-secondary">
+                  {{ t('ventas.detail.wompiTxId', { id: wompiSession.provider_tx_id }) }}
+                </p>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-primary disabled:opacity-50"
+                  :disabled="!wompiLandingUrl"
+                  @click="copyWompiLandingUrl"
+                >
+                  {{ wompiCopied ? t('ventas.detail.wompiCopied') : t('ventas.detail.wompiCopyLanding') }}
+                </button>
+              </div>
             </div>
 
             <div v-if="isPartialSplitSale" class="pt-3 space-y-3 border-t border-border">

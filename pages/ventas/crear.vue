@@ -4,7 +4,7 @@ definePageMeta({ layout: 'dashboard', module: 'ventas' })
 
 useHead({ title: () => t('ventas.head.crear') })
 
-import { modifierLineTotal, saleLineTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType } from '~/utils/saleModifierOption'
+import { modifierLineTotal, saleLineTotal, formatSaleModifierPriceLabel, mapApiModifierToSaleOption, normalizeModifierOptionType, saleModifierPriceClass } from '~/utils/saleModifierOption'
 import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
 import { firstMissingRequiredModifierGroup } from '~/utils/modifierSelection'
 import {
@@ -525,6 +525,15 @@ function modifierPriceLabel(option: ModifierOption): string {
   })
 }
 
+/** Multi-select cards: the "X incluida(s)" chip is rendered beside the option name,
+ *  so the price label below the stepper should not repeat the included prefix. */
+function modifierPriceLabelMulti(option: ModifierOption): string {
+  return formatSaleModifierPriceLabel(Number(option.price) || 0, formatCurrency, 0, {
+    perAdditional: t('ventas.crear.perAdditional'),
+    noAdditionalCost: t('ventas.crear.noAdditionalCost'),
+  })
+}
+
 const subtotal = computed(() =>
   form.value.items.reduce((sum, item) => sum + itemTotal(item), 0)
 )
@@ -986,142 +995,149 @@ async function submit() {
                   <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4">
-                  <div class="flex items-center justify-between gap-2">
+                <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-4 md:px-6 py-3">
+                  <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                      <h2 class="text-sm font-semibold text-text-primary truncate">
+                      <h2 class="text-base font-bold text-text-primary truncate">
                         {{ customizationProduct?.name }}
                       </h2>
-                      <p class="text-xs text-text-secondary">
+                      <p class="text-xs text-text-secondary mt-0.5">
                         {{ t('ventas.crear.unitPrice', { amount: formatCurrency(customizationItem.unit_price) }) }}
                       </p>
                     </div>
                     <button
                       type="button"
-                      class="text-xs text-text-secondary hover:text-text-primary transition-colors px-2 py-1 rounded min-h-[32px]"
+                      class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      :aria-label="t('ventas.common.cerrarPanel')"
                       @click="closeCustomizationPanel"
                     >
-                      {{ t('ventas.common.cerrar') }}
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
+                </div>
 
+                <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-5">
                   <div
                     v-if="customizationItem.modifier_groups.length > 0"
-                    class="flex flex-col gap-3"
+                    class="flex flex-col gap-5"
                   >
-                    <div
+                    <section
                       v-for="group in customizationItem.modifier_groups"
                       :key="group.id"
-                      class="flex flex-col gap-2"
                     >
-                      <p class="text-sm font-medium text-text-secondary">
-                        {{ group.name }}
-                        <span v-if="group.is_required || group.min_qty > 0" class="text-destructive" aria-hidden="true">*</span>
-                        <span class="normal-case font-normal ms-1 text-xs">
-                          (<template v-if="group.min_qty > 1">{{ t('ventas.crear.minShort', { count: group.min_qty }) }} · </template>{{ t('ventas.crear.maxShort', { count: group.max_qty }) }})
+                      <div class="flex items-center justify-between gap-2 mb-3">
+                        <h3 class="text-sm font-bold text-text-primary">
+                          {{ group.name }}
+                          <span v-if="group.is_required || group.min_qty > 0" class="text-destructive" aria-hidden="true">*</span>
+                        </h3>
+                        <span class="text-xs font-medium bg-surface-secondary text-text-secondary px-2 py-1 rounded shrink-0">
+                          <template v-if="group.min_qty > 1">{{ t('ventas.crear.minShort', { count: group.min_qty }) }} · </template>{{ t('ventas.crear.maxShort', { count: group.max_qty }) }}
                         </span>
-                      </p>
-                      <div v-if="isSingleSelectGroup(group)" class="flex flex-wrap gap-2">
+                      </div>
+                      <div v-if="isSingleSelectGroup(group)" class="grid grid-cols-2 gap-3">
                         <button
                           v-for="option in group.modifiers"
                           :key="option.id"
                           type="button"
-                          class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          class="border-2 rounded-xl p-3 text-start transition-all duration-200 bg-surface h-full flex flex-col gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           :class="isModifierSelected(customizationItem, option.id)
-                            ? 'border-primary bg-primary/10 text-primary font-medium'
-                            : 'border-border bg-background text-text-primary hover:border-primary/50'"
+                            ? 'border-primary bg-primary/5 shadow-sm'
+                            : 'border-border hover:border-primary/50'"
                           @click="selectRadioModifier(customizationItem, option, group)"
                         >
-                          <svg
-                            class="w-3.5 h-3.5 shrink-0"
-                            :class="isModifierSelected(customizationItem, option.id) ? 'text-primary' : 'text-text-secondary'"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
-                          >
-                            <path
-                              v-if="isModifierSelected(customizationItem, option.id)"
-                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            />
-                            <path
-                              v-else
-                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          {{ option.name }}
+                          <div class="flex items-start justify-between gap-2">
+                            <span class="font-semibold text-text-primary text-sm leading-snug">{{ option.name }}</span>
+                            <svg
+                              class="h-5 w-5 shrink-0 text-primary transition-all"
+                              :class="isModifierSelected(customizationItem, option.id) ? 'opacity-100 scale-100' : 'opacity-0 scale-50'"
+                              fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                          </div>
                           <span
-                            v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
-                            class="text-[10px] uppercase tracking-wide text-text-tertiary"
-                          >
-                            {{ modifierTypeLabel(option) }}
-                          </span>
-                          <span
-                            class="text-xs"
-                            :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
+                            class="text-xs font-semibold"
+                            :class="saleModifierPriceClass(option.price)"
                           >
                             {{ modifierPriceLabel(option) }}
                           </span>
+                          <span
+                            v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
+                            class="text-xs text-text-tertiary"
+                          >
+                            {{ modifierTypeLabel(option) }}
+                          </span>
                         </button>
                       </div>
-                      <div v-else class="grid grid-cols-1 gap-2">
+                      <div v-else class="grid grid-cols-2 gap-3">
                         <div
                           v-for="option in group.modifiers"
                           :key="option.id"
-                          class="rounded-lg border bg-background p-3 transition-all"
+                          class="border rounded-xl p-3 flex flex-col gap-3 transition-all bg-surface"
                           :class="isModifierSelected(customizationItem, option.id)
-                            ? 'border-primary bg-primary/5'
+                            ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-border'"
                         >
-                          <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                              <p class="text-sm font-medium text-text-primary truncate">{{ option.name }}</p>
-                              <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                                <span
-                                  v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
-                                  class="text-[10px] uppercase tracking-wide text-text-tertiary"
-                                >
-                                  {{ modifierTypeLabel(option) }}
-                                </span>
-                                <span
-                                  class="text-xs"
-                                  :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
-                                >
-                                  {{ modifierPriceLabel(option) }}
-                                </span>
-                              </div>
-                            </div>
-                            <div class="flex items-center rounded-lg border border-border bg-surface-secondary/40 p-0.5 shrink-0">
-                              <button
-                                type="button"
-                                class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
-                                :disabled="getModifierQty(customizationItem, option.id) <= 0"
-                                :aria-label="t('ventas.crear.reduce', { name: option.name })"
-                                @click="decrementModifier(customizationItem, option)"
-                              >
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                                </svg>
-                              </button>
+                          <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                              <p class="font-medium text-text-primary text-sm leading-snug">{{ option.name }}</p>
                               <span
-                                class="w-7 text-center text-sm font-semibold tabular-nums"
-                                :class="getModifierQty(customizationItem, option.id) > 0 ? 'text-primary' : 'text-text-secondary'"
+                                v-if="Number(option.included_quantity) > 0"
+                                class="inline-flex items-center gap-1 text-[11px] font-semibold leading-none px-1.5 py-1 rounded bg-surface-secondary text-text-secondary"
                               >
-                                {{ getModifierQty(customizationItem, option.id) }}
-                              </span>
-                              <button
-                                type="button"
-                                class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-primary transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
-                                :disabled="!canIncrementModifier(customizationItem, option, group)"
-                                :aria-label="t('ventas.crear.increase', { name: option.name })"
-                                @click="incrementModifier(customizationItem, option, group)"
-                              >
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
                                 </svg>
-                              </button>
+                                {{ t('ventas.crear.modifierIncluded', { count: Number(option.included_quantity) }) }}
+                              </span>
                             </div>
+                            <p
+                              class="text-xs font-semibold mt-0.5"
+                              :class="saleModifierPriceClass(option.price)"
+                            >
+                              {{ modifierPriceLabelMulti(option) }}
+                            </p>
+                            <p
+                              v-if="modifierTypeLabel(option) !== t('ventas.crear.ingredient')"
+                              class="text-xs text-text-tertiary mt-0.5"
+                            >
+                              {{ modifierTypeLabel(option) }}
+                            </p>
+                          </div>
+                          <div
+                            class="flex items-center justify-between w-full rounded-xl border border-border/80 bg-surface-secondary/40 p-0.5"
+                            :class="getModifierQty(customizationItem, option.id) > 0 ? 'border-primary/30' : ''"
+                          >
+                            <button
+                              type="button"
+                              class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                              :disabled="getModifierQty(customizationItem, option.id) <= 0"
+                              :aria-label="t('ventas.crear.reduce', { name: option.name })"
+                              @click="decrementModifier(customizationItem, option)"
+                            >
+                              −
+                            </button>
+                            <span
+                              class="min-w-[2rem] px-1 text-center text-sm font-semibold tabular-nums"
+                              :class="getModifierQty(customizationItem, option.id) > 0 ? 'text-primary' : 'text-text-secondary'"
+                            >
+                              {{ getModifierQty(customizationItem, option.id) }}
+                            </span>
+                            <button
+                              type="button"
+                              class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                              :disabled="!canIncrementModifier(customizationItem, option, group)"
+                              :aria-label="t('ventas.crear.increase', { name: option.name })"
+                              @click="incrementModifier(customizationItem, option, group)"
+                            >
+                              +
+                            </button>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </section>
                   </div>
 
                   <p
@@ -1130,44 +1146,44 @@ async function submit() {
                   >
                     {{ t('ventas.crear.noAdditions') }}
                   </p>
+                </div>
 
-                  <div
-                    v-if="pendingItem"
-                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-primary/20 pt-4"
-                  >
-                    <span class="text-sm font-semibold text-primary">
-                      {{ formatCurrency(itemTotal(pendingItem)) }}
-                    </span>
-                    <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        class="h-10 px-4 rounded-lg border border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
-                        @click="closeProductDetail"
-                      >
-                        {{ t('ventas.common.cancelar') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-                        @click="confirmProductDetail"
-                      >
-                        {{ t('ventas.crear.addToCart') }}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    v-else-if="activeItem"
-                    class="flex justify-end border-t border-primary/20 pt-4"
-                  >
+                <div
+                  v-if="pendingItem"
+                  class="flex-shrink-0 border-t border-border bg-surface px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                >
+                  <span class="text-sm font-semibold text-primary tabular-nums">
+                    {{ formatCurrency(itemTotal(pendingItem)) }}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="h-10 px-4 rounded-lg border border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                      @click="closeProductDetail"
+                    >
+                      {{ t('ventas.common.cancelar') }}
+                    </button>
                     <button
                       type="button"
                       class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-                      @click="closeCustomizationPanel"
+                      @click="confirmProductDetail"
                     >
-                      {{ t('ventas.common.listo') }}
+                      {{ t('ventas.crear.addToCart') }}
                     </button>
                   </div>
+                </div>
+
+                <div
+                  v-else-if="activeItem"
+                  class="flex-shrink-0 border-t border-border bg-surface px-4 md:px-6 py-3 flex justify-end"
+                >
+                  <button
+                    type="button"
+                    class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                    @click="closeCustomizationPanel"
+                  >
+                    {{ t('ventas.common.listo') }}
+                  </button>
                 </div>
               </div>
             </Transition>

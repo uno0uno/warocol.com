@@ -324,7 +324,17 @@
       "fixedDiscount": "Fijo",
       "orderTotal": "Total orden",
       "tableAdvance": "Anticipo mesa",
-      "orderItemsTitle": "Items de la orden ({count})"
+      "orderItemsTitle": "Items de la orden ({count})",
+      "wompiCobro": "Cobro Wompi",
+      "wompiLanding": "Enlace WARO",
+      "wompiTxId": "ID transacción Wompi: {id}",
+      "wompiCopyLanding": "Copiar enlace WARO",
+      "wompiCopied": "Enlace copiado",
+      "wompiStatusApproved": "Aprobado",
+      "wompiStatusPending": "Pendiente",
+      "wompiStatusRejected": "Rechazado",
+      "wompiStatusExpired": "Vencido",
+      "wompiStatusUnknown": "Sin estado"
     },
     "emailModal": {
       "title": "Enviar factura electronica",

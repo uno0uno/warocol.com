@@ -321,7 +321,17 @@
       "fixedDiscount": "Fixed",
       "orderTotal": "Order total",
       "tableAdvance": "Table advance",
-      "orderItemsTitle": "Order items ({count})"
+      "orderItemsTitle": "Order items ({count})",
+      "wompiCobro": "Wompi collection",
+      "wompiLanding": "WARO link",
+      "wompiTxId": "Wompi transaction id: {id}",
+      "wompiCopyLanding": "Copy WARO link",
+      "wompiCopied": "Link copied",
+      "wompiStatusApproved": "Approved",
+      "wompiStatusPending": "Pending",
+      "wompiStatusRejected": "Rejected",
+      "wompiStatusExpired": "Expired",
+      "wompiStatusUnknown": "No status"
     },
     "emailModal": {
       "title": "Send electronic invoice",
