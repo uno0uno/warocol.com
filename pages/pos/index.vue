@@ -588,7 +588,7 @@ async function runComandaPrint(queue: ComandaPrintPayload[]) {
 }
 
 async function printLatestComanda() {
-  if (!comandaPrintEnabled.value || !canPrintLatestComanda.value) return
+  if (!comandasEnabled.value || !canPrintLatestComanda.value) return
   const queue = mapComandasForPrint(lastFiredComandasRaw.value)
   if (!queue.length) return
   await runComandaPrint(queue)
@@ -2247,13 +2247,13 @@ onUnmounted(() => {
   />
 
   <PosComandaPrintTickets
-    v-if="comandaPrintEnabled"
+    v-if="comandasEnabled"
     :comandas="printQueueComandas"
     :business-name="posBusinessName"
   />
 
   <PosComandasReprintPanel
-    v-if="comandaPrintEnabled"
+    v-if="comandasEnabled"
     v-model="showComandasReprintPanel"
     :comandas="sentComandasForPanel"
     :selected-ids="selectedComandaIds"
