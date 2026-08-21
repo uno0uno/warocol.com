@@ -48,7 +48,7 @@
                   Cobro Wompi
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  El pago queda pendiente hasta que Wompi lo apruebe
+                  El comensal paga en Wompi. Esta venta sigue pendiente.
                 </p>
               </div>
             </div>
@@ -65,25 +65,27 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <p v-if="errorMessage" class="text-sm text-state-danger-text" role="alert">{{ errorMessage }}</p>
-
-          <div class="rounded-xl border border-border bg-background px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Monto</p>
-            <p class="text-lg font-bold text-text-primary mt-1">{{ formatCurrency(amount) }}</p>
-          </div>
 
           <div
             v-if="creating"
-            class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-4 py-10"
-            aria-busy="true"
-            aria-live="polite"
+            class="flex items-center justify-center min-h-[280px]"
           >
-            <UiLoadingMatrix size="8px" />
-            <p class="text-sm text-text-secondary">Generando enlace de cobro…</p>
+            <CommonsTheCustomLoader size="large" />
           </div>
 
           <template v-else>
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-medium text-text-primary">Estado</p>
+              <UiStatusBadge variant="warning">Pendiente en Wompi</UiStatusBadge>
+            </div>
+
+            <dl class="rounded-xl border border-border bg-background px-4 py-3">
+              <dt class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">A cobrar</dt>
+              <dd class="text-2xl font-bold text-text-primary mt-1 tabular-nums">{{ formatCurrency(amount) }}</dd>
+            </dl>
+
             <label class="block">
               <span class="text-sm font-medium text-text-primary">Correo del comensal</span>
               <input
@@ -94,18 +96,17 @@
                 placeholder="correo@ejemplo.com"
               />
               <span class="mt-1 block text-xs text-text-tertiary">
-                Obligatorio para enviar el enlace. Copiar no requiere correo.
+                Solo hace falta si vas a enviar el enlace. Copiar no pide correo.
               </span>
             </label>
 
-            <div v-if="landingUrl" class="rounded-xl border border-dashed border-border px-4 py-3">
-              <p class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Enlace WARO</p>
-              <p class="mt-1 text-sm break-all text-text-primary">{{ landingUrl }}</p>
+            <div v-if="landingUrl" class="rounded-xl border border-border bg-surface-secondary/40 px-4 py-3 space-y-1">
+              <p class="text-xs uppercase tracking-wide text-text-tertiary font-semibold">Enlace para el comensal</p>
+              <p class="text-sm break-all text-text-primary font-medium">{{ landingUrl }}</p>
+              <p class="text-xs text-text-tertiary leading-relaxed">
+                Ábrelo en el celular del comensal o cópialo. Si Wompi dice que el link no está disponible, genera uno nuevo abajo.
+              </p>
             </div>
-
-            <p v-if="waiting" class="text-sm text-text-secondary">
-              Esperando aprobación de Wompi. No marques esta venta como pagada.
-            </p>
           </template>
         </div>
 
@@ -116,7 +117,7 @@
             :disabled="creating || !landingUrl"
             @click="copyLandingUrl"
           >
-            {{ copied ? 'Enlace copiado' : 'Copiar enlace WARO' }}
+            {{ copied ? 'Enlace copiado' : 'Copiar enlace' }}
           </button>
           <button
             type="button"
@@ -125,6 +126,15 @@
             @click="sendLandingUrl"
           >
             Enviar por correo
+          </button>
+          <button
+            v-if="sessionId"
+            type="button"
+            class="w-full min-h-[44px] rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+            :disabled="creating"
+            @click="regenerateSession"
+          >
+            Generar enlace nuevo
           </button>
         </div>
       </div>
@@ -161,7 +171,6 @@ const siteOrigin = siteUrl
 const emailDraft = ref('')
 const sessionId = ref<string | null>(null)
 const creating = ref(false)
-const waiting = ref(false)
 const copied = ref(false)
 const errorMessage = ref('')
 
@@ -169,6 +178,14 @@ const landingUrl = computed(() => (
   sessionId.value ? waroCollectionLandingUrl(siteOrigin.value, sessionId.value) : ''
 ))
 const canSend = computed(() => Boolean(landingUrl.value && isValidCollectionEmail(emailDraft.value)))
+
+const sessionBody = () => ({
+  orderId: props.orderId,
+  amount: props.amount,
+  customerId: props.customerId || undefined,
+  linkEmail: isValidCollectionEmail(emailDraft.value) ? emailDraft.value.trim() : undefined,
+  redirectUrl: waroCollectionThankYouUrl(siteOrigin.value, '{sessionId}'),
+})
 
 const handleClose = () => {
   emit('update:modelValue', false)
@@ -179,22 +196,34 @@ async function createSession () {
   creating.value = true
   errorMessage.value = ''
   try {
-    const email = isValidCollectionEmail(emailDraft.value) ? emailDraft.value.trim() : undefined
     const res = await $fetch<{ success: boolean; data: { id: string } }>('/api/collections/sessions', {
       method: 'POST',
-      body: {
-        orderId: props.orderId,
-        amount: props.amount,
-        customerId: props.customerId || undefined,
-        linkEmail: email,
-        redirectUrl: waroCollectionThankYouUrl(siteOrigin.value, '{sessionId}'),
-      },
+      body: sessionBody(),
     })
     sessionId.value = res.data.id
-    waiting.value = true
   } catch (error: any) {
     const message = error?.data?.message || error?.data?.detail || error?.message || 'No se pudo crear el cobro Wompi'
     errorMessage.value = typeof message === 'string' ? message : 'No se pudo crear el cobro Wompi'
+    emit('error', errorMessage.value)
+  } finally {
+    creating.value = false
+  }
+}
+
+async function regenerateSession () {
+  if (!props.orderId || creating.value) return
+  creating.value = true
+  errorMessage.value = ''
+  try {
+    const res = await $fetch<{ success: boolean; data: { id: string } }>('/api/collections/sessions/regenerate', {
+      method: 'POST',
+      body: sessionBody(),
+    })
+    sessionId.value = res.data.id
+    copied.value = false
+  } catch (error: any) {
+    const message = error?.data?.message || error?.data?.detail || error?.message || 'No se pudo generar un enlace nuevo'
+    errorMessage.value = typeof message === 'string' ? message : 'No se pudo generar un enlace nuevo'
     emit('error', errorMessage.value)
   } finally {
     creating.value = false
@@ -222,7 +251,6 @@ function sendLandingUrl () {
 watch(() => props.modelValue, (open) => {
   if (!open) {
     sessionId.value = null
-    waiting.value = false
     copied.value = false
     errorMessage.value = ''
     return
