@@ -1,0 +1,42 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2398
+title: "fix(ventas-crear): auto-close Wompi slideover + SubmitBusyOverlay + redirect to /ventas/{id} on approval"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2398-wompi-crear-redirect
+
+paths:
+  - pages/ventas/crear.vue
+  - i18n/locales/es/ventas.json
+  - i18n/locales/en/ventas.json
+
+ac:
+  - Wompi slideover @approved auto-closes (showWompiSlideover=false), shows UiSubmitBusyOverlay (glass + matrix) with label "Redirigiendo…" + hint "Cobro Wompi confirmado. Abriendo la venta.", waits for payment_status='paid' via subscribeOrderPaymentApproved, then navigateTo('/ventas/{id}').
+  - New ref wompiOrderFinalized added to canSubmit so Registrar is disabled once approved fires.
+  - Double-submit guard in submit(): if wompiOrderId.value set, early-return regardless of loading.
+  - Manual slideover close (X) before approved still allowed (cashier cancel) — redirect only fires on approved event, not on user-driven close.
+  - Both submit buttons (L1413 + L1652) share canSubmit, so the rule applies to both.
+  - i18n: ventas.crear.wompiApprovedRedirecting + wompiApprovedHint added to es and en.
+
+out_of_scope:
+  - Backend changes
+  - New modal components (reuse SubmitBusyOverlay)
+  - Split-payment Wompi (still rejected in submit() today)
+  - Layout rework
+
+hints:
+  entry: "pages/ventas/crear.vue: canSubmit (L584-592), submit (L682-757), slideover binding (L1669-1675), wompiOrderId (L218), useNotifications subscribeOrderPaymentApproved"
+  pattern: "components/ui/SubmitBusyOverlay.vue is the canonical glass/matrix loading overlay (used in pages/finanzas/arqueo/apertura.vue, pages/equipo/salarios/[id]/index.vue, components/DashboardSidebar.vue). useI18n keys common.submitBusy/common.processing already exist."
+  tests: "no test framework in front for this scope; manual validation via Wompi sandbox + curl /api/orders/manual"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "auto-review via wr-reader (Kimi K3); ready-for-review label"

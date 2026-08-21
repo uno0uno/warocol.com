@@ -217,11 +217,17 @@ const isWompiTender = computed(() => {
 const showWompiSlideover = ref(false)
 const wompiOrderId = ref<string | null>(null)
 const wompiAmount = ref(0)
+/**
+ * #2398 — once the Wompi slideover confirms approval, we transition through
+ * a SubmitBusyOverlay (glass + matrix) before navigating to /ventas/{id}.
+ * This flag locks the Registrar button and powers the overlay `busy` prop.
+ */
+const wompiOrderFinalized = ref(false)
 function onWompiCollectionApproved () {
   const orderId = wompiOrderId.value
   if (!orderId) return
   showWompiSlideover.value = false
-  wompiOrderId.value = null
+  wompiOrderFinalized.value = true
   useToast().success(t('ventas.crear.success'), { title: t('ventas.crear.successTitle') })
   void navigateTo(`/ventas/${orderId}`)
 }
@@ -588,7 +594,8 @@ const canSubmit = computed(() =>
   !singlePaymentValidationError.value &&
   (!splitMode.value || splitIsComplete.value) &&
   !loading.value &&
-  !showWompiSlideover.value
+  !showWompiSlideover.value &&
+  !wompiOrderFinalized.value
 )
 
 const totalItemCount = computed(() =>
@@ -681,6 +688,7 @@ watch(selectedCustomer, () => {
 
 async function submit() {
   if (showWompiSlideover.value) return
+  if (wompiOrderId.value || wompiOrderFinalized.value) return
   if (!canSubmit.value) return
   if (isWompiTender.value && splitMode.value) {
     useToast().error('Wompi no admite cobro dividido. Cobra el total con Wompi.', { title: t('ventas.common.error') })
@@ -1676,6 +1684,15 @@ async function submit() {
         @approved="onWompiCollectionApproved"
       />
     </Teleport>
+
+    <!-- #2398 — Wompi cobro confirmed; transitioning to /ventas/{id}. -->
+    <UiSubmitBusyOverlay
+      :busy="wompiOrderFinalized"
+      variant="glass"
+      indicator="matrix"
+      :label="t('ventas.crear.wompiApprovedRedirecting')"
+      :hint="t('ventas.crear.wompiApprovedHint')"
+    />
 
     <PosOpenSaleModal
       ref="openSaleModalRef"
