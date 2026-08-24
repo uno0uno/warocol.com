@@ -1,0 +1,42 @@
+# Compact plan for wr-fast. Keep <=80 lines.
+issue: 2263
+title: "fix(menu): carga masiva as slide-over + human copy (no dry-run jargon)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2263-menu-import-slideover
+
+paths:
+  - components/menu/MenuImportUpload.vue
+  - components/menu/MenuImportJobHistory.vue
+  - i18n/locales/es/menu.json
+  - i18n/locales/en/menu.json
+  - i18n/locales/es/abastecimiento.json
+  - i18n/locales/en/abastecimiento.json
+  - .wr/2263.yaml
+
+ac:
+  - Slide-over/bottom-sheet shell matching IngredientePropioPanel
+  - Ordered sections template → file → result → history; footer Revisar/Importar
+  - No user-facing dry-run; human job status labels; API status unchanged
+  - All four entity entry points keep working
+
+out_of_scope:
+  - API renames
+  - CSV schema / product-modifier matrix
+
+hints:
+  entry: "components/menu/MenuImportUpload.vue"
+  pattern: "components/ingredientes/IngredientePropioPanel.vue slide-over shell"
+  tests: "python3 -c json load i18n; rg no dry-run in vue/json UI"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: ""
