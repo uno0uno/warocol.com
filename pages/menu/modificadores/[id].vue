@@ -232,6 +232,18 @@
             >
               {{ t('menu.modificadores.cancel') }}
             </UiButton>
+
+            <UiButton
+              type="button"
+              variant="destructive"
+              size="default"
+              class="w-full"
+              :disabled="isSubmitting || isDeleting"
+              @click="confirmDeleteOpen = true"
+            >
+              <Icon name="heroicons:trash" class="h-5 w-5 me-2" />
+              {{ t('menu.modificadores.deleteGroup') }}
+            </UiButton>
           </div>
         </div>
       </div>
@@ -256,6 +268,26 @@
       @confirm="goToBillingFromQuotaLimitModal"
       @cancel="closeQuotaLimitModal"
     />
+
+    <!-- Delete confirm with reason -->
+    <UiConfirmActionModal
+      v-model="confirmDeleteOpen"
+      :title="t('menu.modificadores.deleteTitle')"
+      :message="t('menu.modificadores.deleteMessage', { name: form.name })"
+      :confirm-label="t('menu.modificadores.deleteConfirm')"
+      :loading-label="t('menu.modificadores.deleteLoading')"
+      variant="destructive"
+      :loading="isDeleting"
+      :disabled-confirm="!deleteReason.trim()"
+      @confirm="performDelete"
+    >
+      <template #extra>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-1">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
+      </template>
+    </UiConfirmActionModal>
   </div>
 </template>
 
@@ -301,6 +333,9 @@ const {
 } = useMenuCatalogQuotaGate()
 
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+const confirmDeleteOpen = ref(false)
+const deleteReason = ref('')
 const submitError = ref('')
 const productSearchInputId = 'modifier-edit-product-search'
 const selectedProducts = ref<{ id: string; name: string }[]>([])
@@ -722,6 +757,23 @@ onUnmounted(() => {
 
 function cancel() {
   router.push('/menu/modificadores')
+}
+
+const performDelete = async () => {
+  if (isDeleting.value || isSubmitting.value) return
+  if (!deleteReason.value.trim()) return
+  const groupId = route.params.id as string
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/menu/modifier-groups/${groupId}`, { method: 'DELETE', body: { reason: deleteReason.value.trim() } })
+    await cache.invalidateQueries({ key: ['menu', 'modifier-groups'] })
+    await cache.invalidateQueries({ key: ['menu', 'modifier-stats'] })
+    await router.push('/menu/modificadores')
+  } catch (err: any) {
+    submitError.value = err?.data?.detail || err.message || t('menu.modificadores.deleteError')
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 </script>

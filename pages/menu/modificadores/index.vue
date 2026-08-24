@@ -146,13 +146,20 @@
       </template>
 
       <template #cell-actions="{ row }">
-        <div class="flex justify-center">
+        <div class="flex justify-center gap-1">
           <button
             @click="goToEditGroup(row.id)"
             class="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-text-secondary transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring"
             :title="t('menu.modificadores.editGroup')"
           >
             <Icon name="heroicons:pencil-square" class="h-4 w-4" />
+          </button>
+          <button
+            @click.stop="requestDelete(row)"
+            class="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-destructive transition-colors hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30"
+            :title="t('menu.modificadores.deleteGroup')"
+          >
+            <Icon name="heroicons:trash" class="h-4 w-4" />
           </button>
         </div>
       </template>
@@ -343,6 +350,26 @@
       @cancel="closeQuotaLimitModal"
     />
 
+    <!-- Delete confirm with reason -->
+    <UiConfirmActionModal
+      v-model="confirmOpen"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :confirm-label="t('menu.modificadores.deleteConfirm')"
+      :loading-label="t('menu.modificadores.deleteLoading')"
+      variant="destructive"
+      :loading="isDeleting"
+      :disabled-confirm="!deleteReason.trim()"
+      @confirm="performDelete"
+    >
+      <template #extra>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-1">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
+      </template>
+    </UiConfirmActionModal>
+
     <MenuImportUpload
       :open="showBulkImport"
       entity="modifiers"
@@ -354,6 +381,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 const { t } = useI18n({ useScope: 'global' })
@@ -394,9 +422,49 @@ const onItemsPerPageChange = (event: Event) => {
   itemsPerPage.value = next
   currentPage.value = 1
 }
-const expandedRows = ref(new Set())
+const cache = useQueryCache()
+const toast = useToast()
+const expandedRows = ref(new Set<string>())
 const showBulkImport = ref(false)
 const requiredFilter = ref<'required' | 'optional' | ''>('')
+
+// ── Delete flow ─────────────────────────────────────────────────────────
+const confirmOpen = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const isDeleting = ref(false)
+const pendingDelete = ref<any>(null)
+const deleteReason = ref('')
+
+const requestDelete = (row: any) => {
+  pendingDelete.value = row
+  deleteReason.value = ''
+  confirmTitle.value = t('menu.modificadores.deleteTitle')
+  confirmMessage.value = t('menu.modificadores.deleteMessage', { name: row.name })
+  confirmOpen.value = true
+}
+
+const performDelete = async () => {
+  if (!pendingDelete.value || isDeleting.value) return
+  if (!deleteReason.value.trim()) return
+  const row = pendingDelete.value
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/menu/modifier-groups/${row.id}`, { method: 'DELETE', body: { reason: deleteReason.value.trim() } })
+    confirmOpen.value = false
+    pendingDelete.value = null
+    deleteReason.value = ''
+    await cache.invalidateQueries({ key: ['menu', 'modifier-groups'] })
+    await refetchGroups()
+    await refetchStats()
+  } catch (err: any) {
+    const msg = err?.data?.detail || err?.message || t('menu.modificadores.deleteError')
+    toast.error(msg, { title: t('menu.modificadores.deleteErrorTitle') })
+    console.error('Delete modifier group failed', err)
+  } finally {
+    isDeleting.value = false
+  }
+}
 const requiredHeaderOptions = computed(() => [
   { label: t('menu.modificadores.required'), value: 'required' },
   { label: t('menu.modificadores.optional'), value: 'optional' },
