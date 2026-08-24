@@ -529,7 +529,11 @@
       "deleteConfirm": "Delete",
       "deleteLoading": "Deleting...",
       "deleteErrorTitle": "Could not delete",
-      "deleteError": "Error deleting group. Please try again."
+      "deleteError": "Error deleting group. Please try again.",
+      "estado": "Status",
+      "activo": "Active",
+      "archivado": "Archived",
+      "todos": "All"
     },
     "categorias": {
       "searchPlaceholder": "Search category...",
