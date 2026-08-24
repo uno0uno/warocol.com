@@ -1,0 +1,37 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2417
+title: "Paddle LIVE env + deploy front/back vía bin (sin WOMPI)"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2417-paddle-live-deploy
+
+paths:
+  - front_nuxt/.env.example
+  - docs/migracion/2417-paddle-deploy.md
+
+ac:
+  - Paddle LIVE en .env.example (NUXT_PUBLIC_PADDLE_* live, PADDLE_*_LIVE) sin WOMPI_*
+  - Docs deploy bin warocol-front/api-prod con OPENBAO_ADDR http://openbao:8200 ya de #904
+  - Deploys warocol-nuxt 3001 y api 5001 healthy
+
+out_of_scope:
+  - openbao provisioning
+
+hints:
+  entry: ".env.example"
+  pattern: "PADDLE_KEYS.txt:8 PADDLE_API_KEY_LIVE"
+  tests: "cat .env.example | grep PADDLE"
+
+risk:
+  sensitive: true
+  areas:
+    - Paddle LIVE secrets (no pegar live keys en git, solo placeholders)
+
+skip:
+  audits:
+    - no WOMPI code change (dejamos así)
+
+next:
+  after_pr: ""
