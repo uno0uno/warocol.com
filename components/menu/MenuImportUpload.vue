@@ -27,7 +27,7 @@
                md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <div class="w-10 h-1 rounded-full bg-border" aria-hidden="true" />
         </div>
 
         <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
@@ -68,81 +68,163 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <!-- 1. Template -->
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          <!-- Template (compact) -->
           <section class="space-y-2" aria-labelledby="menu-import-step-template">
-            <h3 id="menu-import-step-template" class="text-sm font-semibold text-text-primary">
-              {{ t(i18nStepTemplate) }}
-            </h3>
-            <a
-              :href="templateHref"
-              class="btn-secondary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center"
-            >
-              {{ t(i18nDownloadTemplate) }}
-            </a>
+            <div class="flex items-center justify-between gap-3">
+              <h3
+                id="menu-import-step-template"
+                class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+              >
+                {{ t(i18nStepTemplate) }}
+              </h3>
+              <a
+                :href="templateHref"
+                class="text-sm font-medium text-primary hover:underline"
+              >
+                {{ t(i18nDownloadTemplate) }}
+              </a>
+            </div>
+            <UiAccordionSection :title="t(i18nHelpTitle)">
+              <div class="space-y-3">
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.overview') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpBody) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.example') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpExample) }}
+                  </p>
+                </div>
+                <div v-if="showUnitsHelp">
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.units') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpUnits) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.columns') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpColumnsNote) }}
+                  </p>
+                </div>
+              </div>
+            </UiAccordionSection>
           </section>
 
-          <!-- 2. Upload / file -->
+          <!-- Dropzone (hero) -->
           <section class="space-y-2" aria-labelledby="menu-import-step-file">
-            <h3 id="menu-import-step-file" class="text-sm font-semibold text-text-primary">
+            <h3
+              id="menu-import-step-file"
+              class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+            >
               {{ t(i18nStepFile) }}
             </h3>
-            <label class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium cursor-pointer inline-flex items-center">
-              {{ t(i18nUpload) }}
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                class="sr-only"
-                :disabled="busy"
-                @change="onFile"
-              >
-            </label>
-            <p v-if="job" class="text-sm text-text-secondary">
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".csv,text/csv"
+              class="hidden"
+              :disabled="busy"
+              @change="onFileInput"
+            >
+            <div
+              role="button"
+              tabindex="0"
+              class="relative border-2 border-dashed rounded-xl transition-colors overflow-hidden cursor-pointer"
+              :class="isDragging
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/40 bg-surface-secondary/50'"
+              :aria-label="`${t(i18nDropPrompt)} ${t(i18nDropSelect)}`"
+              :aria-disabled="busy"
+              @click="openFilePicker"
+              @keydown.enter.prevent="openFilePicker"
+              @keydown.space.prevent="openFilePicker"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="onDrop"
+            >
+              <div class="flex flex-col items-center justify-center py-10 px-5 text-center">
+                <svg
+                  class="w-8 h-8 text-text-tertiary mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.6"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                  />
+                </svg>
+                <p class="text-sm text-text-primary">
+                  {{ t(i18nDropPrompt) }}
+                  <span class="font-medium text-primary">{{ t(i18nDropSelect) }}</span>
+                </p>
+                <p class="text-xs text-text-tertiary mt-1">
+                  {{ t(i18nDropHint) }}
+                </p>
+              </div>
+            </div>
+            <p v-if="job" class="text-xs text-text-secondary">
               <span class="font-medium text-text-primary">{{ job.file_name }}</span>
-              · {{ t(i18nStatus) }}:
-              <span class="font-medium text-text-primary">{{ statusLabel(job.status) }}</span>
+              <span class="text-text-tertiary"> · {{ statusLabel(job.status) }}</span>
               <a
                 v-if="job.download_url"
                 :href="job.download_url"
                 target="_blank"
                 rel="noopener"
-                class="ms-2 text-primary underline text-xs"
+                class="ms-2 text-primary underline"
               >
                 {{ t(i18nDownloadOriginal) }}
               </a>
             </p>
           </section>
 
-          <!-- 3. Result -->
+          <!-- Result (only after review) -->
           <section
             v-if="report"
             class="space-y-2"
             aria-labelledby="menu-import-step-result"
           >
-            <h3 id="menu-import-step-result" class="text-sm font-semibold text-text-primary">
+            <h3
+              id="menu-import-step-result"
+              class="text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+            >
               {{ t(i18nStepResult) }}
             </h3>
-            <div class="rounded-xl border border-border p-3 space-y-2 text-sm">
+            <div class="space-y-1.5 text-sm">
               <p class="text-state-success-text">
-                <span class="font-medium">{{ t(i18nValidLabel) }}</span>
-                {{ t(i18nValid, { n: report.valid?.length ?? job?.row_valid ?? 0 }) }}
+                {{ t(i18nValid, { n: readyCount }) }}
               </p>
               <p class="text-destructive">
-                <span class="font-medium">{{ t(i18nInvalidLabel) }}</span>
-                {{ t(i18nInvalid, { n: report.errors?.length ?? job?.row_invalid ?? 0 }) }}
+                {{ t(i18nInvalid, { n: errorCount }) }}
               </p>
-              <p v-if="report.needs_product_count" class="text-text-secondary">
+              <p v-if="report.needs_product_count" class="text-xs text-text-secondary">
                 {{ t('abastecimiento.glossary.bulkImportNeedsProduct', { n: report.needs_product_count }) }}
               </p>
-              <p v-if="report.quota_exceeded" class="text-destructive font-medium">
+              <p v-if="report.quota_exceeded" class="text-xs text-destructive font-medium">
                 {{ t(i18nQuotaExceeded) }}
               </p>
               <ul
                 v-if="report.errors?.length"
-                class="max-h-40 overflow-y-auto text-xs text-destructive space-y-1"
+                class="max-h-36 overflow-y-auto text-xs text-destructive space-y-1 pt-1"
               >
                 <li v-for="(e, i) in report.errors.slice(0, 50)" :key="i">
-                  <template v-if="e.row != null">fila {{ e.row }} · </template>{{ e.field }}: {{ e.error }}
+                  <template v-if="e.row != null">{{ t(i18nErrorRow, { row: e.row }) }} · </template>{{ e.field }}: {{ e.error }}
                 </li>
               </ul>
             </div>
@@ -151,19 +233,27 @@
           <p v-if="commitMsg" class="text-sm text-state-success-text">{{ commitMsg }}</p>
           <p v-if="errorMsg" class="text-sm text-destructive" role="alert">{{ errorMsg }}</p>
 
-          <!-- 4. History -->
-          <MenuImportJobHistory
-            :jobs="jobs"
+          <UiAccordionSection
+            class="mt-1"
             :title="t(i18nStepHistory)"
-            :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
-            :status-label-fn="statusLabel"
-            @select="loadJob"
-          />
+            :badge="jobs.length ? `(${jobs.length})` : undefined"
+          >
+            <MenuImportJobHistory
+              :jobs="jobs"
+              hide-title
+              :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
+              :status-label-fn="statusLabel"
+              @select="loadJob"
+            />
+          </UiAccordionSection>
         </div>
 
         <div class="flex-shrink-0 border-t border-border px-6 py-4 bg-surface space-y-2">
-          <p class="text-xs text-text-tertiary leading-snug">
-            {{ t(i18nReviewHint) }}
+          <p
+            v-if="!canCommit && commitBlockedReason"
+            class="text-xs text-text-tertiary leading-snug"
+          >
+            {{ commitBlockedReason }}
           </p>
           <div class="flex flex-wrap gap-2">
             <button
@@ -178,9 +268,10 @@
               type="button"
               class="btn-primary min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium"
               :disabled="!canCommit || busy"
+              :title="canCommit ? undefined : (commitBlockedReason || undefined)"
               @click="runCommit"
             >
-              {{ t(i18nCommit) }}
+              {{ t(i18nCommit, { n: readyCount }) }}
             </button>
           </div>
         </div>
@@ -209,32 +300,47 @@ const i18nTitle = computed(() => `${i18nPrefix.value}Title`)
 const i18nHint = computed(() => `${i18nPrefix.value}Hint`)
 const i18nClose = computed(() => `${i18nPrefix.value}Close`)
 const i18nDownloadTemplate = computed(() => `${i18nPrefix.value}DownloadTemplate`)
-const i18nUpload = computed(() => `${i18nPrefix.value}Upload`)
-const i18nStatus = computed(() => `${i18nPrefix.value}Status`)
 const i18nDownloadOriginal = computed(() => `${i18nPrefix.value}DownloadOriginal`)
 const i18nValid = computed(() => `${i18nPrefix.value}Valid`)
 const i18nInvalid = computed(() => `${i18nPrefix.value}Invalid`)
 const i18nQuotaExceeded = computed(() => `${i18nPrefix.value}QuotaExceeded`)
 const i18nReview = computed(() => `${i18nPrefix.value}Review`)
-const i18nReviewHint = computed(() => `${i18nPrefix.value}ReviewHint`)
 const i18nCommit = computed(() => `${i18nPrefix.value}Commit`)
 const i18nCommitted = computed(() => `${i18nPrefix.value}Committed`)
 const i18nStepTemplate = computed(() => `${i18nPrefix.value}StepTemplate`)
 const i18nStepFile = computed(() => `${i18nPrefix.value}StepFile`)
 const i18nStepResult = computed(() => `${i18nPrefix.value}StepResult`)
 const i18nStepHistory = computed(() => `${i18nPrefix.value}History`)
-const i18nValidLabel = computed(() => `${i18nPrefix.value}ValidLabel`)
-const i18nInvalidLabel = computed(() => `${i18nPrefix.value}InvalidLabel`)
+const i18nHelpTitle = computed(() => `${i18nPrefix.value}HelpTitle`)
+const i18nHelpBody = computed(() => `${i18nPrefix.value}HelpBody`)
+const i18nHelpExample = computed(() => `${i18nPrefix.value}HelpExample`)
+const i18nHelpColumnsNote = computed(() => `${i18nPrefix.value}HelpColumnsNote`)
+const i18nHelpUnits = computed(() => `${i18nPrefix.value}HelpUnits`)
+const i18nDropPrompt = computed(() => `${i18nPrefix.value}DropPrompt`)
+const i18nDropSelect = computed(() => `${i18nPrefix.value}DropSelect`)
+const i18nDropHint = computed(() => `${i18nPrefix.value}DropHint`)
+const i18nErrorRow = computed(() => `${i18nPrefix.value}ErrorRow`)
+const i18nNeedFile = computed(() => `${i18nPrefix.value}NeedFile`)
+const i18nNeedReview = computed(() => `${i18nPrefix.value}NeedReview`)
+const i18nNoneReady = computed(() => `${i18nPrefix.value}NoneReady`)
 const isMenuEntity = computed(
   () =>
     props.entity === 'recipe_bases'
     || props.entity === 'products'
     || props.entity === 'modifiers',
 )
+const showUnitsHelp = computed(
+  () =>
+    props.entity === 'warehouse'
+    || props.entity === 'recipe_bases'
+    || props.entity === 'modifiers',
+)
 
 const templateHref = computed(() => `/api/menu/imports/template/${props.entity}`)
 const uploadPath = computed(() => `/api/menu/imports/${props.entity}/upload`)
 
+const fileInput = ref<HTMLInputElement | null>(null)
+const isDragging = ref(false)
 const busy = ref(false)
 const jobId = ref<string | null>(null)
 const job = ref<any>(null)
@@ -243,12 +349,24 @@ const jobs = ref<any[]>([])
 const commitMsg = ref('')
 const errorMsg = ref('')
 
+const readyCount = computed(() => Number(job.value?.row_valid ?? report.value?.valid?.length ?? 0))
+const errorCount = computed(() => Number(report.value?.errors?.length ?? job.value?.row_invalid ?? 0))
+
 const canCommit = computed(
   () =>
     job.value?.status === 'dry_run'
-    && (job.value?.row_valid ?? 0) > 0
+    && readyCount.value > 0
     && !report.value?.quota_exceeded,
 )
+
+const commitBlockedReason = computed(() => {
+  if (canCommit.value) return ''
+  if (!jobId.value) return t(i18nNeedFile.value)
+  if (report.value?.quota_exceeded) return t(i18nQuotaExceeded.value)
+  if (job.value?.status !== 'dry_run') return t(i18nNeedReview.value)
+  if (readyCount.value <= 0) return t(i18nNoneReady.value)
+  return t(i18nNeedReview.value)
+})
 
 function statusLabel(status: string | undefined | null): string {
   const key = {
@@ -260,27 +378,22 @@ function statusLabel(status: string | undefined | null): string {
   return key ? t(key) : (status || '')
 }
 
-async function refreshJobs() {
-  const res = await $fetch<{ success: boolean; data: any[] }>('/api/menu/imports/jobs', {
-    params: { entity_type: props.entity },
-  })
-  jobs.value = res.data || []
+function openFilePicker() {
+  if (busy.value) return
+  fileInput.value?.click()
 }
 
-async function loadJob(id: string) {
-  const res = await $fetch<{ success: boolean; data: any }>(`/api/menu/imports/jobs/${id}`)
-  job.value = res.data
-  jobId.value = res.data.id
-  report.value = res.data.dry_run_report || null
-  commitMsg.value = ''
-  errorMsg.value = ''
+function isCsvFile(file: File): boolean {
+  const name = file.name.toLowerCase()
+  return name.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel'
 }
 
-async function onFile(ev: Event) {
-  const input = ev.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
+async function acceptFile(file: File | undefined | null) {
   if (!file) return
+  if (!isCsvFile(file)) {
+    errorMsg.value = t(`${i18nPrefix.value}InvalidFileType`)
+    return
+  }
   busy.value = true
   errorMsg.value = ''
   commitMsg.value = ''
@@ -303,6 +416,36 @@ async function onFile(ev: Event) {
   }
 }
 
+function onFileInput(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  void acceptFile(file)
+}
+
+function onDrop(event: DragEvent) {
+  isDragging.value = false
+  if (busy.value) return
+  const file = event.dataTransfer?.files?.[0]
+  void acceptFile(file)
+}
+
+async function refreshJobs() {
+  const res = await $fetch<{ success: boolean; data: any[] }>('/api/menu/imports/jobs', {
+    params: { entity_type: props.entity },
+  })
+  jobs.value = res.data || []
+}
+
+async function loadJob(id: string) {
+  const res = await $fetch<{ success: boolean; data: any }>(`/api/menu/imports/jobs/${id}`)
+  job.value = res.data
+  jobId.value = res.data.id
+  report.value = res.data.dry_run_report || null
+  commitMsg.value = ''
+  errorMsg.value = ''
+}
+
 async function runDryRun() {
   if (!jobId.value) return
   busy.value = true
@@ -323,7 +466,7 @@ async function runDryRun() {
 }
 
 async function runCommit() {
-  if (!jobId.value) return
+  if (!canCommit.value || !jobId.value) return
   busy.value = true
   errorMsg.value = ''
   try {
@@ -354,6 +497,7 @@ watch(
       report.value = null
       commitMsg.value = ''
       errorMsg.value = ''
+      isDragging.value = false
       await refreshJobs()
     }
   },

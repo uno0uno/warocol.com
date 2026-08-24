@@ -1,16 +1,19 @@
 <template>
-  <div class="border-t border-border pt-4 mt-2">
-    <h3 class="text-sm font-semibold text-text-primary mb-2">
+  <div>
+    <h3
+      v-if="showTitle"
+      class="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2"
+    >
       {{ title || t('abastecimiento.glossary.bulkImportHistory') }}
     </h3>
-    <p v-if="!jobs?.length" class="text-sm text-text-secondary">
+    <p v-if="!jobs?.length" class="text-xs text-text-secondary">
       {{ empty || t('abastecimiento.glossary.bulkImportNoJobs') }}
     </p>
-    <ul v-else class="space-y-1 max-h-48 overflow-y-auto">
+    <ul v-else class="space-y-1 max-h-40 overflow-y-auto">
       <li v-for="j in jobs" :key="j.id">
         <button
           type="button"
-          class="w-full text-left text-sm px-2 py-1.5 rounded-lg hover:bg-surface-secondary flex justify-between gap-2"
+          class="w-full text-left text-xs px-2 py-1.5 rounded-lg hover:bg-surface-secondary flex justify-between gap-2"
           @click="emit('select', j.id)"
         >
           <span class="truncate text-text-primary">{{ j.file_name }}</span>
@@ -24,14 +27,20 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  jobs: any[]
-  title?: string
-  empty?: string
-  statusLabelFn?: (status: string | undefined | null) => string
-}>()
+const props = withDefaults(
+  defineProps<{
+    jobs: any[]
+    title?: string | null
+    empty?: string
+    statusLabelFn?: (status: string | undefined | null) => string
+    hideTitle?: boolean
+  }>(),
+  { hideTitle: false },
+)
 const emit = defineEmits<{ select: [id: string] }>()
 const { t } = useI18n({ useScope: 'global' })
+
+const showTitle = computed(() => !props.hideTitle && props.title !== '')
 
 function resolveStatus(status: string | undefined | null): string {
   if (props.statusLabelFn) return props.statusLabelFn(status)

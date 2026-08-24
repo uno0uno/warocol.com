@@ -37,6 +37,12 @@
       "incompatibleUnitError": "Select a compatible unit for each warehouse item.",
       "rowsPerPage": "Rows per page"
     },
+    "bulkImportHelpSections": {
+      "overview": "Overview",
+      "example": "Example",
+      "units": "Units",
+      "columns": "Columns"
+    },
     "productos": {
       "editMode": "Edit mode",
       "viewCatalog": "View catalog",
@@ -61,25 +67,22 @@
       "newShort": "New",
       "bulkImport": "Bulk import",
       "bulkImportTitle": "Bulk import products",
-      "bulkImportHint": "Menu CSV (price + category + optional recipe bases) or finish_resale=true to complete incomplete resale.",
-      "bulkImportDownloadTemplate": "Download CSV template",
-      "bulkImportUpload": "Upload CSV",
-      "bulkImportReview": "Review file",
-      "bulkImportReviewHint": "Check errors before importing. Nothing is created yet.",
-      "bulkImportCommit": "Import valid rows",
-      "bulkImportValidLabel": "Ready:",
-      "bulkImportInvalidLabel": "With errors:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Imported {n} rows",
+      "bulkImportHint": "Upload menu products or finish a pending warehouse resale.",
+      "bulkImportDownloadTemplate": "Download template",
+      "bulkImportReview": "Check file",
+      "bulkImportReviewHint": "Upload and check the file first. Nothing is saved yet.",
+      "bulkImportCommit": "Load {n} products",
+      "bulkImportValid": "{n} ready to load",
+      "bulkImportInvalid": "{n} with problems",
+      "bulkImportCommitted": "Loaded {n} products",
       "bulkImportClose": "Close",
       "bulkImportStatus": "Status",
       "bulkImportDownloadOriginal": "Download original",
-      "bulkImportQuotaExceeded": "Your plan quota cannot fit this import. Reduce rows or upgrade before confirming.",
-      "bulkImportHistory": "4. Import history",
-      "bulkImportStepTemplate": "1. Template",
-      "bulkImportStepFile": "2. File",
-      "bulkImportStepResult": "3. Result",
+      "bulkImportQuotaExceeded": "Your plan cannot fit this import. Reduce rows or upgrade.",
+      "bulkImportHistory": "History",
+      "bulkImportStepTemplate": "Template",
+      "bulkImportStepFile": "File",
+      "bulkImportStepResult": "Result",
       "bulkImportNoJobs": "No imports yet",
       "costWarning": "{count} product{suffix} with cost above the sale price — possible incorrectly recorded purchases.",
       "viewDataQuality": "View Data Quality →",
@@ -111,164 +114,178 @@
       "selectedCount": "{count} selected",
       "deselect": "deselect",
       "apply": "Apply",
-      "cancel": "Cancel"
-      ,"productNamePlaceholder": "Product name"
-      ,"nameOf": "Name of {name}"
-      ,"categoryOf": "Category of {name}"
-      ,"enableQr": "Enable for table QR"
-      ,"disableQr": "Disable for table QR"
-      ,"editProductFor": "Edit {name}"
-      ,"updateError": "Could not update. Try again."
-      ,"enableDeliveryFor": "Enable {name} for delivery"
-      ,"disableDeliveryFor": "Disable {name} for delivery"
-      ,"enableQrFor": "Enable {name} for table QR"
-      ,"disableQrFor": "Disable {name} for table QR"
-      ,"detailTitle": "Product data"
-      ,"nameRequired": "Name *"
-      ,"namePlaceholder": "E.g. classic burger"
-      ,"description": "Description"
-      ,"descriptionPlaceholder": "Brief description for the menu"
-      ,"photo": "Photo"
-      ,"uploadPhoto": "Upload photo"
-      ,"changePhoto": "Change"
-      ,"removePhoto": "Remove"
-      ,"imageAlt": "Product image"
-      ,"categoryRequired": "Category *"
-      ,"categorySearchPlaceholder": "Search category..."
-      ,"kitchen": "Kitchen"
-      ,"fromCategory": "from category"
-      ,"noKitchenCategory": "No kitchen ticket for category"
-      ,"createStation": "Create station"
-      ,"preparationTime": "Preparation (min)"
-      ,"priceSection": "Price"
-      ,"salePriceRequired": "Sale price *"
-      ,"realCostSystem": "Real cost (system)"
-      ,"recipeCostPreview": "Preview with current recipe: {amount} (confirmed when saved)"
-      ,"calculatedFromRecipePurchases": "Calculated by the system from recipe and purchases."
-      ,"dishCost": "Dish cost"
-      ,"operationalCostHelp": "Operating cost you define; the system does not change it."
-      ,"realMargin": "Real margin"
-      ,"operatingMargin": "Operating margin"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin’s cost."
-      ,"taxCategory": "Tax category"
-      ,"taxResolution": "Product tax"
-      ,"taxInherit": "Inherit from category"
-      ,"taxInheritHint": "Uses the Facturación map for the menu category"
-      ,"taxOverrideLine": "Other line"
-      ,"taxOverrideLineHint": "Force a tax line different from the category default"
-      ,"taxSelectLine": "Tax line"
-      ,"taxInheritedLabel": "Default: {label}"
-      ,"taxInheritedExempt": "Default: exempt (category)"
-      ,"taxNoCategory": "Choose a menu category to see the inherited tax"
-      ,"foodBeverage": "Food / Beverage"
-      ,"incVatRates": "Rate from Billing tax settings"
-      ,"takeawayLiquor": "Takeaway liquor"
-      ,"liquorVat": "Liquor rate from Billing"
-      ,"exempt": "Exempt"
-      ,"noTax": "No tax"
-      ,"inventoryPurchases": "Inventory and purchases"
-      ,"controlsInventory": "This product controls inventory"
-      ,"defineInventory": "Define the product recipe. Each sale will deduct warehouse items from inventory."
-      ,"noInventoryOnSale": "Nothing will be deducted from inventory when sold. Useful for services, tips, promotions, or products without stock."
-      ,"baseRecipes": "Base recipes"
-      ,"selectBaseRecipe": "Select base recipe..."
-      ,"recipeQuantity": "Recipe quantity {index}"
-      ,"recipeQuantityHelp": "How many units of this recipe does the product consume (e.g. 2× = double yield)"
-      ,"recipeUnit": "× recipe"
-      ,"removeRecipe": "Remove base recipe {index}"
-      ,"noBaseRecipes": "No base recipes"
-      ,"linkBaseRecipe": "Use + Add to link one"
-      ,"additionalLines": "Additional lines"
-      ,"emptyAdditionalLines": "No additional lines"
-      ,"quantity": "Quantity"
-      ,"configuration": "Configuration"
-      ,"available": "Available"
-      ,"availableHelp": "The product appears in the menu and can be sold"
-      ,"onlineAvailable": "Available for delivery"
-      ,"onlineHelp": "The product appears in the online ordering menu (delivery/pickup)"
-      ,"tableQr": "Table order (QR)"
-      ,"tableQrHelp": "Independent of delivery. Only appears in the table QR menu."
-      ,"summary": "Summary"
-      ,"priceLabel": "Price:"
-      ,"realCostLabel": "Real cost:"
-      ,"myCostSummary": "My cost:"
-      ,"realMarginLabel": "Real margin:"
-      ,"linesLabel": "Lines:"
-      ,"saving": "Saving..."
-      ,"updateProduct": "Update product"
-      ,"deleteProduct": "Delete product"
-      ,"deleteModalTitle": "Delete product"
-      ,"deleteQuestion": "Delete this product?"
-      ,"deleteDescription": "Products with recorded sales will be archived: they will stop selling in POS and delivery, while history is preserved. Products never sold will be permanently deleted."
-      ,"confirmDeleteProduct": "Yes, delete"
-      ,"deletingProduct": "Deleting..."
-      ,"updateSuccess": "Product updated successfully"
-      ,"saved": "Saved"
-      ,"updateErrorDetail": "Error updating product: {detail}"
-      ,"deleteError": "Error deleting product"
-      ,"openSale": "open sale"
-      ,"openSaleDescription": "This product is the POS container for charging amounts that are not on the menu. It has no category or fixed catalog price; the cashier defines the value when selling."
-      ,"openSaleToggleHelp": "Enable or disable the feature in Operations → Customize."
-      ,"openSaleGridHelp": "It does not appear in the POS grid as a normal product."
-      ,"openSaleUnavailableHelp": "Delivery, table QR, and recipe toggles do not apply here."
-      ,"goToCustomize": "Go to Customize"
-      ,"backToCatalog": "Back to catalog"
-      ,"directSaleQuestion": "Is it sold as-is (soda, snack)?"
-      ,"directSaleDescription": "Enable direct sale: the system will create the linked warehouse item and deduct 1 unit per sale."
-      ,"activateResale": "Enable as direct sale (resale)"
-      ,"convertDirectSale": "Convert to direct sale"
-      ,"convertDirectSaleHelp": "This action cannot be undone here. The product will become resale and will no longer support modifiers."
-      ,"optional": "Optional"
-      ,"converting": "Converting..."
-      ,"confirmConversion": "Confirm conversion"
-      ,"conversionSuccess": "Product converted to direct sale"
-      ,"resaleActivated": "Resale enabled"
-      ,"conversionError": "Could not convert the product"
-      ,"duplicateRecipeError": "You cannot add the same base recipe more than once."
-      ,"recipeQuantityError": "Each recipe quantity must be greater than 0."
-      ,"updatedToast": "Product updated successfully"
-      ,"stationCreated": "Station created"
-      ,"createBusy": "Creating product..."
-      ,"createBusyHint": "We're saving the product configuration and preparing its catalog."
-      ,"productTypeQuestion": "How is this product prepared?"
-      ,"productTypeHelp": "Choose whether it uses a kitchen recipe or is sold as-is (resale)."
-      ,"recipeMode": "With recipe"
-      ,"recipeModeDescription": "Cook with warehouse items and base recipes. Each sale deducts inventory."
-      ,"resaleMode": "Direct sale"
-      ,"resaleModeDescription": "Resale by piece (und). Equivalence in gr or ml for stock."
-      ,"referenceInternal": "Internal reference"
-      ,"referenceHelp": "Does not change the calculated cost."
-      ,"calculatedCost": "Calculated cost"
-      ,"estimatedCostHelp": "Estimated on save; from recipe and purchases."
-      ,"resaleInventory": "Inventory"
-      ,"resaleSale": "Sale"
-      ,"equivalence": "Equivalence"
-      ,"equivalenceUnitAria": "Equivalence unit"
-      ,"equivalenceError": "Indicate how many {unit} equal 1 piece."
-      ,"oneSaleOneUnit": "1 sale = 1 unit in inventory."
-      ,"pieceUnit": "Piece (und)"
-      ,"equivalenceExample": "E.g. 400"
-      ,"purchaseUnits": "Purchase units"
-      ,"defaultUnit": "Default"
-      ,"addPurchaseUnit": "Add unit"
-      ,"chooseRecipe": "Choose recipe..."
-      ,"recipeLines": "Recipe lines:"
-      ,"createProduct": "Create product"
-      ,"typeLabel": "Type:"
-      ,"creatingProduct": "Creating..."
-      ,"assigning": "Assigning..."
-      ,"nameRequiredError": "Name is required."
-      ,"categoryRequiredError": "Select a category."
-      ,"priceRequiredError": "Enter a sale price greater than 0."
-      ,"nameExistsError": "A product with that name already exists."
-      ,"equivalenceRequiredError": "Enter the gr or ml equivalence per sold unit."
-      ,"stationAssigned": "Station assigned to {category}."
-      ,"stationReady": "Station ready"
-      ,"stationCreatedUnassigned": "Station created without assignment"
-      ,"stationAssignmentError": "Could not assign the station to the category"
-      ,"directProductCreated": "Direct-sale product created"
-      ,"validationError": "Validation error: check that all fields are complete and valid."
-      ,"createError": "Could not create the product. Please try again."
+      "cancel": "Cancel",
+      "productNamePlaceholder": "Product name",
+      "nameOf": "Name of {name}",
+      "categoryOf": "Category of {name}",
+      "enableQr": "Enable for table QR",
+      "disableQr": "Disable for table QR",
+      "editProductFor": "Edit {name}",
+      "updateError": "Could not update. Try again.",
+      "enableDeliveryFor": "Enable {name} for delivery",
+      "disableDeliveryFor": "Disable {name} for delivery",
+      "enableQrFor": "Enable {name} for table QR",
+      "disableQrFor": "Disable {name} for table QR",
+      "detailTitle": "Product data",
+      "nameRequired": "Name *",
+      "namePlaceholder": "E.g. classic burger",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description for the menu",
+      "photo": "Photo",
+      "uploadPhoto": "Upload photo",
+      "changePhoto": "Change",
+      "removePhoto": "Remove",
+      "imageAlt": "Product image",
+      "categoryRequired": "Category *",
+      "categorySearchPlaceholder": "Search category...",
+      "kitchen": "Kitchen",
+      "fromCategory": "from category",
+      "noKitchenCategory": "No kitchen ticket for category",
+      "createStation": "Create station",
+      "preparationTime": "Preparation (min)",
+      "priceSection": "Price",
+      "salePriceRequired": "Sale price *",
+      "realCostSystem": "Real cost (system)",
+      "recipeCostPreview": "Preview with current recipe: {amount} (confirmed when saved)",
+      "calculatedFromRecipePurchases": "Calculated by the system from recipe and purchases.",
+      "dishCost": "Dish cost",
+      "operationalCostHelp": "Operating cost you define; the system does not change it.",
+      "realMargin": "Real margin",
+      "operatingMargin": "Operating margin",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin’s cost.",
+      "taxCategory": "Tax category",
+      "taxResolution": "Product tax",
+      "taxInherit": "Inherit from category",
+      "taxInheritHint": "Uses the Facturación map for the menu category",
+      "taxOverrideLine": "Other line",
+      "taxOverrideLineHint": "Force a tax line different from the category default",
+      "taxSelectLine": "Tax line",
+      "taxInheritedLabel": "Default: {label}",
+      "taxInheritedExempt": "Default: exempt (category)",
+      "taxNoCategory": "Choose a menu category to see the inherited tax",
+      "foodBeverage": "Food / Beverage",
+      "incVatRates": "Rate from Billing tax settings",
+      "takeawayLiquor": "Takeaway liquor",
+      "liquorVat": "Liquor rate from Billing",
+      "exempt": "Exempt",
+      "noTax": "No tax",
+      "inventoryPurchases": "Inventory and purchases",
+      "controlsInventory": "This product controls inventory",
+      "defineInventory": "Define the product recipe. Each sale will deduct warehouse items from inventory.",
+      "noInventoryOnSale": "Nothing will be deducted from inventory when sold. Useful for services, tips, promotions, or products without stock.",
+      "baseRecipes": "Base recipes",
+      "selectBaseRecipe": "Select base recipe...",
+      "recipeQuantity": "Recipe quantity {index}",
+      "recipeQuantityHelp": "How many units of this recipe does the product consume (e.g. 2× = double yield)",
+      "recipeUnit": "× recipe",
+      "removeRecipe": "Remove base recipe {index}",
+      "noBaseRecipes": "No base recipes",
+      "linkBaseRecipe": "Use + Add to link one",
+      "additionalLines": "Additional lines",
+      "emptyAdditionalLines": "No additional lines",
+      "quantity": "Quantity",
+      "configuration": "Configuration",
+      "available": "Available",
+      "availableHelp": "The product appears in the menu and can be sold",
+      "onlineAvailable": "Available for delivery",
+      "onlineHelp": "The product appears in the online ordering menu (delivery/pickup)",
+      "tableQr": "Table order (QR)",
+      "tableQrHelp": "Independent of delivery. Only appears in the table QR menu.",
+      "summary": "Summary",
+      "priceLabel": "Price:",
+      "realCostLabel": "Real cost:",
+      "myCostSummary": "My cost:",
+      "realMarginLabel": "Real margin:",
+      "linesLabel": "Lines:",
+      "saving": "Saving...",
+      "updateProduct": "Update product",
+      "deleteProduct": "Delete product",
+      "deleteModalTitle": "Delete product",
+      "deleteQuestion": "Delete this product?",
+      "deleteDescription": "Products with recorded sales will be archived: they will stop selling in POS and delivery, while history is preserved. Products never sold will be permanently deleted.",
+      "confirmDeleteProduct": "Yes, delete",
+      "deletingProduct": "Deleting...",
+      "updateSuccess": "Product updated successfully",
+      "saved": "Saved",
+      "updateErrorDetail": "Error updating product: {detail}",
+      "deleteError": "Error deleting product",
+      "openSale": "open sale",
+      "openSaleDescription": "This product is the POS container for charging amounts that are not on the menu. It has no category or fixed catalog price; the cashier defines the value when selling.",
+      "openSaleToggleHelp": "Enable or disable the feature in Operations → Customize.",
+      "openSaleGridHelp": "It does not appear in the POS grid as a normal product.",
+      "openSaleUnavailableHelp": "Delivery, table QR, and recipe toggles do not apply here.",
+      "goToCustomize": "Go to Customize",
+      "backToCatalog": "Back to catalog",
+      "directSaleQuestion": "Is it sold as-is (soda, snack)?",
+      "directSaleDescription": "Enable direct sale: the system will create the linked warehouse item and deduct 1 unit per sale.",
+      "activateResale": "Enable as direct sale (resale)",
+      "convertDirectSale": "Convert to direct sale",
+      "convertDirectSaleHelp": "This action cannot be undone here. The product will become resale and will no longer support modifiers.",
+      "optional": "Optional",
+      "converting": "Converting...",
+      "confirmConversion": "Confirm conversion",
+      "conversionSuccess": "Product converted to direct sale",
+      "resaleActivated": "Resale enabled",
+      "conversionError": "Could not convert the product",
+      "duplicateRecipeError": "You cannot add the same base recipe more than once.",
+      "recipeQuantityError": "Each recipe quantity must be greater than 0.",
+      "updatedToast": "Product updated successfully",
+      "stationCreated": "Station created",
+      "createBusy": "Creating product...",
+      "createBusyHint": "We're saving the product configuration and preparing its catalog.",
+      "productTypeQuestion": "How is this product prepared?",
+      "productTypeHelp": "Choose whether it uses a kitchen recipe or is sold as-is (resale).",
+      "recipeMode": "With recipe",
+      "recipeModeDescription": "Cook with warehouse items and base recipes. Each sale deducts inventory.",
+      "resaleMode": "Direct sale",
+      "resaleModeDescription": "Resale by piece (und). Equivalence in gr or ml for stock.",
+      "referenceInternal": "Internal reference",
+      "referenceHelp": "Does not change the calculated cost.",
+      "calculatedCost": "Calculated cost",
+      "estimatedCostHelp": "Estimated on save; from recipe and purchases.",
+      "resaleInventory": "Inventory",
+      "resaleSale": "Sale",
+      "equivalence": "Equivalence",
+      "equivalenceUnitAria": "Equivalence unit",
+      "equivalenceError": "Indicate how many {unit} equal 1 piece.",
+      "oneSaleOneUnit": "1 sale = 1 unit in inventory.",
+      "pieceUnit": "Piece (und)",
+      "equivalenceExample": "E.g. 400",
+      "purchaseUnits": "Purchase units",
+      "defaultUnit": "Default",
+      "addPurchaseUnit": "Add unit",
+      "chooseRecipe": "Choose recipe...",
+      "recipeLines": "Recipe lines:",
+      "createProduct": "Create product",
+      "typeLabel": "Type:",
+      "creatingProduct": "Creating...",
+      "assigning": "Assigning...",
+      "nameRequiredError": "Name is required.",
+      "categoryRequiredError": "Select a category.",
+      "priceRequiredError": "Enter a sale price greater than 0.",
+      "nameExistsError": "A product with that name already exists.",
+      "equivalenceRequiredError": "Enter the gr or ml equivalence per sold unit.",
+      "stationAssigned": "Station assigned to {category}.",
+      "stationReady": "Station ready",
+      "stationCreatedUnassigned": "Station created without assignment",
+      "stationAssignmentError": "Could not assign the station to the category",
+      "directProductCreated": "Direct-sale product created",
+      "validationError": "Validation error: check that all fields are complete and valid.",
+      "createError": "Could not create the product. Please try again.",
+      "bulkImportReviewHintReady": "Ready: you can load what passed the check.",
+      "bulkImportDropPrompt": "Drag your CSV here or",
+      "bulkImportDropSelect": "choose a file",
+      "bulkImportDropHint": "CSV only · max 5 MB",
+      "bulkImportNoFileYet": "No file selected yet.",
+      "bulkImportErrorRow": "Line {row}",
+      "bulkImportNeedFile": "Upload a file first.",
+      "bulkImportNeedReview": "Check the file first.",
+      "bulkImportNoneReady": "Nothing ready to load. Fix the file and check again.",
+      "bulkImportInvalidFileType": "Please use a CSV file.",
+      "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
+      "bulkImportHelpTitle": "How to fill the file",
+      "bulkImportHelpBody": "Each row is a product: name, price, and category. To finish an incomplete warehouse resale, mark that row in the template to complete the pending resale.",
+      "bulkImportHelpExample": "Americano coffee · 5000 · Hot drinks\nFinish resale: Coke 350ml · 3500 · Drinks"
     },
     "recetas": {
       "searchPlaceholder": "Search recipes...",
@@ -289,25 +306,22 @@
       "total": "Total:",
       "bulkImport": "Bulk import",
       "bulkImportTitle": "Bulk import recipes",
-      "bulkImportHint": "Upload a CSV with one row per ingredient (same recipe_name). Review checks bodega and units.",
-      "bulkImportDownloadTemplate": "Download CSV template",
-      "bulkImportUpload": "Upload CSV",
-      "bulkImportReview": "Review file",
-      "bulkImportReviewHint": "Check errors before importing. Nothing is created yet.",
-      "bulkImportCommit": "Import valid recipes",
-      "bulkImportValidLabel": "Ready:",
-      "bulkImportInvalidLabel": "With errors:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Imported {n} recipes",
+      "bulkImportHint": "Several rows can be the same recipe: one per ingredient.",
+      "bulkImportDownloadTemplate": "Download template",
+      "bulkImportReview": "Check file",
+      "bulkImportReviewHint": "Upload and check the file first. Nothing is saved yet.",
+      "bulkImportCommit": "Load {n} recipes",
+      "bulkImportValid": "{n} ready to load",
+      "bulkImportInvalid": "{n} with problems",
+      "bulkImportCommitted": "Loaded {n} recipes",
       "bulkImportClose": "Close",
       "bulkImportStatus": "Status",
       "bulkImportDownloadOriginal": "Download original",
-      "bulkImportQuotaExceeded": "Your plan quota cannot fit this import. Reduce recipes or upgrade before confirming.",
-      "bulkImportHistory": "4. Import history",
-      "bulkImportStepTemplate": "1. Template",
-      "bulkImportStepFile": "2. File",
-      "bulkImportStepResult": "3. Result",
+      "bulkImportQuotaExceeded": "Your plan cannot fit this import. Reduce recipes or upgrade.",
+      "bulkImportHistory": "History",
+      "bulkImportStepTemplate": "Template",
+      "bulkImportStepFile": "File",
+      "bulkImportStepResult": "Result",
       "bulkImportNoJobs": "No imports yet",
       "form": {
         "createTitle": "Create recipe",
@@ -342,7 +356,22 @@
         "nameRequiredError": "Name is required.",
         "nameExistsError": "A base recipe with that name already exists.",
         "unexpectedError": "Unexpected error. Please try again."
-      }
+      },
+      "bulkImportReviewHintReady": "Ready: you can load what passed the check.",
+      "bulkImportDropPrompt": "Drag your CSV here or",
+      "bulkImportDropSelect": "choose a file",
+      "bulkImportDropHint": "CSV only · max 5 MB",
+      "bulkImportNoFileYet": "No file selected yet.",
+      "bulkImportErrorRow": "Line {row}",
+      "bulkImportNeedFile": "Upload a file first.",
+      "bulkImportNeedReview": "Check the file first.",
+      "bulkImportNoneReady": "Nothing ready to load. Fix the file and check again.",
+      "bulkImportInvalidFileType": "Please use a CSV file.",
+      "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
+      "bulkImportHelpTitle": "How to fill the file",
+      "bulkImportHelpBody": "Repeat the same recipe name on each ingredient line. Ingredients must already exist in the warehouse with a unit WARO understands.",
+      "bulkImportHelpExample": "Same recipe on 2 lines:\nTomato sauce · Tomato · 1 · kg\nTomato sauce · Onion · 0.2 · kg",
+      "bulkImportHelpUnits": "Item base unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr\nIf that purchase unit is missing on the item, the row fails."
     },
     "modificadores": {
       "searchPlaceholder": "Search group or product...",
@@ -350,25 +379,22 @@
       "emptySub": "Create a new group to get started",
       "bulkImport": "Bulk import",
       "bulkImportTitle": "Bulk import modifiers",
-      "bulkImportHint": "CSV by group (group_name + options). Product links are out of scope in v1; link ingredients/recipes by name when needed.",
-      "bulkImportDownloadTemplate": "Download CSV template",
-      "bulkImportUpload": "Upload CSV",
-      "bulkImportReview": "Review file",
-      "bulkImportReviewHint": "Check errors before importing. Nothing is created yet.",
-      "bulkImportCommit": "Import valid groups",
-      "bulkImportValidLabel": "Ready:",
-      "bulkImportInvalidLabel": "With errors:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Imported {n} groups",
+      "bulkImportHint": "Create option groups; link them to products later.",
+      "bulkImportDownloadTemplate": "Download template",
+      "bulkImportReview": "Check file",
+      "bulkImportReviewHint": "Upload and check the file first. Nothing is saved yet.",
+      "bulkImportCommit": "Load {n} groups",
+      "bulkImportValid": "{n} ready to load",
+      "bulkImportInvalid": "{n} with problems",
+      "bulkImportCommitted": "Loaded {n} groups",
       "bulkImportClose": "Close",
       "bulkImportStatus": "Status",
       "bulkImportDownloadOriginal": "Download original",
-      "bulkImportQuotaExceeded": "Your plan quota cannot fit this import. Reduce groups or upgrade before confirming.",
-      "bulkImportHistory": "4. Import history",
-      "bulkImportStepTemplate": "1. Template",
-      "bulkImportStepFile": "2. File",
-      "bulkImportStepResult": "3. Result",
+      "bulkImportQuotaExceeded": "Your plan cannot fit this import. Reduce groups or upgrade.",
+      "bulkImportHistory": "History",
+      "bulkImportStepTemplate": "Template",
+      "bulkImportStepFile": "File",
+      "bulkImportStepResult": "Result",
       "bulkImportNoJobs": "No imports yet",
       "newGroup": "New group",
       "newShort": "New",
@@ -398,90 +424,105 @@
       "active": "Active",
       "inactive": "Inactive",
       "optionsCount": "options",
-      "selectionShort": "sel."
-      ,"editBusy": "Updating modifier group..."
-      ,"editBusyHint": "Saving group changes and synchronizing its options."
-      ,"groupData": "Group details"
-      ,"productsRequired": "Products *"
-      ,"searchProduct": "Search product..."
-      ,"groupNameRequired": "Group name *"
-      ,"groupNamePlaceholder": "E.g. extras, size, no..."
-      ,"minSelectionRequired": "Minimum selection *"
-      ,"minSelectionHelp": "Minimum number of options to select"
-      ,"maxSelectionRequired": "Maximum selection *"
-      ,"maxSelectionHelp": "Maximum number of options to select"
-      ,"displayOrder": "Display order"
-      ,"displayOrderHelp": "Lower number appears first"
-      ,"requiredToggle": "Required"
-      ,"requiredHelp": "The customer must select at least one option"
-      ,"addOption": "Add"
-      ,"emptyOptions": "No options in this group"
-      ,"emptyOptionsHelp": "Add modifiers customers can select"
-      ,"groupSummary": "Summary"
-      ,"groupSummaryLabel": "Group:"
-      ,"selectedProducts": "Products:"
-      ,"optionCount": "Options:"
-      ,"selection": "Selection:"
-      ,"none": "None"
-      ,"productsCount": "{count} products"
-      ,"saveBusy": "Saving..."
-      ,"saveGroup": "Save group"
-      ,"cancel": "Cancel"
-      ,"warehouseItemRequired": "Warehouse item *"
-      ,"resaleProductRequired": "Resale product *"
-      ,"resaleProductHelp": "Pick a resale product; WARO uses its linked warehouse item (1:1)."
-      ,"baseRecipe": "Base recipe"
-      ,"menuProduct": "Menu product"
-      ,"priceOnly": "Price only"
-      ,"optionTypeRequired": "Type *"
-      ,"optionNameRequired": "Name *"
-      ,"cashierNamePlaceholder": "Name shown at checkout"
-      ,"salePrice": "Sale price"
-      ,"additionalUnitPrice": "Price per additional unit"
-      ,"includedShort": "Incl."
-      ,"includedQuantityHelp": "Included units are free; the price applies to each additional unit."
-      ,"optionQuantityThresholdHelp": "Per option: Max = unit cap; Incl. = free units (Incl. cannot exceed Max). This is separate from the group min/max selection."
-      ,"maxRaisedForIncluded": "Max was raised to {max} to cover the included units."
-      ,"includedClampedToMax": "Incl. was lowered to {max} because it cannot exceed Max."
-      ,"groupSelectionVsOptionHelp": "Group min/max selection controls how many different options the customer can pick. Max/Incl. on each row apply only to that option."
-      ,"maxShort": "Max"
-      ,"order": "Order"
-      ,"removeOption": "Remove option"
-      ,"quantity": "Quantity"
-      ,"unit": "Unit"
-      ,"unitCost": "Unit cost:"
-      ,"baseRecipeRequired": "Base recipe *"
-      ,"chooseRecipe": "Choose recipe…"
-      ,"recipeQuantity": "Quantity × recipe"
-      ,"menuProductRequired": "Menu product *"
-      ,"productQuantity": "Quantity × product"
-      ,"noInventoryComposition": "Option without inventory composition; only the sale price applies."
-      ,"isDefault": "Default"
-      ,"available": "Available"
-      ,"updatedSuccess": "Modifier group updated successfully"
-      ,"saved": "Saved"
-      ,"selectProductError": "Select at least one product."
-      ,"nameRequiredError": "The group name is required."
-      ,"maxMinError": "Maximum selection must be greater than or equal to minimum."
-      ,"optionRequiredError": "Add at least one option to the group."
-      ,"updateError": "Could not update. Try again."
-      ,"removeProduct": "Remove {name}"
-      ,"editProductList": "View / edit list"
-      ,"searchAndAddProducts": "Search and add products one at a time"
-      ,"selectedProductsCount": "{count} product(s) selected"
-      ,"createBusy": "Creating modifier group..."
-      ,"createBusyHint": "Saving the group configuration and options."
-      ,"optionalLabel": "(optional)"
-      ,"totalOptions": "Total options:"
-      ,"withComposition": "With composition:"
-      ,"withAdditionalCost": "With additional cost:"
-      ,"createBusyButton": "Creating..."
-      ,"createGroup": "Create group"
-      ,"nameError": "The name is required."
-      ,"duplicateNameError": "A modifier group with that name already exists."
-      ,"createOptionError": "Add at least one modifier to the group."
-      ,"createError": "Could not create the group. Please try again."
-      ,"nameLabel": "Name:"
+      "selectionShort": "sel.",
+      "editBusy": "Updating modifier group...",
+      "editBusyHint": "Saving group changes and synchronizing its options.",
+      "groupData": "Group details",
+      "productsRequired": "Products *",
+      "searchProduct": "Search product...",
+      "groupNameRequired": "Group name *",
+      "groupNamePlaceholder": "E.g. extras, size, no...",
+      "minSelectionRequired": "Minimum selection *",
+      "minSelectionHelp": "Minimum number of options to select",
+      "maxSelectionRequired": "Maximum selection *",
+      "maxSelectionHelp": "Maximum number of options to select",
+      "displayOrder": "Display order",
+      "displayOrderHelp": "Lower number appears first",
+      "requiredToggle": "Required",
+      "requiredHelp": "The customer must select at least one option",
+      "addOption": "Add",
+      "emptyOptions": "No options in this group",
+      "emptyOptionsHelp": "Add modifiers customers can select",
+      "groupSummary": "Summary",
+      "groupSummaryLabel": "Group:",
+      "selectedProducts": "Products:",
+      "optionCount": "Options:",
+      "selection": "Selection:",
+      "none": "None",
+      "productsCount": "{count} products",
+      "saveBusy": "Saving...",
+      "saveGroup": "Save group",
+      "cancel": "Cancel",
+      "warehouseItemRequired": "Warehouse item *",
+      "resaleProductRequired": "Resale product *",
+      "resaleProductHelp": "Pick a resale product; WARO uses its linked warehouse item (1:1).",
+      "baseRecipe": "Base recipe",
+      "menuProduct": "Menu product",
+      "priceOnly": "Price only",
+      "optionTypeRequired": "Type *",
+      "optionNameRequired": "Name *",
+      "cashierNamePlaceholder": "Name shown at checkout",
+      "salePrice": "Sale price",
+      "additionalUnitPrice": "Price per additional unit",
+      "includedShort": "Incl.",
+      "includedQuantityHelp": "Included units are free; the price applies to each additional unit.",
+      "optionQuantityThresholdHelp": "Per option: Max = unit cap; Incl. = free units (Incl. cannot exceed Max). This is separate from the group min/max selection.",
+      "maxRaisedForIncluded": "Max was raised to {max} to cover the included units.",
+      "includedClampedToMax": "Incl. was lowered to {max} because it cannot exceed Max.",
+      "groupSelectionVsOptionHelp": "Group min/max selection controls how many different options the customer can pick. Max/Incl. on each row apply only to that option.",
+      "maxShort": "Max",
+      "order": "Order",
+      "removeOption": "Remove option",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "unitCost": "Unit cost:",
+      "baseRecipeRequired": "Base recipe *",
+      "chooseRecipe": "Choose recipe…",
+      "recipeQuantity": "Quantity × recipe",
+      "menuProductRequired": "Menu product *",
+      "productQuantity": "Quantity × product",
+      "noInventoryComposition": "Option without inventory composition; only the sale price applies.",
+      "isDefault": "Default",
+      "available": "Available",
+      "updatedSuccess": "Modifier group updated successfully",
+      "saved": "Saved",
+      "selectProductError": "Select at least one product.",
+      "nameRequiredError": "The group name is required.",
+      "maxMinError": "Maximum selection must be greater than or equal to minimum.",
+      "optionRequiredError": "Add at least one option to the group.",
+      "updateError": "Could not update. Try again.",
+      "removeProduct": "Remove {name}",
+      "editProductList": "View / edit list",
+      "searchAndAddProducts": "Search and add products one at a time",
+      "selectedProductsCount": "{count} product(s) selected",
+      "createBusy": "Creating modifier group...",
+      "createBusyHint": "Saving the group configuration and options.",
+      "optionalLabel": "(optional)",
+      "totalOptions": "Total options:",
+      "withComposition": "With composition:",
+      "withAdditionalCost": "With additional cost:",
+      "createBusyButton": "Creating...",
+      "createGroup": "Create group",
+      "nameError": "The name is required.",
+      "duplicateNameError": "A modifier group with that name already exists.",
+      "createOptionError": "Add at least one modifier to the group.",
+      "createError": "Could not create the group. Please try again.",
+      "nameLabel": "Name:",
+      "bulkImportReviewHintReady": "Ready: you can load what passed the check.",
+      "bulkImportDropPrompt": "Drag your CSV here or",
+      "bulkImportDropSelect": "choose a file",
+      "bulkImportDropHint": "CSV only · max 5 MB",
+      "bulkImportNoFileYet": "No file selected yet.",
+      "bulkImportErrorRow": "Line {row}",
+      "bulkImportNeedFile": "Upload a file first.",
+      "bulkImportNeedReview": "Check the file first.",
+      "bulkImportNoneReady": "Nothing ready to load. Fix the file and check again.",
+      "bulkImportInvalidFileType": "Please use a CSV file.",
+      "bulkImportHelpColumnsNote": "Do not rename the template columns (they stay in English on purpose). Names, quantities, and text values can be in your business language.",
+      "bulkImportHelpTitle": "How to fill the file",
+      "bulkImportHelpBody": "Repeat the group name on each option row. This import does not attach products; do that later on the group.",
+      "bulkImportHelpExample": "Same group on 2 lines:\nCooking point · Medium · 0\nCooking point · Well done · 0",
+      "bulkImportHelpUnits": "If the option deducts warehouse stock, in ingredient_unit use:\nBase unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr"
     },
     "categorias": {
       "searchPlaceholder": "Search category...",

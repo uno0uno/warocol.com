@@ -37,6 +37,12 @@
       "incompatibleUnitError": "Selecciona una unidad compatible para cada artículo de bodega.",
       "rowsPerPage": "Filas por página"
     },
+    "bulkImportHelpSections": {
+      "overview": "Resumen",
+      "example": "Ejemplo",
+      "units": "Unidades",
+      "columns": "Columnas"
+    },
     "productos": {
       "editMode": "Modo edición",
       "viewCatalog": "Ver catálogo",
@@ -61,25 +67,22 @@
       "newShort": "Nuevo",
       "bulkImport": "Carga masiva",
       "bulkImportTitle": "Carga masiva de productos",
-      "bulkImportHint": "CSV de menú (precio + categoría + recetas opcionales) o finish_resale=true para completar reventa incompleta.",
-      "bulkImportDownloadTemplate": "Descargar plantilla CSV",
-      "bulkImportUpload": "Subir CSV",
-      "bulkImportReview": "Revisar archivo",
-      "bulkImportReviewHint": "Revisa errores antes de importar. Aún no se crea nada.",
-      "bulkImportCommit": "Importar filas válidas",
-      "bulkImportValidLabel": "Listas:",
-      "bulkImportInvalidLabel": "Con error:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Importadas {n} filas",
+      "bulkImportHint": "Sube productos del menú o completa una reventa pendiente de bodega.",
+      "bulkImportDownloadTemplate": "Descargar plantilla",
+      "bulkImportReview": "Comprobar archivo",
+      "bulkImportReviewHint": "Primero sube y comprueba el archivo. Nada se guarda todavía.",
+      "bulkImportCommit": "Cargar {n} productos",
+      "bulkImportValid": "{n} listos para cargar",
+      "bulkImportInvalid": "{n} con problema",
+      "bulkImportCommitted": "Se cargaron {n} productos",
       "bulkImportClose": "Cerrar",
       "bulkImportStatus": "Estado",
       "bulkImportDownloadOriginal": "Descargar original",
-      "bulkImportQuotaExceeded": "El plan no tiene cupo para esta carga. Reduce filas o actualiza el plan antes de confirmar.",
-      "bulkImportHistory": "4. Historial de cargas",
-      "bulkImportStepTemplate": "1. Plantilla",
-      "bulkImportStepFile": "2. Archivo",
-      "bulkImportStepResult": "3. Resultado",
+      "bulkImportQuotaExceeded": "Tu plan no tiene cupo para esta carga. Reduce filas o actualiza el plan.",
+      "bulkImportHistory": "Historial",
+      "bulkImportStepTemplate": "Plantilla",
+      "bulkImportStepFile": "Archivo",
+      "bulkImportStepResult": "Resultado",
       "bulkImportNoJobs": "Aún no hay cargas",
       "costWarning": "{count} producto{suffix} con costo mayor al precio de venta — posibles compras mal registradas.",
       "viewDataQuality": "Ver Calidad de Datos →",
@@ -111,164 +114,178 @@
       "selectedCount": "{count} seleccionada(s)",
       "deselect": "deseleccionar",
       "apply": "Aplicar",
-      "cancel": "Cancelar"
-      ,"productNamePlaceholder": "Nombre del producto"
-      ,"nameOf": "Nombre de {name}"
-      ,"categoryOf": "Categoría de {name}"
-      ,"enableQr": "Habilitar para QR en mesa"
-      ,"disableQr": "Deshabilitar para QR en mesa"
-      ,"editProductFor": "Editar {name}"
-      ,"updateError": "Error al actualizar. Intenta de nuevo."
-      ,"enableDeliveryFor": "Habilitar {name} para domicilios"
-      ,"disableDeliveryFor": "Deshabilitar {name} para domicilios"
-      ,"enableQrFor": "Habilitar {name} para QR en mesa"
-      ,"disableQrFor": "Deshabilitar {name} para QR en mesa"
-      ,"detailTitle": "Datos del producto"
-      ,"nameRequired": "Nombre *"
-      ,"namePlaceholder": "Ej. hamburguesa clásica"
-      ,"description": "Descripción"
-      ,"descriptionPlaceholder": "Breve descripción para el menú"
-      ,"photo": "Foto"
-      ,"uploadPhoto": "Subir foto"
-      ,"changePhoto": "Cambiar"
-      ,"removePhoto": "Eliminar"
-      ,"imageAlt": "Imagen del producto"
-      ,"categoryRequired": "Categoría *"
-      ,"categorySearchPlaceholder": "Buscar categoría..."
-      ,"kitchen": "Cocina"
-      ,"fromCategory": "desde categoría"
-      ,"noKitchenCategory": "Sin comanda en categoría"
-      ,"createStation": "Crear estación"
-      ,"preparationTime": "Preparación (min)"
-      ,"priceSection": "Precio"
-      ,"salePriceRequired": "Precio de venta *"
-      ,"realCostSystem": "Costo real (sistema)"
-      ,"recipeCostPreview": "Vista previa con receta actual: {amount} (se confirma al guardar)"
-      ,"calculatedFromRecipePurchases": "Calculado por el sistema desde receta y compras."
-      ,"dishCost": "Mi costo del plato"
-      ,"operationalCostHelp": "Costo operativo que tú defines; no lo cambia el sistema."
-      ,"realMargin": "Margen real"
-      ,"operatingMargin": "Margen operativo"
-      ,"marginsHelp": "Real = compras/bodega. Operativo = mi costo. El % usa el costo de cada margen."
-      ,"taxCategory": "Categoría de impuesto"
-      ,"taxResolution": "Impuesto del producto"
-      ,"taxInherit": "Heredar de la categoría"
-      ,"taxInheritHint": "Usa el mapa de Facturación para la categoría del menú"
-      ,"taxOverrideLine": "Otra línea"
-      ,"taxOverrideLineHint": "Fija una línea de impuesto distinta a la de la categoría"
-      ,"taxSelectLine": "Línea de impuesto"
-      ,"taxInheritedLabel": "Por defecto: {label}"
-      ,"taxInheritedExempt": "Por defecto: exento (categoría)"
-      ,"taxNoCategory": "Elige una categoría de menú para ver el impuesto heredado"
-      ,"foodBeverage": "Alimento / Bebida"
-      ,"incVatRates": "Tarifa según Facturación"
-      ,"takeawayLiquor": "Licor para llevar"
-      ,"liquorVat": "Tarifa de licor según Facturación"
-      ,"exempt": "Exento"
-      ,"noTax": "Sin impuesto"
-      ,"inventoryPurchases": "Inventario y compras"
-      ,"controlsInventory": "Este producto controla inventario"
-      ,"defineInventory": "Define la receta del producto. Cada venta descontará los artículos de bodega del inventario."
-      ,"noInventoryOnSale": "No se descontará nada del inventario al venderlo. Útil para servicios, propinas, promos o productos sin stock."
-      ,"baseRecipes": "Recetas base"
-      ,"selectBaseRecipe": "Seleccionar receta base..."
-      ,"recipeQuantity": "Cantidad de la receta {index}"
-      ,"recipeQuantityHelp": "Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)"
-      ,"recipeUnit": "× receta"
-      ,"removeRecipe": "Eliminar receta base {index}"
-      ,"noBaseRecipes": "Sin recetas base"
-      ,"linkBaseRecipe": "Usa + Agregar para vincular una"
-      ,"additionalLines": "Líneas adicionales"
-      ,"emptyAdditionalLines": "Sin líneas adicionales"
-      ,"quantity": "Cantidad"
-      ,"configuration": "Configuración"
-      ,"available": "Disponible"
-      ,"availableHelp": "El producto aparece en el menú y se puede vender"
-      ,"onlineAvailable": "Disponible para domicilios"
-      ,"onlineHelp": "El producto aparece en el menú de pedidos online (delivery/pickup)"
-      ,"tableQr": "Pedido en mesa (QR)"
-      ,"tableQrHelp": "Independiente de domicilios. Solo aparece en el menú QR de la mesa."
-      ,"summary": "Resumen"
-      ,"priceLabel": "Precio:"
-      ,"realCostLabel": "Costo real:"
-      ,"myCostSummary": "Mi costo:"
-      ,"realMarginLabel": "Margen real:"
-      ,"linesLabel": "Líneas:"
-      ,"saving": "Guardando..."
-      ,"updateProduct": "Actualizar producto"
-      ,"deleteProduct": "Eliminar producto"
-      ,"deleteModalTitle": "Eliminar producto"
-      ,"deleteQuestion": "¿Eliminar este producto?"
-      ,"deleteDescription": "Si tiene ventas registradas, se archivará: dejará de venderse en POS y domicilios, pero se conserva el historial. Si nunca se vendió, se elimina permanentemente."
-      ,"confirmDeleteProduct": "Sí, eliminar"
-      ,"deletingProduct": "Eliminando..."
-      ,"updateSuccess": "Producto actualizado correctamente"
-      ,"saved": "Guardado"
-      ,"updateErrorDetail": "Error al actualizar el producto: {detail}"
-      ,"deleteError": "Error al eliminar el producto"
-      ,"openSale": "venta libre"
-      ,"openSaleDescription": "Este producto es el contenedor del POS para cobrar montos que no están en el menú. No tiene categoría ni precio fijo de catálogo; el cajero define el valor al vender."
-      ,"openSaleToggleHelp": "Activa o desactiva la función en Operaciones → Personalizar."
-      ,"openSaleGridHelp": "No aparece en la grilla del POS como producto normal."
-      ,"openSaleUnavailableHelp": "Los toggles de domicilios, QR en mesa y receta no aplican aquí."
-      ,"goToCustomize": "Ir a Personalizar"
-      ,"backToCatalog": "Volver al catálogo"
-      ,"directSaleQuestion": "¿Se vende tal cual (gaseosa, snack)?"
-      ,"directSaleDescription": "Actívalo como venta directa: el sistema creará el artículo de bodega vinculado y descontará 1 und por venta."
-      ,"activateResale": "Activar como venta directa (reventa)"
-      ,"convertDirectSale": "Convertir a venta directa"
-      ,"convertDirectSaleHelp": "Esta acción no se puede deshacer desde aquí. El producto pasará a reventa y dejará de admitir modificadores."
-      ,"optional": "Opcional"
-      ,"converting": "Convirtiendo..."
-      ,"confirmConversion": "Confirmar conversión"
-      ,"conversionSuccess": "Producto convertido a venta directa"
-      ,"resaleActivated": "Reventa activada"
-      ,"conversionError": "No se pudo convertir el producto"
-      ,"duplicateRecipeError": "No puedes agregar la misma receta base más de una vez."
-      ,"recipeQuantityError": "La cantidad de cada receta debe ser mayor que 0."
-      ,"updatedToast": "Producto actualizado correctamente"
-      ,"stationCreated": "Estación creada"
-      ,"createBusy": "Creando producto..."
-      ,"createBusyHint": "Estamos guardando la configuración del producto y preparando su catálogo."
-      ,"productTypeQuestion": "¿Cómo se prepara este producto?"
-      ,"productTypeHelp": "Elige si lleva receta en cocina o se vende tal cual (reventa)."
-      ,"recipeMode": "Con receta"
-      ,"recipeModeDescription": "Cocina con artículos de bodega y recetas base. Cada venta descuenta inventario."
-      ,"resaleMode": "Venta directa"
-      ,"resaleModeDescription": "Reventa por pieza (und). Equivalencia en gr o ml para stock."
-      ,"referenceInternal": "Referencia interna"
-      ,"referenceHelp": "No modifica el costo calculado."
-      ,"calculatedCost": "Costo calculado"
-      ,"estimatedCostHelp": "Estimado al guardar; desde receta y compras."
-      ,"resaleInventory": "Inventario"
-      ,"resaleSale": "Venta"
-      ,"equivalence": "Equivalencia"
-      ,"equivalenceUnitAria": "Unidad de equivalencia"
-      ,"equivalenceError": "Indica cuántos {unit} equivale 1 und."
-      ,"oneSaleOneUnit": "1 venta = 1 und en inventario."
-      ,"pieceUnit": "Pieza (und)"
-      ,"equivalenceExample": "Ej. 400"
-      ,"purchaseUnits": "Unidades de compra"
-      ,"defaultUnit": "Predeterminado"
-      ,"addPurchaseUnit": "Agregar unidad"
-      ,"chooseRecipe": "Elegir receta…"
-      ,"recipeLines": "Líneas receta:"
-      ,"createProduct": "Crear producto"
-      ,"typeLabel": "Tipo:"
-      ,"creatingProduct": "Creando..."
-      ,"assigning": "Asignando…"
-      ,"nameRequiredError": "El nombre es obligatorio."
-      ,"categoryRequiredError": "Selecciona una categoría."
-      ,"priceRequiredError": "Indica un precio de venta mayor a 0."
-      ,"nameExistsError": "Ya existe un producto con ese nombre."
-      ,"equivalenceRequiredError": "Indica la equivalencia en gr o ml por unidad vendida."
-      ,"stationAssigned": "Estación asignada a {category}."
-      ,"stationReady": "Estación lista"
-      ,"stationCreatedUnassigned": "Estación creada sin asignar"
-      ,"stationAssignmentError": "No se pudo asignar la estación a la categoría"
-      ,"directProductCreated": "Producto de venta directa creado"
-      ,"validationError": "Error de validación: revisa que todos los campos estén completos y con valores válidos."
-      ,"createError": "Error al crear el producto. Por favor intenta de nuevo."
+      "cancel": "Cancelar",
+      "productNamePlaceholder": "Nombre del producto",
+      "nameOf": "Nombre de {name}",
+      "categoryOf": "Categoría de {name}",
+      "enableQr": "Habilitar para QR en mesa",
+      "disableQr": "Deshabilitar para QR en mesa",
+      "editProductFor": "Editar {name}",
+      "updateError": "Error al actualizar. Intenta de nuevo.",
+      "enableDeliveryFor": "Habilitar {name} para domicilios",
+      "disableDeliveryFor": "Deshabilitar {name} para domicilios",
+      "enableQrFor": "Habilitar {name} para QR en mesa",
+      "disableQrFor": "Deshabilitar {name} para QR en mesa",
+      "detailTitle": "Datos del producto",
+      "nameRequired": "Nombre *",
+      "namePlaceholder": "Ej. hamburguesa clásica",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Breve descripción para el menú",
+      "photo": "Foto",
+      "uploadPhoto": "Subir foto",
+      "changePhoto": "Cambiar",
+      "removePhoto": "Eliminar",
+      "imageAlt": "Imagen del producto",
+      "categoryRequired": "Categoría *",
+      "categorySearchPlaceholder": "Buscar categoría...",
+      "kitchen": "Cocina",
+      "fromCategory": "desde categoría",
+      "noKitchenCategory": "Sin comanda en categoría",
+      "createStation": "Crear estación",
+      "preparationTime": "Preparación (min)",
+      "priceSection": "Precio",
+      "salePriceRequired": "Precio de venta *",
+      "realCostSystem": "Costo real (sistema)",
+      "recipeCostPreview": "Vista previa con receta actual: {amount} (se confirma al guardar)",
+      "calculatedFromRecipePurchases": "Calculado por el sistema desde receta y compras.",
+      "dishCost": "Mi costo del plato",
+      "operationalCostHelp": "Costo operativo que tú defines; no lo cambia el sistema.",
+      "realMargin": "Margen real",
+      "operatingMargin": "Margen operativo",
+      "marginsHelp": "Real = compras/bodega. Operativo = mi costo. El % usa el costo de cada margen.",
+      "taxCategory": "Categoría de impuesto",
+      "taxResolution": "Impuesto del producto",
+      "taxInherit": "Heredar de la categoría",
+      "taxInheritHint": "Usa el mapa de Facturación para la categoría del menú",
+      "taxOverrideLine": "Otra línea",
+      "taxOverrideLineHint": "Fija una línea de impuesto distinta a la de la categoría",
+      "taxSelectLine": "Línea de impuesto",
+      "taxInheritedLabel": "Por defecto: {label}",
+      "taxInheritedExempt": "Por defecto: exento (categoría)",
+      "taxNoCategory": "Elige una categoría de menú para ver el impuesto heredado",
+      "foodBeverage": "Alimento / Bebida",
+      "incVatRates": "Tarifa según Facturación",
+      "takeawayLiquor": "Licor para llevar",
+      "liquorVat": "Tarifa de licor según Facturación",
+      "exempt": "Exento",
+      "noTax": "Sin impuesto",
+      "inventoryPurchases": "Inventario y compras",
+      "controlsInventory": "Este producto controla inventario",
+      "defineInventory": "Define la receta del producto. Cada venta descontará los artículos de bodega del inventario.",
+      "noInventoryOnSale": "No se descontará nada del inventario al venderlo. Útil para servicios, propinas, promos o productos sin stock.",
+      "baseRecipes": "Recetas base",
+      "selectBaseRecipe": "Seleccionar receta base...",
+      "recipeQuantity": "Cantidad de la receta {index}",
+      "recipeQuantityHelp": "Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)",
+      "recipeUnit": "× receta",
+      "removeRecipe": "Eliminar receta base {index}",
+      "noBaseRecipes": "Sin recetas base",
+      "linkBaseRecipe": "Usa + Agregar para vincular una",
+      "additionalLines": "Líneas adicionales",
+      "emptyAdditionalLines": "Sin líneas adicionales",
+      "quantity": "Cantidad",
+      "configuration": "Configuración",
+      "available": "Disponible",
+      "availableHelp": "El producto aparece en el menú y se puede vender",
+      "onlineAvailable": "Disponible para domicilios",
+      "onlineHelp": "El producto aparece en el menú de pedidos online (delivery/pickup)",
+      "tableQr": "Pedido en mesa (QR)",
+      "tableQrHelp": "Independiente de domicilios. Solo aparece en el menú QR de la mesa.",
+      "summary": "Resumen",
+      "priceLabel": "Precio:",
+      "realCostLabel": "Costo real:",
+      "myCostSummary": "Mi costo:",
+      "realMarginLabel": "Margen real:",
+      "linesLabel": "Líneas:",
+      "saving": "Guardando...",
+      "updateProduct": "Actualizar producto",
+      "deleteProduct": "Eliminar producto",
+      "deleteModalTitle": "Eliminar producto",
+      "deleteQuestion": "¿Eliminar este producto?",
+      "deleteDescription": "Si tiene ventas registradas, se archivará: dejará de venderse en POS y domicilios, pero se conserva el historial. Si nunca se vendió, se elimina permanentemente.",
+      "confirmDeleteProduct": "Sí, eliminar",
+      "deletingProduct": "Eliminando...",
+      "updateSuccess": "Producto actualizado correctamente",
+      "saved": "Guardado",
+      "updateErrorDetail": "Error al actualizar el producto: {detail}",
+      "deleteError": "Error al eliminar el producto",
+      "openSale": "venta libre",
+      "openSaleDescription": "Este producto es el contenedor del POS para cobrar montos que no están en el menú. No tiene categoría ni precio fijo de catálogo; el cajero define el valor al vender.",
+      "openSaleToggleHelp": "Activa o desactiva la función en Operaciones → Personalizar.",
+      "openSaleGridHelp": "No aparece en la grilla del POS como producto normal.",
+      "openSaleUnavailableHelp": "Los toggles de domicilios, QR en mesa y receta no aplican aquí.",
+      "goToCustomize": "Ir a Personalizar",
+      "backToCatalog": "Volver al catálogo",
+      "directSaleQuestion": "¿Se vende tal cual (gaseosa, snack)?",
+      "directSaleDescription": "Actívalo como venta directa: el sistema creará el artículo de bodega vinculado y descontará 1 und por venta.",
+      "activateResale": "Activar como venta directa (reventa)",
+      "convertDirectSale": "Convertir a venta directa",
+      "convertDirectSaleHelp": "Esta acción no se puede deshacer desde aquí. El producto pasará a reventa y dejará de admitir modificadores.",
+      "optional": "Opcional",
+      "converting": "Convirtiendo...",
+      "confirmConversion": "Confirmar conversión",
+      "conversionSuccess": "Producto convertido a venta directa",
+      "resaleActivated": "Reventa activada",
+      "conversionError": "No se pudo convertir el producto",
+      "duplicateRecipeError": "No puedes agregar la misma receta base más de una vez.",
+      "recipeQuantityError": "La cantidad de cada receta debe ser mayor que 0.",
+      "updatedToast": "Producto actualizado correctamente",
+      "stationCreated": "Estación creada",
+      "createBusy": "Creando producto...",
+      "createBusyHint": "Estamos guardando la configuración del producto y preparando su catálogo.",
+      "productTypeQuestion": "¿Cómo se prepara este producto?",
+      "productTypeHelp": "Elige si lleva receta en cocina o se vende tal cual (reventa).",
+      "recipeMode": "Con receta",
+      "recipeModeDescription": "Cocina con artículos de bodega y recetas base. Cada venta descuenta inventario.",
+      "resaleMode": "Venta directa",
+      "resaleModeDescription": "Reventa por pieza (und). Equivalencia en gr o ml para stock.",
+      "referenceInternal": "Referencia interna",
+      "referenceHelp": "No modifica el costo calculado.",
+      "calculatedCost": "Costo calculado",
+      "estimatedCostHelp": "Estimado al guardar; desde receta y compras.",
+      "resaleInventory": "Inventario",
+      "resaleSale": "Venta",
+      "equivalence": "Equivalencia",
+      "equivalenceUnitAria": "Unidad de equivalencia",
+      "equivalenceError": "Indica cuántos {unit} equivale 1 und.",
+      "oneSaleOneUnit": "1 venta = 1 und en inventario.",
+      "pieceUnit": "Pieza (und)",
+      "equivalenceExample": "Ej. 400",
+      "purchaseUnits": "Unidades de compra",
+      "defaultUnit": "Predeterminado",
+      "addPurchaseUnit": "Agregar unidad",
+      "chooseRecipe": "Elegir receta…",
+      "recipeLines": "Líneas receta:",
+      "createProduct": "Crear producto",
+      "typeLabel": "Tipo:",
+      "creatingProduct": "Creando...",
+      "assigning": "Asignando…",
+      "nameRequiredError": "El nombre es obligatorio.",
+      "categoryRequiredError": "Selecciona una categoría.",
+      "priceRequiredError": "Indica un precio de venta mayor a 0.",
+      "nameExistsError": "Ya existe un producto con ese nombre.",
+      "equivalenceRequiredError": "Indica la equivalencia en gr o ml por unidad vendida.",
+      "stationAssigned": "Estación asignada a {category}.",
+      "stationReady": "Estación lista",
+      "stationCreatedUnassigned": "Estación creada sin asignar",
+      "stationAssignmentError": "No se pudo asignar la estación a la categoría",
+      "directProductCreated": "Producto de venta directa creado",
+      "validationError": "Error de validación: revisa que todos los campos estén completos y con valores válidos.",
+      "createError": "Error al crear el producto. Por favor intenta de nuevo.",
+      "bulkImportReviewHintReady": "Listo: puedes cargar lo que pasó la revisión.",
+      "bulkImportDropPrompt": "Arrastra tu CSV aquí o",
+      "bulkImportDropSelect": "elige un archivo",
+      "bulkImportDropHint": "Solo CSV · máx. 5 MB",
+      "bulkImportNoFileYet": "Todavía no hay archivo seleccionado.",
+      "bulkImportErrorRow": "Línea {row}",
+      "bulkImportNeedFile": "Primero sube un archivo.",
+      "bulkImportNeedReview": "Primero comprueba el archivo.",
+      "bulkImportNoneReady": "Nada listo para cargar. Corrige el archivo y vuelve a comprobar.",
+      "bulkImportInvalidFileType": "Usa un archivo CSV.",
+      "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
+      "bulkImportHelpTitle": "Cómo llenar el archivo",
+      "bulkImportHelpBody": "Cada fila es un producto: nombre, precio y categoría. Para terminar una reventa incompleta de bodega, marca esa fila como completar reventa en la plantilla.",
+      "bulkImportHelpExample": "Café americano · 5000 · Bebidas calientes\nCompletar reventa: Coca 350ml · 3500 · Bebidas"
     },
     "recetas": {
       "searchPlaceholder": "Buscar recetas...",
@@ -289,25 +306,22 @@
       "total": "Total:",
       "bulkImport": "Carga masiva",
       "bulkImportTitle": "Carga masiva de recetas",
-      "bulkImportHint": "Sube un CSV con líneas por ingrediente (mismo recipe_name). La revisión valida bodega y unidades.",
-      "bulkImportDownloadTemplate": "Descargar plantilla CSV",
-      "bulkImportUpload": "Subir CSV",
-      "bulkImportReview": "Revisar archivo",
-      "bulkImportReviewHint": "Revisa errores antes de importar. Aún no se crea nada.",
-      "bulkImportCommit": "Importar recetas válidas",
-      "bulkImportValidLabel": "Listas:",
-      "bulkImportInvalidLabel": "Con error:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Importadas {n} recetas",
+      "bulkImportHint": "Varias filas pueden ser la misma receta: una por ingrediente.",
+      "bulkImportDownloadTemplate": "Descargar plantilla",
+      "bulkImportReview": "Comprobar archivo",
+      "bulkImportReviewHint": "Primero sube y comprueba el archivo. Nada se guarda todavía.",
+      "bulkImportCommit": "Cargar {n} recetas",
+      "bulkImportValid": "{n} listas para cargar",
+      "bulkImportInvalid": "{n} con problema",
+      "bulkImportCommitted": "Se cargaron {n} recetas",
       "bulkImportClose": "Cerrar",
       "bulkImportStatus": "Estado",
       "bulkImportDownloadOriginal": "Descargar original",
-      "bulkImportQuotaExceeded": "El plan no tiene cupo para esta carga. Reduce recetas o actualiza el plan antes de confirmar.",
-      "bulkImportHistory": "4. Historial de cargas",
-      "bulkImportStepTemplate": "1. Plantilla",
-      "bulkImportStepFile": "2. Archivo",
-      "bulkImportStepResult": "3. Resultado",
+      "bulkImportQuotaExceeded": "Tu plan no tiene cupo para esta carga. Reduce recetas o actualiza el plan.",
+      "bulkImportHistory": "Historial",
+      "bulkImportStepTemplate": "Plantilla",
+      "bulkImportStepFile": "Archivo",
+      "bulkImportStepResult": "Resultado",
       "bulkImportNoJobs": "Aún no hay cargas",
       "form": {
         "createTitle": "Crear receta",
@@ -342,7 +356,22 @@
         "nameRequiredError": "El nombre es obligatorio.",
         "nameExistsError": "Ya existe una receta base con ese nombre.",
         "unexpectedError": "Error inesperado. Por favor intenta de nuevo."
-      }
+      },
+      "bulkImportReviewHintReady": "Listo: puedes cargar lo que pasó la revisión.",
+      "bulkImportDropPrompt": "Arrastra tu CSV aquí o",
+      "bulkImportDropSelect": "elige un archivo",
+      "bulkImportDropHint": "Solo CSV · máx. 5 MB",
+      "bulkImportNoFileYet": "Todavía no hay archivo seleccionado.",
+      "bulkImportErrorRow": "Línea {row}",
+      "bulkImportNeedFile": "Primero sube un archivo.",
+      "bulkImportNeedReview": "Primero comprueba el archivo.",
+      "bulkImportNoneReady": "Nada listo para cargar. Corrige el archivo y vuelve a comprobar.",
+      "bulkImportInvalidFileType": "Usa un archivo CSV.",
+      "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
+      "bulkImportHelpTitle": "Cómo llenar el archivo",
+      "bulkImportHelpBody": "Repite el mismo nombre de receta en cada línea de ingredientes. Los ingredientes deben existir ya en bodega, con una unidad que WARO entienda.",
+      "bulkImportHelpExample": "Misma receta en 2 líneas:\nSalsa tomate · Tomate · 1 · kg\nSalsa tomate · Cebolla · 0.2 · kg",
+      "bulkImportHelpUnits": "Unidad base del artículo: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr\nSi esa unidad de compra no existe en el artículo, la fila falla."
     },
     "modificadores": {
       "searchPlaceholder": "Buscar grupo o producto...",
@@ -350,25 +379,22 @@
       "emptySub": "Crea un nuevo grupo para comenzar",
       "bulkImport": "Carga masiva",
       "bulkImportTitle": "Carga masiva de modificadores",
-      "bulkImportHint": "CSV por grupo (group_name + opciones). Sin vincular productos en v1; enlaza ingredientes/recetas por nombre si aplica.",
-      "bulkImportDownloadTemplate": "Descargar plantilla CSV",
-      "bulkImportUpload": "Subir CSV",
-      "bulkImportReview": "Revisar archivo",
-      "bulkImportReviewHint": "Revisa errores antes de importar. Aún no se crea nada.",
-      "bulkImportCommit": "Importar grupos válidos",
-      "bulkImportValidLabel": "Listos:",
-      "bulkImportInvalidLabel": "Con error:",
-      "bulkImportValid": "{n}",
-      "bulkImportInvalid": "{n}",
-      "bulkImportCommitted": "Importados {n} grupos",
+      "bulkImportHint": "Crea grupos de opciones; luego los vinculas a productos.",
+      "bulkImportDownloadTemplate": "Descargar plantilla",
+      "bulkImportReview": "Comprobar archivo",
+      "bulkImportReviewHint": "Primero sube y comprueba el archivo. Nada se guarda todavía.",
+      "bulkImportCommit": "Cargar {n} grupos",
+      "bulkImportValid": "{n} listos para cargar",
+      "bulkImportInvalid": "{n} con problema",
+      "bulkImportCommitted": "Se cargaron {n} grupos",
       "bulkImportClose": "Cerrar",
       "bulkImportStatus": "Estado",
       "bulkImportDownloadOriginal": "Descargar original",
-      "bulkImportQuotaExceeded": "El plan no tiene cupo para esta carga. Reduce grupos o actualiza el plan antes de confirmar.",
-      "bulkImportHistory": "4. Historial de cargas",
-      "bulkImportStepTemplate": "1. Plantilla",
-      "bulkImportStepFile": "2. Archivo",
-      "bulkImportStepResult": "3. Resultado",
+      "bulkImportQuotaExceeded": "Tu plan no tiene cupo para esta carga. Reduce grupos o actualiza el plan.",
+      "bulkImportHistory": "Historial",
+      "bulkImportStepTemplate": "Plantilla",
+      "bulkImportStepFile": "Archivo",
+      "bulkImportStepResult": "Resultado",
       "bulkImportNoJobs": "Aún no hay cargas",
       "newGroup": "Nuevo grupo",
       "newShort": "Nuevo",
@@ -398,90 +424,105 @@
       "active": "Activo",
       "inactive": "Inactivo",
       "optionsCount": "opciones",
-      "selectionShort": "sel."
-      ,"editBusy": "Actualizando grupo de modificadores..."
-      ,"editBusyHint": "Estamos guardando los cambios del grupo y sincronizando sus opciones."
-      ,"groupData": "Datos del grupo"
-      ,"productsRequired": "Productos *"
-      ,"searchProduct": "Buscar producto..."
-      ,"groupNameRequired": "Nombre del grupo *"
-      ,"groupNamePlaceholder": "Ej. extras, tamaño, sin..."
-      ,"minSelectionRequired": "Selección mínima *"
-      ,"minSelectionHelp": "Cantidad mínima de opciones a seleccionar"
-      ,"maxSelectionRequired": "Selección máxima *"
-      ,"maxSelectionHelp": "Cantidad máxima de opciones a seleccionar"
-      ,"displayOrder": "Orden de visualización"
-      ,"displayOrderHelp": "Menor número aparece primero"
-      ,"requiredToggle": "Es obligatorio"
-      ,"requiredHelp": "El cliente debe seleccionar al menos una opción"
-      ,"addOption": "Agregar"
-      ,"emptyOptions": "Sin opciones en el grupo"
-      ,"emptyOptionsHelp": "Agrega modificadores que los clientes puedan seleccionar"
-      ,"groupSummary": "Resumen"
-      ,"groupSummaryLabel": "Grupo:"
-      ,"selectedProducts": "Productos:"
-      ,"optionCount": "Opciones:"
-      ,"selection": "Selección:"
-      ,"none": "Ninguno"
-      ,"productsCount": "{count} productos"
-      ,"saveBusy": "Guardando..."
-      ,"saveGroup": "Guardar grupo"
-      ,"cancel": "Cancelar"
-      ,"warehouseItemRequired": "Artículo de bodega *"
-      ,"resaleProductRequired": "Producto de reventa *"
-      ,"resaleProductHelp": "Selecciona un producto de reventa; WARO usa su artículo de bodega vinculado (1:1)."
-      ,"baseRecipe": "Receta base"
-      ,"menuProduct": "Producto de menú"
-      ,"priceOnly": "Solo precio"
-      ,"optionTypeRequired": "Tipo *"
-      ,"optionNameRequired": "Nombre *"
-      ,"cashierNamePlaceholder": "Nombre en caja"
-      ,"salePrice": "Precio venta"
-      ,"additionalUnitPrice": "Precio por unidad adicional"
-      ,"includedShort": "Incl."
-      ,"includedQuantityHelp": "Las unidades incluidas no tienen costo; el precio se cobra por cada unidad adicional."
-      ,"optionQuantityThresholdHelp": "Por opción: Máx. = tope de unidades; Incl. = unidades gratis (Incl. no puede superar Máx.). Esto es distinto de la selección mínima/máxima del grupo."
-      ,"maxRaisedForIncluded": "Máx. se ajustó a {max} para cubrir las unidades incluidas."
-      ,"includedClampedToMax": "Incl. se ajustó a {max} porque no puede superar Máx."
-      ,"groupSelectionVsOptionHelp": "La selección mínima/máxima del grupo define cuántas opciones distintas puede elegir el cliente. Máx./Incl. en cada fila aplican solo a esa opción."
-      ,"maxShort": "Máx"
-      ,"order": "Orden"
-      ,"removeOption": "Eliminar opción"
-      ,"quantity": "Cantidad"
-      ,"unit": "Unidad"
-      ,"unitCost": "Costo unit.:"
-      ,"baseRecipeRequired": "Receta base *"
-      ,"chooseRecipe": "Elegir receta…"
-      ,"recipeQuantity": "Cantidad × receta"
-      ,"menuProductRequired": "Producto de menú *"
-      ,"productQuantity": "Cantidad × producto"
-      ,"noInventoryComposition": "Opción sin composición de inventario; solo aplica el precio de venta."
-      ,"isDefault": "Por defecto"
-      ,"available": "Disponible"
-      ,"updatedSuccess": "Grupo de modificadores actualizado correctamente"
-      ,"saved": "Guardado"
-      ,"selectProductError": "Selecciona al menos un producto."
-      ,"nameRequiredError": "El nombre del grupo es obligatorio."
-      ,"maxMinError": "La selección máxima debe ser mayor o igual a la mínima."
-      ,"optionRequiredError": "Agrega al menos una opción al grupo."
-      ,"updateError": "Error al actualizar. Intenta de nuevo."
-      ,"removeProduct": "Quitar {name}"
-      ,"editProductList": "Ver / editar lista"
-      ,"searchAndAddProducts": "Busca y agrega productos uno a uno"
-      ,"selectedProductsCount": "{count} producto(s) seleccionado(s)"
-      ,"createBusy": "Creando grupo de modificadores..."
-      ,"createBusyHint": "Estamos guardando la configuración y opciones del grupo."
-      ,"optionalLabel": "(opcional)"
-      ,"totalOptions": "Total opciones:"
-      ,"withComposition": "Con composición:"
-      ,"withAdditionalCost": "Con costo adicional:"
-      ,"createBusyButton": "Creando..."
-      ,"createGroup": "Crear grupo"
-      ,"nameError": "El nombre es obligatorio."
-      ,"duplicateNameError": "Ya existe un grupo de modificadores con ese nombre."
-      ,"createOptionError": "Agrega al menos un modificador al grupo."
-      ,"createError": "Error al crear el grupo. Por favor intenta de nuevo."
-      ,"nameLabel": "Nombre:"
+      "selectionShort": "sel.",
+      "editBusy": "Actualizando grupo de modificadores...",
+      "editBusyHint": "Estamos guardando los cambios del grupo y sincronizando sus opciones.",
+      "groupData": "Datos del grupo",
+      "productsRequired": "Productos *",
+      "searchProduct": "Buscar producto...",
+      "groupNameRequired": "Nombre del grupo *",
+      "groupNamePlaceholder": "Ej. extras, tamaño, sin...",
+      "minSelectionRequired": "Selección mínima *",
+      "minSelectionHelp": "Cantidad mínima de opciones a seleccionar",
+      "maxSelectionRequired": "Selección máxima *",
+      "maxSelectionHelp": "Cantidad máxima de opciones a seleccionar",
+      "displayOrder": "Orden de visualización",
+      "displayOrderHelp": "Menor número aparece primero",
+      "requiredToggle": "Es obligatorio",
+      "requiredHelp": "El cliente debe seleccionar al menos una opción",
+      "addOption": "Agregar",
+      "emptyOptions": "Sin opciones en el grupo",
+      "emptyOptionsHelp": "Agrega modificadores que los clientes puedan seleccionar",
+      "groupSummary": "Resumen",
+      "groupSummaryLabel": "Grupo:",
+      "selectedProducts": "Productos:",
+      "optionCount": "Opciones:",
+      "selection": "Selección:",
+      "none": "Ninguno",
+      "productsCount": "{count} productos",
+      "saveBusy": "Guardando...",
+      "saveGroup": "Guardar grupo",
+      "cancel": "Cancelar",
+      "warehouseItemRequired": "Artículo de bodega *",
+      "resaleProductRequired": "Producto de reventa *",
+      "resaleProductHelp": "Selecciona un producto de reventa; WARO usa su artículo de bodega vinculado (1:1).",
+      "baseRecipe": "Receta base",
+      "menuProduct": "Producto de menú",
+      "priceOnly": "Solo precio",
+      "optionTypeRequired": "Tipo *",
+      "optionNameRequired": "Nombre *",
+      "cashierNamePlaceholder": "Nombre en caja",
+      "salePrice": "Precio venta",
+      "additionalUnitPrice": "Precio por unidad adicional",
+      "includedShort": "Incl.",
+      "includedQuantityHelp": "Las unidades incluidas no tienen costo; el precio se cobra por cada unidad adicional.",
+      "optionQuantityThresholdHelp": "Por opción: Máx. = tope de unidades; Incl. = unidades gratis (Incl. no puede superar Máx.). Esto es distinto de la selección mínima/máxima del grupo.",
+      "maxRaisedForIncluded": "Máx. se ajustó a {max} para cubrir las unidades incluidas.",
+      "includedClampedToMax": "Incl. se ajustó a {max} porque no puede superar Máx.",
+      "groupSelectionVsOptionHelp": "La selección mínima/máxima del grupo define cuántas opciones distintas puede elegir el cliente. Máx./Incl. en cada fila aplican solo a esa opción.",
+      "maxShort": "Máx",
+      "order": "Orden",
+      "removeOption": "Eliminar opción",
+      "quantity": "Cantidad",
+      "unit": "Unidad",
+      "unitCost": "Costo unit.:",
+      "baseRecipeRequired": "Receta base *",
+      "chooseRecipe": "Elegir receta…",
+      "recipeQuantity": "Cantidad × receta",
+      "menuProductRequired": "Producto de menú *",
+      "productQuantity": "Cantidad × producto",
+      "noInventoryComposition": "Opción sin composición de inventario; solo aplica el precio de venta.",
+      "isDefault": "Por defecto",
+      "available": "Disponible",
+      "updatedSuccess": "Grupo de modificadores actualizado correctamente",
+      "saved": "Guardado",
+      "selectProductError": "Selecciona al menos un producto.",
+      "nameRequiredError": "El nombre del grupo es obligatorio.",
+      "maxMinError": "La selección máxima debe ser mayor o igual a la mínima.",
+      "optionRequiredError": "Agrega al menos una opción al grupo.",
+      "updateError": "Error al actualizar. Intenta de nuevo.",
+      "removeProduct": "Quitar {name}",
+      "editProductList": "Ver / editar lista",
+      "searchAndAddProducts": "Busca y agrega productos uno a uno",
+      "selectedProductsCount": "{count} producto(s) seleccionado(s)",
+      "createBusy": "Creando grupo de modificadores...",
+      "createBusyHint": "Estamos guardando la configuración y opciones del grupo.",
+      "optionalLabel": "(opcional)",
+      "totalOptions": "Total opciones:",
+      "withComposition": "Con composición:",
+      "withAdditionalCost": "Con costo adicional:",
+      "createBusyButton": "Creando...",
+      "createGroup": "Crear grupo",
+      "nameError": "El nombre es obligatorio.",
+      "duplicateNameError": "Ya existe un grupo de modificadores con ese nombre.",
+      "createOptionError": "Agrega al menos un modificador al grupo.",
+      "createError": "Error al crear el grupo. Por favor intenta de nuevo.",
+      "nameLabel": "Nombre:",
+      "bulkImportReviewHintReady": "Listo: puedes cargar lo que pasó la revisión.",
+      "bulkImportDropPrompt": "Arrastra tu CSV aquí o",
+      "bulkImportDropSelect": "elige un archivo",
+      "bulkImportDropHint": "Solo CSV · máx. 5 MB",
+      "bulkImportNoFileYet": "Todavía no hay archivo seleccionado.",
+      "bulkImportErrorRow": "Línea {row}",
+      "bulkImportNeedFile": "Primero sube un archivo.",
+      "bulkImportNeedReview": "Primero comprueba el archivo.",
+      "bulkImportNoneReady": "Nada listo para cargar. Corrige el archivo y vuelve a comprobar.",
+      "bulkImportInvalidFileType": "Usa un archivo CSV.",
+      "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
+      "bulkImportHelpTitle": "Cómo llenar el archivo",
+      "bulkImportHelpBody": "Repite el nombre del grupo en cada opción. Esta carga no asigna productos; eso se hace después en el grupo.",
+      "bulkImportHelpExample": "Mismo grupo en 2 líneas:\nPunto de cocción · Término medio · 0\nPunto de cocción · Bien asado · 0",
+      "bulkImportHelpUnits": "Si la opción descuenta bodega, en ingredient_unit usa:\nUnidad base: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr"
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",
