@@ -46,6 +46,7 @@
           {{ pollingStatus ? t('billing.validating') : t('billing.paddleThankYouRefresh') }}
         </button>
         <NuxtLink
+          v-if="thankYouPhase !== 'ready'"
           to="/gestion/billing"
           class="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-5 py-2 text-sm font-semibold text-text-primary"
         >
