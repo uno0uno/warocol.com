@@ -58,6 +58,17 @@
         />
       </template>
 
+      <template #header-estado>
+        <UiTableHeaderFilter
+          v-model="estadoFilter"
+          :title="t('menu.modificadores.estado')"
+          filter-type="select"
+          :options="estadoHeaderOptions"
+          :all-label="t('menu.modificadores.todos')"
+          align="center"
+        />
+      </template>
+
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value }">
         <div class="flex items-center">
@@ -145,6 +156,17 @@
         </div>
       </template>
 
+      <template #cell-estado="{ row }">
+        <div class="flex justify-center">
+          <UiStatusBadge
+            :value="row.is_active === false ? t('menu.modificadores.archivado') : t('menu.modificadores.activo')"
+            format="text"
+            :variant="row.is_active === false ? 'destructive' : 'success'"
+            size="sm"
+          />
+        </div>
+      </template>
+
       <template #cell-actions="{ row }">
         <div class="flex justify-center gap-1">
           <button
@@ -182,6 +204,12 @@
             :value="item.is_required ? t('menu.modificadores.required') : t('menu.modificadores.optional')"
             format="text"
             :variant="item.is_required ? 'warning' : 'secondary'"
+            size="sm"
+          />
+          <UiStatusBadge
+            :value="item.is_active === false ? t('menu.modificadores.archivado') : t('menu.modificadores.activo')"
+            format="text"
+            :variant="item.is_active === false ? 'destructive' : 'success'"
             size="sm"
           />
         </div>
@@ -427,6 +455,7 @@ const toast = useToast()
 const expandedRows = ref(new Set<string>())
 const showBulkImport = ref(false)
 const requiredFilter = ref<'required' | 'optional' | ''>('')
+const estadoFilter = ref<'activo' | 'archivado' | ''>('activo')
 
 // ── Delete flow ─────────────────────────────────────────────────────────
 const confirmOpen = ref(false)
@@ -469,15 +498,20 @@ const requiredHeaderOptions = computed(() => [
   { label: t('menu.modificadores.required'), value: 'required' },
   { label: t('menu.modificadores.optional'), value: 'optional' },
 ])
+const estadoHeaderOptions = computed(() => [
+  { label: t('menu.modificadores.activo'), value: 'activo' },
+  { label: t('menu.modificadores.archivado'), value: 'archivado' },
+])
 const isRequiredFilter = computed(() => {
   if (requiredFilter.value === 'required') return true
   if (requiredFilter.value === 'optional') return false
   return null
 })
-const hasActiveModificadoresFilters = computed(() => hasActiveFilters.value || !!requiredFilter.value)
+const hasActiveModificadoresFilters = computed(() => hasActiveFilters.value || !!requiredFilter.value || !!estadoFilter.value)
 
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 watch(requiredFilter, () => { currentPage.value = 1 })
+watch(estadoFilter, () => { currentPage.value = 1 })
 
 const performSearch = () => {
   appliedSearch.value = localSearchTerm.value.trim()
@@ -487,6 +521,7 @@ const performSearch = () => {
 const onClearModificadoresFilters = () => {
   clearModificadoresFilters()
   requiredFilter.value = ''
+  estadoFilter.value = 'activo'
   currentPage.value = 1
 }
 
@@ -497,6 +532,7 @@ const { data: groupsData, asyncStatus: groupsAsyncStatus, refetch: refetchGroups
     limit: itemsPerPage.value,
     search: appliedSearch.value || null,
     is_required: isRequiredFilter.value,
+    estado: estadoFilter.value,
   }],
   query: () => {
     const params: Record<string, string | number | boolean> = {
@@ -505,6 +541,7 @@ const { data: groupsData, asyncStatus: groupsAsyncStatus, refetch: refetchGroups
     }
     if (appliedSearch.value) params.search = appliedSearch.value
     if (isRequiredFilter.value !== null) params.is_required = isRequiredFilter.value
+    if (estadoFilter.value) params.estado = estadoFilter.value
     return $fetch('/api/menu/modifier-groups', { params })
   },
   enabled: () => !!currentTenant.value,
@@ -591,6 +628,13 @@ const gruposTableColumns = [
     key: 'tipo',
     title: t('menu.common.tipo'),
     sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'estado',
+    title: t('menu.modificadores.estado'),
+    sortable: false,
     format: 'text',
     align: 'center'
   },

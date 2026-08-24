@@ -529,7 +529,11 @@
       "deleteConfirm": "Eliminar",
       "deleteLoading": "Eliminando...",
       "deleteErrorTitle": "No se pudo eliminar",
-      "deleteError": "Error al eliminar el grupo. Intenta de nuevo."
+      "deleteError": "Error al eliminar el grupo. Intenta de nuevo.",
+      "estado": "Estado",
+      "activo": "Activo",
+      "archivado": "Archivado",
+      "todos": "Todos"
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",
