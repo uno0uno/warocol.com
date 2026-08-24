@@ -112,8 +112,11 @@
                disabled:opacity-50 disabled:cursor-not-allowed transition-all"
       >
         <UiLoadingDots v-if="isSubmitting" color="currentColor" size="14px" aria-label="Enviando..." />
-        <span v-else>Quiero saber más</span>
+        <span v-else>{{ submitLabel }}</span>
       </button>
+      <p v-if="microcopy" class="text-xs leading-relaxed text-ebony-500 text-center">
+        {{ microcopy }}
+      </p>
 
     </form>
   </div>
@@ -124,9 +127,13 @@ const props = withDefaults(defineProps<{
   buttonSource: string
   campaignSlug?: string
   whatsappFollowUp?: boolean
+  submitLabel?: string
+  microcopy?: string
 }>(), {
   campaignSlug: '',
   whatsappFollowUp: false,
+  submitLabel: 'Quiero saber más',
+  microcopy: '',
 })
 
 const emit = defineEmits<{ close: [] }>()
