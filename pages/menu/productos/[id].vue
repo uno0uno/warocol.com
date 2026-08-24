@@ -896,6 +896,10 @@
             <p class="text-sm text-text-secondary">{{ t('menu.productos.deleteDescription') }}</p>
           </div>
         </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-text-primary mb-1">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
         <div v-if="deleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
           {{ deleteError }}
         </div>
@@ -903,7 +907,7 @@
           <UiButton type="button" variant="default" class="flex-1 bg-shell-icon-bg text-shell-icon-text hover:bg-shell-icon-hover-bg focus-visible:ring-shell-action-focus-ring" @click="showDeleteModal = false" :disabled="isSubmitting">
             {{ t('common.cancel') }}
           </UiButton>
-          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" @click="confirmDelete" :disabled="isSubmitting">
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" @click="confirmDelete" :disabled="isSubmitting || !deleteReason.trim()">
             <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
             <span>{{ isSubmitting ? t('menu.productos.deletingProduct') : t('menu.productos.confirmDeleteProduct') }}</span>
           </UiButton>
@@ -1849,6 +1853,7 @@ const handleSubmit = async () => {
 
 const showDeleteModal = ref(false)
 const deleteError = ref('')
+const deleteReason = ref('')
 
 const deleteProduct = () => {
   deleteError.value = ''
@@ -1856,12 +1861,13 @@ const deleteProduct = () => {
 }
 
 const confirmDelete = async () => {
+  if (!deleteReason.value.trim()) { deleteError.value = t('operaciones.promociones.deleteReasonPlaceholder'); return }
   isSubmitting.value = true
   deleteError.value = ''
   try {
     const result = await $fetch<{ success: boolean; archived?: boolean; message?: string }>(
       `/api/menu/products/${productId}`,
-      { method: 'DELETE' },
+      { method: 'DELETE', body: { reason: deleteReason.value.trim() } },
     )
     showDeleteModal.value = false
     cache.invalidateQueries()
