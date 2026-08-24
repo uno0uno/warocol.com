@@ -522,7 +522,14 @@
       "bulkImportHelpTitle": "How to fill the file",
       "bulkImportHelpBody": "Repeat the group name on each option row. This import does not attach products; do that later on the group.",
       "bulkImportHelpExample": "Same group on 2 lines:\nCooking point · Medium · 0\nCooking point · Well done · 0",
-      "bulkImportHelpUnits": "If the option deducts warehouse stock, in ingredient_unit use:\nBase unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr"
+      "bulkImportHelpUnits": "If the option deducts warehouse stock, in ingredient_unit use:\nBase unit: gr, kg, ml, lt, und\nOr a purchase unit already configured: libra, arroba, bulto_25kg, botella, galon, hr",
+      "deleteGroup": "Delete group",
+      "deleteTitle": "Delete modifier group?",
+      "deleteMessage": "\"{name}\" and its options will be deleted. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteLoading": "Deleting...",
+      "deleteErrorTitle": "Could not delete",
+      "deleteError": "Error deleting group. Please try again."
     },
     "categorias": {
       "searchPlaceholder": "Search category...",
