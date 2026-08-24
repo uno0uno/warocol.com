@@ -95,12 +95,12 @@ export const useWarehouseCategorySearch = (options: { searchOnMount?: boolean } 
     }
   }
 
-  async function archiveCategory(categoryId: string) {
+  async function archiveCategory(categoryId: string, reason?: string) {
     mutating.value = true
     try {
       const response = await $fetch<{ data: WarehouseCategoryRow }>(
         `/api/suppliers/warehouse-categories/${categoryId}/archive`,
-        { method: 'PATCH' },
+        { method: 'PATCH', body: { reason: reason?.trim() } },
       )
       results.value = results.value.filter(category => category.id !== categoryId)
       return response.data

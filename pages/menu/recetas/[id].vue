@@ -233,7 +233,7 @@
               size="default"
               class="w-full bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:ring-destructive/30"
               :disabled="isSubmitting"
-              @click="deleteRecipe"
+              @click="showDeleteReasonModal = true"
             >
               <Icon name="heroicons:trash" class="h-5 w-5 me-2" />
               {{ t('menu.recetas.form.deleteRecipe') }}
@@ -242,6 +242,24 @@
         </div>
       </div>
     </form>
+
+    <UiModal v-model="showDeleteReasonModal" :title="t('menu.recetas.form.deleteConfirm')">
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
+        <p v-if="deleteError" class="mb-3 text-sm text-destructive">{{ deleteError }}</p>
+        <div class="flex gap-3">
+          <UiButton type="button" variant="default" class="flex-1" @click="showDeleteReasonModal = false" :disabled="isSubmitting">
+            {{ t('common.cancel') }}
+          </UiButton>
+          <UiButton type="button" variant="destructive" class="flex-1" @click="deleteRecipe" :disabled="isSubmitting || !deleteReason.trim()">
+            {{ t('menu.recetas.form.deleteRecipe') }}
+          </UiButton>
+        </div>
+      </div>
+    </UiModal>
 
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
@@ -560,8 +578,13 @@ const cancel = () => {
   router.push('/menu/recetas')
 }
 
+const showDeleteReasonModal = ref(false)
+const deleteReason = ref('')
+const deleteError = ref('')
+
 const deleteRecipe = async () => {
-  if (!confirm(t('menu.recetas.form.deleteConfirm'))) {
+  if (!deleteReason.value.trim()) {
+    deleteError.value = t('operaciones.promociones.deleteReasonPlaceholder')
     return
   }
 
@@ -569,7 +592,8 @@ const deleteRecipe = async () => {
 
   try {
     await $fetch(`/api/menu/recipe-bases/${recipeId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      body: { reason: deleteReason.value.trim() }
     })
 
     await router.push('/menu/recetas')
