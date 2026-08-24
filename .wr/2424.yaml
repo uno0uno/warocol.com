@@ -1,0 +1,48 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2424
+title: "Batch 1: Producto - motivo en eliminar/archivar/bulk y update"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: "/Users/saifer/Documents/WEBS/WARO COLOMBIA"
+stack: fullstack
+branch: wr-2424-producto-motivo
+
+paths:
+  - api_warocol.com/app/routers/products.py
+  - api_warocol.com/app/services/products_service.py
+  - api_warocol.com/app/models/product.py
+  - api_warocol.com/app/services/operation_events_service.py
+  - front_nuxt/pages/menu/productos/[id].vue
+  - front_nuxt/pages/menu/productos/index.vue
+  - front_nuxt/composables/useOperationEvents.ts
+
+ac:
+  - Modal delete [id].vue:888 exige textarea motivo obligatorio; bloquea si vacio
+  - Bulk delete index.vue:887 exige motivo comun; valida antes de enviar
+  - PUT update producto exige reason no vacio; API valida 422 si falta
+  - API products_service valida reason y pasa a record_module_event(..., reason)
+  - Bitacora registra reason (operation_events.reason)
+
+out_of_scope:
+  - Categorias/modificadores/recetas/warehouse (Batch 2 #2425)
+  - Cambios en menu_history_service mas alla de reason
+  - CREATE producto
+
+hints:
+  entry: "api_warocol.com/app/services/products_service.py:delete_product, update_product_with_recipe"
+  pattern: "Promociones como referencia: operaciones motivo obligatorio + reason en body/extra -> operation_events"
+  tests: "pytest api_warocol.com/tests/test_products* ; pnpm --filter front_nuxt typecheck"
+
+risk:
+  sensitive: false
+  areas:
+    - 422 breaking si frontend viejo no envia reason
+    - Bloqueo UX si validacion no muestra error claro
+    - Bulk requiere payload por item o razon comun
+
+skip:
+  audits:
+    - no infra
+
+next:
+  after_pr: "/wr-plan uno0uno/warocol.com#2425"
