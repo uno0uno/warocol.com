@@ -423,6 +423,7 @@ const onItemsPerPageChange = (event: Event) => {
   currentPage.value = 1
 }
 const cache = useQueryCache()
+const toast = useToast()
 const expandedRows = ref(new Set<string>())
 const showBulkImport = ref(false)
 const requiredFilter = ref<'required' | 'optional' | ''>('')
@@ -437,6 +438,7 @@ const deleteReason = ref('')
 
 const requestDelete = (row: any) => {
   pendingDelete.value = row
+  deleteReason.value = ''
   confirmTitle.value = t('menu.modificadores.deleteTitle')
   confirmMessage.value = t('menu.modificadores.deleteMessage', { name: row.name })
   confirmOpen.value = true
@@ -456,6 +458,8 @@ const performDelete = async () => {
     await refetchGroups()
     await refetchStats()
   } catch (err: any) {
+    const msg = err?.data?.detail || err?.message || t('menu.modificadores.deleteError')
+    toast.error(msg, { title: t('menu.modificadores.deleteErrorTitle') })
     console.error('Delete modifier group failed', err)
   } finally {
     isDeleting.value = false
