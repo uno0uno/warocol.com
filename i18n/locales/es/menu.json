@@ -522,7 +522,14 @@
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Repite el nombre del grupo en cada opción. Esta carga no asigna productos; eso se hace después en el grupo.",
       "bulkImportHelpExample": "Mismo grupo en 2 líneas:\nPunto de cocción · Término medio · 0\nPunto de cocción · Bien asado · 0",
-      "bulkImportHelpUnits": "Si la opción descuenta bodega, en ingredient_unit usa:\nUnidad base: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr"
+      "bulkImportHelpUnits": "Si la opción descuenta bodega, en ingredient_unit usa:\nUnidad base: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr",
+      "deleteGroup": "Eliminar grupo",
+      "deleteTitle": "¿Eliminar grupo de modificadores?",
+      "deleteMessage": "Se eliminará \"{name}\" y sus opciones. Esta acción no se puede deshacer.",
+      "deleteConfirm": "Eliminar",
+      "deleteLoading": "Eliminando...",
+      "deleteErrorTitle": "No se pudo eliminar",
+      "deleteError": "Error al eliminar el grupo. Intenta de nuevo."
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",
