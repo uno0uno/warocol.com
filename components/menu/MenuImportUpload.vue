@@ -85,20 +85,42 @@
                 {{ t(i18nDownloadTemplate) }}
               </a>
             </div>
-            <details class="text-xs">
-              <summary class="cursor-pointer text-text-secondary hover:text-text-primary select-none">
-                {{ t(i18nHelpTitle) }}
-              </summary>
-              <div class="mt-2 space-y-1.5 text-text-secondary leading-relaxed">
-                <p>{{ t(i18nHelpBody) }}</p>
-                <p class="whitespace-pre-line text-text-tertiary">
-                  {{ t(i18nHelpExample) }}
-                </p>
-                <p class="text-text-tertiary">
-                  {{ t(i18nHelpColumnsNote) }}
-                </p>
+            <UiAccordionSection :title="t(i18nHelpTitle)">
+              <div class="space-y-3">
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.overview') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpBody) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.example') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpExample) }}
+                  </p>
+                </div>
+                <div v-if="showUnitsHelp">
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.units') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed whitespace-pre-line">
+                    {{ t(i18nHelpUnits) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-text-primary">
+                    {{ t('menu.bulkImportHelpSections.columns') }}
+                  </h4>
+                  <p class="mt-1 pl-3 border-l-2 border-border text-xs text-text-secondary leading-relaxed">
+                    {{ t(i18nHelpColumnsNote) }}
+                  </p>
+                </div>
               </div>
-            </details>
+            </UiAccordionSection>
           </section>
 
           <!-- Dropzone (hero) -->
@@ -211,25 +233,19 @@
           <p v-if="commitMsg" class="text-sm text-state-success-text">{{ commitMsg }}</p>
           <p v-if="errorMsg" class="text-sm text-destructive" role="alert">{{ errorMsg }}</p>
 
-          <details class="border-t border-border pt-4">
-            <summary
-              class="cursor-pointer text-xs font-semibold uppercase tracking-wide text-text-tertiary select-none hover:text-text-secondary"
-            >
-              {{ t(i18nStepHistory) }}
-              <span v-if="jobs.length" class="normal-case font-normal tracking-normal">
-                ({{ jobs.length }})
-              </span>
-            </summary>
-            <div class="mt-2">
-              <MenuImportJobHistory
-                :jobs="jobs"
-                hide-title
-                :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
-                :status-label-fn="statusLabel"
-                @select="loadJob"
-              />
-            </div>
-          </details>
+          <UiAccordionSection
+            class="mt-1"
+            :title="t(i18nStepHistory)"
+            :badge="jobs.length ? `(${jobs.length})` : undefined"
+          >
+            <MenuImportJobHistory
+              :jobs="jobs"
+              hide-title
+              :empty="isMenuEntity ? t(`${i18nPrefix}NoJobs`) : t('abastecimiento.glossary.bulkImportNoJobs')"
+              :status-label-fn="statusLabel"
+              @select="loadJob"
+            />
+          </UiAccordionSection>
         </div>
 
         <div class="flex-shrink-0 border-t border-border px-6 py-4 bg-surface space-y-2">
@@ -299,6 +315,7 @@ const i18nHelpTitle = computed(() => `${i18nPrefix.value}HelpTitle`)
 const i18nHelpBody = computed(() => `${i18nPrefix.value}HelpBody`)
 const i18nHelpExample = computed(() => `${i18nPrefix.value}HelpExample`)
 const i18nHelpColumnsNote = computed(() => `${i18nPrefix.value}HelpColumnsNote`)
+const i18nHelpUnits = computed(() => `${i18nPrefix.value}HelpUnits`)
 const i18nDropPrompt = computed(() => `${i18nPrefix.value}DropPrompt`)
 const i18nDropSelect = computed(() => `${i18nPrefix.value}DropSelect`)
 const i18nDropHint = computed(() => `${i18nPrefix.value}DropHint`)
@@ -310,6 +327,12 @@ const isMenuEntity = computed(
   () =>
     props.entity === 'recipe_bases'
     || props.entity === 'products'
+    || props.entity === 'modifiers',
+)
+const showUnitsHelp = computed(
+  () =>
+    props.entity === 'warehouse'
+    || props.entity === 'recipe_bases'
     || props.entity === 'modifiers',
 )
 

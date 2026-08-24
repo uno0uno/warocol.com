@@ -801,7 +801,8 @@
       "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Cada fila es un artículo de bodega. Si es reventa, puedes dejar precio/categoría vacíos y completarlos después en Productos.",
-      "bulkImportHelpExample": "Ejemplo: Tomate · unidad kg · costo 4000\nReventa incompleta: Coca 350ml · sin precio aún"
+      "bulkImportHelpExample": "Tomate · unidad kg · costo 4000\nReventa incompleta: Coca 350ml · sin precio aún",
+      "bulkImportHelpUnits": "Columna unit (stock): solo gr, kg, ml, lt o und\nReventa incompleta: debe ir en und\nunit_weight_unit: solo gr o ml"
     },
     "calidad": {
       "qualityScore": "Score de calidad",

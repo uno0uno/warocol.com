@@ -106,49 +106,44 @@
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
       <div>
         <h2 v-if="!hasOpenShift" class="text-sm font-semibold text-text-primary mb-2">{{ t('finanzas.arqueo.new') }}</h2>
-        <details v-else class="group rounded-lg border border-border bg-surface">
-          <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-text-primary flex items-center justify-between">
-            {{ t('finanzas.arqueo.otherPeriod') }}
-            <svg class="w-4 h-4 text-text-secondary transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="px-4 pb-4 pt-1">
-            <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.otherPeriodHint') }}</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px] text-start"
-                @click="onOpenShiftClick(`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`)"
-              >
-                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayMode') }}</p>
-                </div>
-              </button>
-              <button
-                type="button"
-                class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px] text-start"
-                @click="onCashCloseClick(`/finanzas/arqueo/z?mode=template&start=${today}`)"
-              >
-                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfigured') }}</p>
-                </div>
-              </button>
-            </div>
+        <UiAccordionSection
+          v-else
+          :title="t('finanzas.arqueo.otherPeriod')"
+        >
+          <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.otherPeriodHint') }}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px] text-start"
+              @click="onOpenShiftClick(`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`)"
+            >
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.common.fullDay') }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fullDayMode') }}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px] text-start"
+              @click="onCashCloseClick(`/finanzas/arqueo/z?mode=template&start=${today}`)"
+            >
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-text-primary">{{ t('finanzas.arqueo.templateMode') }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ t('finanzas.arqueo.fixedShiftConfigured') }}</p>
+              </div>
+            </button>
           </div>
-        </details>
+        </UiAccordionSection>
         <div v-if="!hasOpenShift" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"

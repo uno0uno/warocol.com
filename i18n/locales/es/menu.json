@@ -37,6 +37,12 @@
       "incompatibleUnitError": "Selecciona una unidad compatible para cada artículo de bodega.",
       "rowsPerPage": "Filas por página"
     },
+    "bulkImportHelpSections": {
+      "overview": "Resumen",
+      "example": "Ejemplo",
+      "units": "Unidades",
+      "columns": "Columnas"
+    },
     "productos": {
       "editMode": "Modo edición",
       "viewCatalog": "Ver catálogo",
@@ -279,7 +285,7 @@
       "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Cada fila es un producto: nombre, precio y categoría. Para terminar una reventa incompleta de bodega, marca esa fila como completar reventa en la plantilla.",
-      "bulkImportHelpExample": "Ejemplo: Café americano · 5000 · Bebidas calientes\nCompletar reventa: Coca 350ml · 3500 · Bebidas"
+      "bulkImportHelpExample": "Café americano · 5000 · Bebidas calientes\nCompletar reventa: Coca 350ml · 3500 · Bebidas"
     },
     "recetas": {
       "searchPlaceholder": "Buscar recetas...",
@@ -364,7 +370,8 @@
       "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Repite el mismo nombre de receta en cada línea de ingredientes. Los ingredientes deben existir ya en bodega, con una unidad que WARO entienda.",
-      "bulkImportHelpExample": "Ejemplo (misma receta en 2 líneas):\nSalsa tomate · Tomate · 1 · kg\nSalsa tomate · Cebolla · 0.2 · kg"
+      "bulkImportHelpExample": "Misma receta en 2 líneas:\nSalsa tomate · Tomate · 1 · kg\nSalsa tomate · Cebolla · 0.2 · kg",
+      "bulkImportHelpUnits": "Unidad base del artículo: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr\nSi esa unidad de compra no existe en el artículo, la fila falla."
     },
     "modificadores": {
       "searchPlaceholder": "Buscar grupo o producto...",
@@ -514,7 +521,8 @@
       "bulkImportHelpColumnsNote": "No renombres las columnas de la plantilla (están en inglés a propósito). Los nombres, cantidades y textos sí puedes escribirlos en el idioma de tu negocio.",
       "bulkImportHelpTitle": "Cómo llenar el archivo",
       "bulkImportHelpBody": "Repite el nombre del grupo en cada opción. Esta carga no asigna productos; eso se hace después en el grupo.",
-      "bulkImportHelpExample": "Ejemplo (mismo grupo en 2 líneas):\nPunto de cocción · Término medio · 0\nPunto de cocción · Bien asado · 0"
+      "bulkImportHelpExample": "Mismo grupo en 2 líneas:\nPunto de cocción · Término medio · 0\nPunto de cocción · Bien asado · 0",
+      "bulkImportHelpUnits": "Si la opción descuenta bodega, en ingredient_unit usa:\nUnidad base: gr, kg, ml, lt, und\nO unidad de compra ya configurada: libra, arroba, bulto_25kg, botella, galon, hr"
     },
     "categorias": {
       "searchPlaceholder": "Buscar categoría...",
