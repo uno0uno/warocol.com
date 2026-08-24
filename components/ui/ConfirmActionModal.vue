@@ -59,7 +59,9 @@
               {{ message }}
             </p>
 
-            <div class="flex flex-col-reverse sm:flex-row gap-2">
+            <slot name="extra" />
+
+            <div class="flex flex-col-reverse sm:flex-row gap-2 mt-6">
               <button
                 ref="cancelButton"
                 type="button"
@@ -71,7 +73,7 @@
               </button>
               <button
                 type="button"
-                :disabled="loading"
+                :disabled="loading || disabledConfirm"
                 :class="[
                   'flex-1 min-h-[44px] py-3 px-4 rounded-lg font-semibold whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2',
                   variant === 'destructive'
@@ -103,6 +105,7 @@ interface Props {
   loadingLabel?: string
   variant?: 'destructive' | 'primary'
   loading?: boolean
+  disabledConfirm?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -111,6 +114,7 @@ const props = withDefaults(defineProps<Props>(), {
   loadingLabel: 'Procesando...',
   variant: 'primary',
   loading: false,
+  disabledConfirm: false,
 })
 
 const emit = defineEmits<{
