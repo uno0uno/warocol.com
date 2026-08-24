@@ -152,7 +152,7 @@
       @saved="onSaved"
     />
 
-    <!-- Delete confirm -->
+    <!-- Delete confirm with reason -->
     <UiConfirmActionModal
       v-model="confirmOpen"
       :title="confirmTitle"
@@ -161,8 +161,16 @@
         :loading-label="t('menu.categorias.deleteLoading')"
       variant="destructive"
       :loading="isDeleting"
+      :disabled-confirm="!deleteReason.trim()"
       @confirm="performDelete"
-    />
+    >
+      <template #extra>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-1">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
+      </template>
+    </UiConfirmActionModal>
 
     <!-- Error modal -->
     <UiErrorAlertModal
@@ -326,6 +334,7 @@ const confirmTitle = ref('')
 const confirmMessage = ref('')
 const isDeleting = ref(false)
 const pendingDelete = ref<Category | null>(null)
+const deleteReason = ref('')
 
 const errorModal = ref<{
   open: boolean
@@ -366,12 +375,14 @@ const requestDelete = async (rawCat: Record<string, any>) => {
 
 const performDelete = async () => {
   if (!pendingDelete.value || isDeleting.value) return
+  if (!deleteReason.value.trim()) return
   const cat = pendingDelete.value
   isDeleting.value = true
   try {
-    await $fetch(`/api/menu/categories/${cat.id}`, { method: 'DELETE' })
+    await $fetch(`/api/menu/categories/${cat.id}`, { method: 'DELETE', body: { reason: deleteReason.value.trim() } })
     confirmOpen.value = false
     pendingDelete.value = null
+    deleteReason.value = ''
     await invalidateConsumers()
   } catch (err: any) {
     const detail = err?.data?.detail

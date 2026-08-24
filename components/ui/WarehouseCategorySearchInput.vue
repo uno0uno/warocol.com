@@ -68,11 +68,17 @@
       <p class="text-xs text-text-secondary">
         {{ t('abastecimiento.glossary.archiveWarehouseCategoryConfirm') }}
       </p>
+      <textarea
+        v-model="archiveReason"
+        rows="2"
+        class="mt-1 w-full rounded border border-border px-2 py-1 text-xs"
+        :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')"
+      />
       <div class="mt-1 flex justify-end gap-2">
         <button type="button" class="text-xs text-text-secondary" @click="confirmingArchive = false">
           {{ t('abastecimiento.glossary.cancel') }}
         </button>
-        <button type="button" class="text-xs font-medium text-destructive" :disabled="mutating" @click="archiveSelected">
+        <button type="button" class="text-xs font-medium text-destructive" :disabled="mutating || !archiveReason.trim()" @click="archiveSelected">
           {{ t('abastecimiento.glossary.archiveWarehouseCategory') }}
         </button>
       </div>
@@ -127,6 +133,7 @@ const queryText = ref(props.modelValue?.name ?? '')
 const renaming = ref(false)
 const renameValue = ref('')
 const confirmingArchive = ref(false)
+const archiveReason = ref('')
 const actionError = ref('')
 const preserveQueryOnClear = ref(false)
 
@@ -240,14 +247,15 @@ async function saveRename() {
 }
 
 async function archiveSelected() {
-  if (!selectedCategory.value?.can_manage) return
+  if (!selectedCategory.value?.can_manage || !archiveReason.value.trim()) return
   actionError.value = ''
   try {
-    await archiveCategory(selectedCategory.value.id)
+    await archiveCategory(selectedCategory.value.id, archiveReason.value.trim())
     queryText.value = ''
     query.value = ''
     updateSelection(null)
     confirmingArchive.value = false
+    archiveReason.value = ''
   } catch (archiveError: any) {
     actionError.value = errorMessage(archiveError)
   }

@@ -176,12 +176,13 @@ describe('WarehouseCategorySearchInput', () => {
     )
 
     await wrapper.findAll('button').find(button => button.text() === 'Archivar')?.trigger('click')
+    await wrapper.get('textarea').setValue('categoria duplicada')
     await wrapper.findAll('button').find(button => button.text() === 'Archivar')?.trigger('click')
     await flushPromises()
 
     expect(fetchMock).toHaveBeenLastCalledWith(
       '/api/suppliers/warehouse-categories/created-category/archive',
-      { method: 'PATCH' },
+      { method: 'PATCH', body: { reason: 'categoria duplicada' } },
     )
     expect(wrapper.text()).not.toContain('Privada')
   })
