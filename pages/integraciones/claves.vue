@@ -342,8 +342,10 @@ const {
 })
 
 const activeTokens = computed(() => tokensData.value?.data?.filter(t => t.isActive) || [])
-const isLoading = computed(() => !tokensData.value && !fetchError.value)
-const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && tokensData.value != null)
+const hasEverLoaded = ref(false)
+watch(tokensData, (v) => { if (v) hasEverLoaded.value = true })
+const isLoading = computed(() => !hasEverLoaded.value && queryAsyncStatus.value === 'loading')
+const isRefreshing = computed(() => hasEverLoaded.value && queryAsyncStatus.value === 'loading')
 const error = computed(() => fetchError.value ? t('integraciones.loadError') : null)
 
 // Create Modal
