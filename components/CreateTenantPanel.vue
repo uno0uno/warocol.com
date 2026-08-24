@@ -11,6 +11,7 @@
       <div
         v-if="modelValue"
         class="fixed inset-0 z-[9999] bg-black/40"
+        :class="saving ? 'pointer-events-none' : ''"
         @click="close"
         aria-hidden="true"
       />
@@ -22,6 +23,7 @@
         role="dialog"
         aria-modal="true"
         :aria-label="t('shell.createTenantTitle')"
+        :aria-busy="saving"
         class="fixed z-[10000] flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:end-0 md:bottom-auto md:start-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -62,7 +64,18 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        <div class="relative flex-1 overflow-y-auto px-6 py-5">
+          <div
+            v-if="saving"
+            class="absolute inset-0 z-10 bg-surface/70 flex items-center justify-center"
+            aria-hidden="true"
+          >
+            <UiLoadingDots size="10px" color="currentColor" />
+          </div>
+          <fieldset
+            :disabled="saving || optionsLoading"
+            class="min-w-0 space-y-4 border-0 p-0 m-0"
+          >
           <div class="flex flex-col gap-1.5">
             <label :for="nameId" class="text-sm font-medium text-text-primary">
               {{ t('onboarding.businessName') }} <span class="text-destructive">*</span>
@@ -75,7 +88,6 @@
               autocomplete="organization"
               minlength="2"
               maxlength="120"
-              :disabled="saving || optionsLoading"
               :class="inputClass"
               :aria-invalid="Boolean(errors.businessName)"
               :aria-describedby="errors.businessName ? `${nameId}-error` : `${nameId}-hint`"
@@ -98,7 +110,6 @@
                 :id="countryId"
                 v-model="businessCountryCode"
                 required
-                :disabled="saving || optionsLoading"
                 :class="selectClass"
                 :aria-invalid="Boolean(errors.businessCountryCode)"
                 @change="handleBusinessCountryChange"
@@ -125,7 +136,7 @@
                 :id="currencyId"
                 v-model="baseCurrencyCode"
                 required
-                :disabled="saving || optionsLoading || !businessCountryCode"
+                :disabled="!businessCountryCode"
                 :class="selectClass"
                 :aria-invalid="Boolean(errors.baseCurrencyCode)"
                 @change="clearError('baseCurrencyCode')"
@@ -150,7 +161,6 @@
               :id="jurisdictionId"
               v-model="taxJurisdictionCode"
               required
-              :disabled="saving || optionsLoading"
               :class="selectClass"
               :aria-invalid="Boolean(errors.taxJurisdictionCode)"
               :aria-describedby="errors.taxJurisdictionCode ? `${jurisdictionId}-error` : `${jurisdictionId}-hint`"
@@ -176,6 +186,7 @@
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2" role="alert">
             {{ errors.general }}
           </p>
+          </fieldset>
         </div>
 
         <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-4">
@@ -229,6 +240,8 @@ interface AdditionalTenantData {
   slug: string
   name: string
   resumed?: boolean
+  lifecycleStatus?: string
+  lifecycle_status?: string
 }
 
 const props = defineProps<{
@@ -415,7 +428,10 @@ const tenantFromResponse = (data: AdditionalTenantData): Tenant | null => {
   const id = String(data.tenantId ?? data.tenant_id ?? '')
   const slug = String(data.slug || '')
   const name = String(data.name || '')
+  const lifecycle = String(data.lifecycleStatus ?? data.lifecycle_status ?? '')
   if (!id || !slug) return null
+  // Resume may still be pending; a new business must be active.
+  if (!data.resumed && lifecycle !== 'active') return null
   return { id, slug, name }
 }
 
@@ -441,7 +457,8 @@ const submit = async () => {
         body,
       },
     )
-    const tenant = tenantFromResponse(response?.data ?? {} as AdditionalTenantData)
+    const payload = response?.data ?? {} as AdditionalTenantData
+    const tenant = tenantFromResponse(payload)
     if (!tenant) {
       errors.value = { general: t('onboarding.activationError') }
       return
@@ -449,7 +466,7 @@ const submit = async () => {
 
     tenantsStore.upsertUserTenant(tenant)
     const switched = await tenantsStore.selectTenant(tenant)
-    if (!switched) {
+    if (!switched || tenantsStore.selectedTenant?.id !== tenant.id) {
       errors.value = { general: t('onboarding.activationError') }
       return
     }
@@ -457,8 +474,12 @@ const submit = async () => {
     // in the selector even if the list snapshot is still stale.
     await tenantsStore.fetchUserTenants()
     tenantsStore.upsertUserTenant(tenant)
+    if (tenantsStore.selectedTenant?.id !== tenant.id) {
+      errors.value = { general: t('onboarding.activationError') }
+      return
+    }
 
-    if (response.data?.resumed) {
+    if (payload.resumed) {
       toast.info(t('shell.createTenantResumed'))
     }
 
