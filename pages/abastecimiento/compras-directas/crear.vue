@@ -808,6 +808,7 @@ import { filterPurchasePaymentGroups, isCashPaymentSlug, mergePosPaymentGroupsFr
 import { useInlineCatalogProductLink } from '@/composables/useInlineCatalogProductLink'
 import { useFormatters } from '~/composables/useFormatters'
 import { localeToNumberFormatTag, normalizeCurrencyCode } from '~/utils/currencyDisplay'
+import { fetchIngredientPurchaseUnitsBatch } from '~/composables/useIngredientPurchaseUnitsBatch'
 
 const { t } = useI18n({ useScope: 'global' })
 const { todayISO, dateAtNoon } = useTenantTimezone()
@@ -1259,31 +1260,28 @@ const onSupplierChange = async (supplierId: string) => {
   }
 }
 
+async function loadPurchaseUnitsBatchTolerant(ids: string[]) {
+  await fetchIngredientPurchaseUnitsBatch(
+    ids,
+    { purchaseUnitsCache: purchaseUnitsCache.value, loadingUnits: loadingUnitsFor.value },
+    (ids, add) => {
+      const next = new Set(loadingUnitsFor.value)
+      ids.forEach(id => add ? next.add(id) : next.delete(id))
+      loadingUnitsFor.value = next
+    },
+    (updater) => { purchaseUnitsCache.value = updater(purchaseUnitsCache.value) },
+  )
+}
+
 const onIngredientChange = async (index: number) => {
   const item = form.value.items[index]
   const ingredient = ingredientCache.value[item.ingredient_id]
   if (!ingredient) return
 
-  // Fetch purchase units for this ingredient if not cached
   if (!purchaseUnitsCache.value.has(item.ingredient_id)) {
-    loadingUnitsFor.value = new Set([...loadingUnitsFor.value, item.ingredient_id])
-    try {
-      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${item.ingredient_id}`)
-      const updated = new Map(purchaseUnitsCache.value)
-      updated.set(item.ingredient_id, res.data || [])
-      purchaseUnitsCache.value = updated
-    } catch {
-      const updated = new Map(purchaseUnitsCache.value)
-      updated.set(item.ingredient_id, [])
-      purchaseUnitsCache.value = updated
-    } finally {
-      const next = new Set(loadingUnitsFor.value)
-      next.delete(item.ingredient_id)
-      loadingUnitsFor.value = next
-    }
+    await loadPurchaseUnitsBatchTolerant([item.ingredient_id])
   }
 
-  // Set default unit
   const units = getPurchaseUnitOptions(item.ingredient_id)
   const defaultUnit = units.find((u: any) => u.is_default) || units[0]
   if (defaultUnit) item.purchase_unit = defaultUnit.value
@@ -1615,10 +1613,18 @@ const handleScanFileSelect = async (event: Event) => {
           return item
         })
 
-        // Auto-set default purchase unit for matched items
-        form.value.items.forEach((item, index) => {
-          if (item.ingredient_id) onIngredientChange(index)
-        })
+        // Auto-set default purchase unit for matched items — batch 1 POST vs N GETs
+        const ocrIds = [...new Set(form.value.items.map(i => i.ingredient_id).filter(Boolean) as string[])]
+        if (ocrIds.length) {
+          await loadPurchaseUnitsBatchTolerant(ocrIds)
+          form.value.items.forEach((item, index) => {
+            if (!item.ingredient_id) return
+            const units = getPurchaseUnitOptions(item.ingredient_id)
+            const defaultUnit = units.find((u: any) => u.is_default) || units[0]
+            if (defaultUnit) item.purchase_unit = defaultUnit.value
+            updateSuggestedPrice(index)
+          })
+        }
 
         // Aplicar peso_unidad_gr del OCR: auto-seleccionar unidad de compra y/o pre-llenar peso
         data.items.forEach((ocrItem: any, index: number) => {
