@@ -309,6 +309,7 @@ import {
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import { buildWarehouseCategorySelectorHydration } from '~/composables/useMenuCategoryIngredientRows'
+import { fetchIngredientPurchaseUnitsBatch } from '~/composables/useIngredientPurchaseUnitsBatch'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -538,16 +539,31 @@ const categorySelectorHydration = computed(() => {
   )
 })
 
+async function loadPurchaseUnitsBatchTolerant(ids: string[]) {
+  await fetchIngredientPurchaseUnitsBatch(
+    ids,
+    { purchaseUnitsCache: purchaseUnitsCache.value, loadingUnits: loadingUnits.value },
+    (ids, add) => {
+      const next = new Set(loadingUnits.value)
+      ids.forEach(id => add ? next.add(id) : next.delete(id))
+      loadingUnits.value = next
+    },
+    (updater) => { purchaseUnitsCache.value = updater(purchaseUnitsCache.value) },
+  )
+}
+
 function onGroupWarehouseCategoryRows(rows: PreparedWarehouseCategoryIngredient[]) {
   form.value.modifiers = syncWarehouseModifiersFromCategory(form.value.modifiers, rows)
+  const batchIds: string[] = []
   for (const row of rows) {
     cacheIngredientForUnits({
       id: row.ingredient_id,
       name: row.name,
       unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
     })
-    void loadPurchaseUnits(row.ingredient_id)
+    if (row.ingredient_id && !purchaseUnitsCache.value.has(row.ingredient_id)) batchIds.push(row.ingredient_id)
   }
+  if (batchIds.length) void loadPurchaseUnitsBatchTolerant(batchIds)
 }
 
 function onResaleIngredientLinked(modifier: ModifierFormRow, ing: Record<string, unknown>) {
