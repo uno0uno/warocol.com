@@ -196,4 +196,43 @@ describe('useWarehouseCategoryIngredientSelector', () => {
       warehouse_category_id: 'category-1',
     }])
   })
+
+  it('preserves quantities across 3 sequential category adds (regression #2436)', async () => {
+    // Simula backend que filtra por exclude_ingredient_ids (caso real que causaba pérdida silenciosa)
+    const fetchMock = vi.fn(async (_url: string, options: any) => {
+      const allByCategory: Record<string, { ingredient_id: string, name: string, unit: string, warehouse_category_id: string }[]> = {
+        'category-1': [{ ingredient_id: 'ing-1', name: 'Cebolla', unit: 'gr', warehouse_category_id: 'category-1' }],
+        'category-2': [{ ingredient_id: 'ing-2', name: 'Aceite', unit: 'ml', warehouse_category_id: 'category-2' }],
+        'category-3': [{ ingredient_id: 'ing-3', name: 'Sal', unit: 'gr', warehouse_category_id: 'category-3' }],
+      }
+      const excluded = new Set<string>(options.body.exclude_ingredient_ids ?? [])
+      const ingredients = (options.body.category_ids as string[]).flatMap(cid =>
+        (allByCategory[cid] ?? []).filter(ing => !excluded.has(ing.ingredient_id)),
+      )
+      return { data: { ingredients, empty_category_ids: [], unavailable_category_ids: [] } }
+    })
+    vi.stubGlobal('$fetch', fetchMock)
+    const selector = useWarehouseCategoryIngredientSelector({
+      // Intencionalmente manda IDs preparados como exclude para simular el bug antiguo;
+      // el composable defensivo debe conservar filas aunque el backend las excluya.
+      getExistingIngredientIds: () => selector.preparedRows.value.map(r => r.ingredient_id),
+    })
+
+    await selector.addCategory(category('category-1', 'Verduras'))
+    selector.updatePreparedRow('ing-1', { quantity: 150, unit: 'gr' })
+    await selector.addCategory(category('category-2', 'Grasas'))
+    selector.updatePreparedRow('ing-2', { quantity: 20, unit: 'ml' })
+    expect(selector.preparedRows.value.find(r => r.ingredient_id === 'ing-1')?.quantity).toBe(150)
+    expect(selector.preparedRows.value.find(r => r.ingredient_id === 'ing-2')?.quantity).toBe(20)
+
+    await selector.addCategory(category('category-3', 'Especias'))
+    expect(selector.preparedRows.value).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ingredient_id: 'ing-1', quantity: 150, warehouse_category_id: 'category-1' }),
+      expect.objectContaining({ ingredient_id: 'ing-2', quantity: 20, warehouse_category_id: 'category-2' }),
+      expect.objectContaining({ ingredient_id: 'ing-3', quantity: null, warehouse_category_id: 'category-3' }),
+    ]))
+    expect(selector.preparedRows.value).toHaveLength(3)
+    // Orden respeta selección
+    expect(selector.preparedRows.value.map(r => r.warehouse_category_id)).toEqual(['category-1', 'category-2', 'category-3'])
+  })
 })

@@ -323,10 +323,9 @@ function getIngredientUnitOptions(ingredientId: string) {
   })
 }
 
-const existingIngredientIds = computed(() => [
-  ...form.value.ingredients.map(row => row.ingredient_id),
-  ...categoryPreparedRows.value.map(row => row.ingredient_id),
-].filter(Boolean))
+const existingIngredientIds = computed(() =>
+  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
+)
 const combinedIngredients = computed(() => [
   ...form.value.ingredients,
   ...mapPreparedRowsToRecipe(categoryPreparedRows.value),

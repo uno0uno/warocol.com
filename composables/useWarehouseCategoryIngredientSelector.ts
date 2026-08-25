@@ -77,7 +77,10 @@ export function useWarehouseCategoryIngredientSelector(options: {
       const existingPreparedRows = new Map(
         preparedRows.value.map(row => [row.ingredient_id, row]),
       )
-      preparedRows.value = (response.data?.ingredients ?? []).flatMap((ingredient) => {
+      const categoryPosition = new Map(
+        selectedCategories.value.map((cat, idx) => [cat.id, idx]),
+      )
+      const mergedFromResponse = (response.data?.ingredients ?? []).flatMap((ingredient) => {
         if (seenIds.has(ingredient.ingredient_id)) return []
         seenIds.add(ingredient.ingredient_id)
         const existingRow = existingPreparedRows.get(ingredient.ingredient_id)
@@ -89,6 +92,24 @@ export function useWarehouseCategoryIngredientSelector(options: {
           warehouse_category_id: ingredient.warehouse_category_id,
         }]
       })
+      // Defensa en profundidad: si el backend excluyó ingredientes ya preparados
+      // (ej. caller mandó categoryPreparedRows en exclude_ingredient_ids), no los perdemos.
+      // Re-incorporamos filas existentes cuya categoría sigue seleccionada y no fueron dismissed.
+      const responseIds = new Set(mergedFromResponse.map(row => row.ingredient_id))
+      for (const [id, row] of existingPreparedRows) {
+        if (responseIds.has(id) || seenIds.has(id)) continue
+        if (dismissedIngredientIds.has(id)) continue
+        if (!categoryPosition.has(row.warehouse_category_id)) continue
+        mergedFromResponse.push({ ...row })
+        seenIds.add(id)
+      }
+      mergedFromResponse.sort((a, b) => {
+        const posA = categoryPosition.get(a.warehouse_category_id) ?? 0
+        const posB = categoryPosition.get(b.warehouse_category_id) ?? 0
+        if (posA !== posB) return posA - posB
+        return a.name.localeCompare(b.name)
+      })
+      preparedRows.value = mergedFromResponse
       emptyCategoryIds.value = uniqueIds(response.data?.empty_category_ids ?? [])
       unavailableCategoryIds.value = uniqueIds(response.data?.unavailable_category_ids ?? [])
     } catch (resolveError: any) {
