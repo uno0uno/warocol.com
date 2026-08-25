@@ -978,6 +978,7 @@ import WarehouseCategoryIngredientSelector from '~/components/ingredientes/Wareh
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
 import type { WarehouseCategoryRow } from '~/composables/useWarehouseCategorySearch'
 import { applyCategorySelectorLayout } from '~/composables/useMenuCategoryIngredientRows'
+import { fetchIngredientPurchaseUnitsBatch } from '~/composables/useIngredientPurchaseUnitsBatch'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -1285,16 +1286,31 @@ async function loadPurchaseUnits(ingredientId: string) {
   }
 }
 
+async function loadPurchaseUnitsBatchTolerant(ids: string[]) {
+  await fetchIngredientPurchaseUnitsBatch(
+    ids,
+    { purchaseUnitsCache: purchaseUnitsCache.value, loadingUnits: loadingUnits.value },
+    (ids, add) => {
+      const next = new Set(loadingUnits.value)
+      ids.forEach(id => add ? next.add(id) : next.delete(id))
+      loadingUnits.value = next
+    },
+    (updater) => { purchaseUnitsCache.value = updater(purchaseUnitsCache.value) },
+  )
+}
+
 function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
   categoryPreparedRows.value = rows
+  const batchIds: string[] = []
   for (const row of rows) {
     cacheIngredientForUnits({
       id: row.ingredient_id,
       name: row.name,
       unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit || undefined,
     })
-    void loadPurchaseUnits(row.ingredient_id)
+    if (row.ingredient_id && !purchaseUnitsCache.value.has(row.ingredient_id)) batchIds.push(row.ingredient_id)
   }
+  if (batchIds.length) void loadPurchaseUnitsBatchTolerant(batchIds)
 }
 
 function selectIngredient(ing: any, index: number, productFallback?: Record<string, unknown>) {

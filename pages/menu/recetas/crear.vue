@@ -270,6 +270,7 @@
 <script setup lang="ts">
 import WarehouseCategoryIngredientSelector from '~/components/ingredientes/WarehouseCategoryIngredientSelector.vue'
 import type { PreparedWarehouseCategoryIngredient } from '~/composables/useWarehouseCategoryIngredientSelector'
+import { fetchIngredientPurchaseUnitsBatch } from '~/composables/useIngredientPurchaseUnitsBatch'
 import { ref, onMounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -357,8 +358,22 @@ async function onIngredientChange(index: number, ingredientId: string) {
   await loadPurchaseUnits(ingredientId)
 }
 
+async function loadPurchaseUnitsBatchTolerant(ids: string[]) {
+  await fetchIngredientPurchaseUnitsBatch(
+    ids,
+    { purchaseUnitsCache: purchaseUnitsCache.value, loadingUnits: loadingUnits.value },
+    (ids, add) => {
+      const next = new Set(loadingUnits.value)
+      ids.forEach(id => add ? next.add(id) : next.delete(id))
+      loadingUnits.value = next
+    },
+    (updater) => { purchaseUnitsCache.value = updater(purchaseUnitsCache.value) },
+  )
+}
+
 function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
   categoryPreparedRows.value = rows
+  const batchIds: string[] = []
   for (const row of rows) {
     ingredientCache.value[row.ingredient_id] = {
       ...ingredientCache.value[row.ingredient_id],
@@ -366,8 +381,9 @@ function onCategoryPreparedRows(rows: PreparedWarehouseCategoryIngredient[]) {
       name: row.name,
       unit: ingredientCache.value[row.ingredient_id]?.unit || row.unit,
     }
-    void loadPurchaseUnits(row.ingredient_id)
+    if (row.ingredient_id && !purchaseUnitsCache.value.has(row.ingredient_id)) batchIds.push(row.ingredient_id)
   }
+  if (batchIds.length) void loadPurchaseUnitsBatchTolerant(batchIds)
 }
 
 function selectIngredient(ingredient: any, index: number) {
