@@ -876,6 +876,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+import { fetchIngredientPurchaseUnitsBatch } from '~/composables/useIngredientPurchaseUnitsBatch'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi, isCashPaymentSlug, readFromCashDrawer } from '~/utils/paymentDefaults'
@@ -1059,13 +1060,28 @@ const ingredientOptions = computed(() => ingredients.value.map((i: any) => ({
   unit: i.unit
 })))
 
-// Fetch purchase units
+// Fetch purchase units — bulk preload + batch fallback for new ingredients
 const { data: purchaseUnitsData, pending: loadingPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
   server: false,
   query: { limit: 10000, active_only: true }
 })
 
 const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
+const extraPurchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+const extraLoadingUnits = ref<Set<string>>(new Set())
+
+async function loadPurchaseUnitsBatchTolerant(ids: string[]) {
+  await fetchIngredientPurchaseUnitsBatch(
+    ids,
+    { purchaseUnitsCache: extraPurchaseUnitsCache.value, loadingUnits: extraLoadingUnits.value },
+    (ids, add) => {
+      const next = new Set(extraLoadingUnits.value)
+      ids.forEach(id => add ? next.add(id) : next.delete(id))
+      extraLoadingUnits.value = next
+    },
+    (updater) => { extraPurchaseUnitsCache.value = updater(extraPurchaseUnitsCache.value) },
+  )
+}
 
 // Loading state
 const isLoadingData = computed(() =>
@@ -1148,7 +1164,8 @@ const getStatusText = (status: string) => {
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []
 
-  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+  const extra = extraPurchaseUnitsCache.value.get(ingredientId) || []
+  const units = [...purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId), ...extra]
 
   if (units.length === 0) {
     const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
@@ -1165,11 +1182,17 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   }))
 }
 
-const onIngredientChange = (index: number) => {
+const onIngredientChange = async (index: number) => {
   const item = form.value.items[index]
   const ingredient = ingredients.value.find((i: any) => i.id === item.ingredient_id)
 
   if (ingredient) {
+    const hasUnits = getPurchaseUnitOptions(item.ingredient_id).length > 0
+    const inExtra = extraPurchaseUnitsCache.value.has(item.ingredient_id)
+    const inBulk = purchaseUnits.value.some((u: any) => u.ingredient_id === item.ingredient_id)
+    if (!hasUnits && !inExtra && !inBulk && !extraLoadingUnits.value.has(item.ingredient_id)) {
+      await loadPurchaseUnitsBatchTolerant([item.ingredient_id])
+    }
     const units = getPurchaseUnitOptions(item.ingredient_id)
     const defaultUnit = units.find((u: any) => u.is_default) || units[0]
     if (defaultUnit) {

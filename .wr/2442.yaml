@@ -1,0 +1,36 @@
+issue: 2442
+title: "Compras directas — batch para líneas de compra"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2442-compras-directas-batch
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+  - pages/abastecimiento/compras-directas/[id]/editar.vue
+  - composables/useIngredientPurchaseUnitsBatch.ts
+
+ac:
+  - Compra directa con 20-50 líneas hace 1 batch vs N GETs, sin ERR_INSUFFICIENT_RESOURCES
+  - Cache y selects unidad funcionan; OCR 50 líneas usa 1 batch tras cacheIngredient
+  - Reusa helper dedup 250 con fallback throttled
+
+out_of_scope:
+  - API (batch ya existe #914)
+  - modificadores, cálculo compras
+
+hints:
+  entry: "pages/abastecimiento/compras-directas/crear.vue:onIngredientChange + editar.vue"
+  pattern: "pages/menu/productos/crear.vue:1084 loadPurchaseUnitsBatchTolerant + fetchIngredientPurchaseUnitsBatch"
+  tests: "manual: crear compra 20 líneas + OCR 50 items; npx vitest run relevante"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Verificar warocol-dev con 50 líneas; cerrar epic #2440"
