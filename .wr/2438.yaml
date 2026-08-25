@@ -1,0 +1,42 @@
+issue: 2438
+title: "[Perf] Batch para ingredient-purchase-units — N+1 al agregar 3-5 categorías"
+repo: both
+repo_remote: uno0uno/warocol.com + uno0uno/api-warolabs
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2438-batch-purchase-units
+
+paths:
+  - api_warocol.com/app/routers/ingredient_purchase_units.py
+  - api_warocol.com/app/services/ingredient_purchase_units_service.py
+  - front_nuxt/composables/useIngredientUnitOptions.ts
+  - front_nuxt/composables/useIngredientPurchaseUnits.ts
+  - front_nuxt/pages/menu/productos/crear.vue
+  - front_nuxt/pages/menu/productos/[id].vue
+  - front_nuxt/pages/menu/recetas/crear.vue
+  - front_nuxt/pages/menu/recetas/[id].vue
+
+ac:
+  - API POST /api/suppliers/ingredient-purchase-units/batch con ingredient_ids (max 250) retorna map id->units con auth tenant
+  - Front usa batch cuando >1 id pendiente; fallback throttling 6 concurrente
+  - Al agregar 5 categorías Waro Colombia (250 filas) no hay ERR_INSUFFICIENT_RESOURCES (1 batch vs N)
+  - Cache y selects de unidad siguen funcionando
+  - Tests para batch service + front dedup
+
+out_of_scope:
+  - cálculo de costo, UI categorías, fix #2436
+
+hints:
+  entry: "ingredient-purchase-units batch"
+  pattern: "api_warocol.com/app/routers/ingredient_purchase_units.py:42 get_purchase_units_by_ingredient + front_nuxt/pages/menu/productos/crear.vue:1087 loadPurchaseUnits"
+  tests: "pytest api_warocol.com/tests/test_ingredient_purchase_units_batch.py + npx vitest run front_nuxt/composables/useIngredientUnitOptions.test.ts"
+
+risk:
+  sensitive: false
+  areas: [tenant_isolation]
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Deploy a warocol-dev y verificar Network muestra 1 batch"
