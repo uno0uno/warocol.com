@@ -1,0 +1,36 @@
+issue: 2441
+title: "Modificadores — aplicar batch purchase-units y fix categorías"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2441-modificadores-batch
+
+paths:
+  - pages/menu/modificadores/crear.vue
+  - pages/menu/modificadores/[id].vue
+  - composables/useIngredientPurchaseUnitsBatch.ts
+
+ac:
+  - Al agregar 3 categorías en Modificadores no hay pérdida (usa merge defensivo ya en main)
+  - Al agregar 5 categorías Waro Colombia Network muestra 1 POST /batch vs N GETs, sin ERR_INSUFFICIENT_RESOURCES
+  - Cache y selects unidad siguen funcionando; existingWarehouseIngredientIds sin preparedRows
+
+out_of_scope:
+  - cambios API (batch ya existe #914)
+  - cálculo costo, UI categorías
+
+hints:
+  entry: "pages/menu/modificadores/crear.vue:onGroupWarehouseCategoryRows + loadPurchaseUnits"
+  pattern: "pages/menu/productos/crear.vue:1084 loadPurchaseUnitsBatchTolerant + fetchIngredientPurchaseUnitsBatch"
+  tests: "npx vitest run composables/useWarehouseCategoryIngredientSelector.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Verificar en warocol-dev con 5 categorías; luego /wr-next para #2442"
