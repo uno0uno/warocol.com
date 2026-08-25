@@ -62,9 +62,47 @@ function toArticleMarket(marketInput: ArticleMarketInput | ArticleMarket = {}): 
   return resolveArticleMarket(marketInput)
 }
 
-/** Resolve public offer strings from article/public market input. Default → CO. */
+/** Resolve public offer strings from article/public market input. Default → CO. Unified with trial pricing for consistency. */
 export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMarket = {}): PublicOffer {
   const market = toArticleMarket(marketInput)
+  const rawCountry = String((marketInput as any).countryCode || (marketInput as any).country || '').trim().toUpperCase()
+  const rawCurrency = String((marketInput as any).currencyCode || '').trim().toUpperCase()
+  const isEn = String((marketInput as any).locale || (marketInput as any).lang || market.localeTag || '').toLowerCase().startsWith('en') || market.isUsEn
+
+  // If caller passed explicit countryCode/currencyCode (trial-style), use same segmentation as trial for consistency
+  if (rawCountry || rawCurrency) {
+    const isCo = rawCountry === 'CO' || rawCountry === 'COL' || rawCountry.includes('COLOMBIA') || rawCurrency === 'COP'
+    const isUs = rawCountry === 'US' || rawCountry === 'USA' || rawCountry.includes('UNITED STATES')
+    if (isCo) return PUBLIC_OFFER
+    if (EUR_30_COUNTRIES.has(rawCountry) || rawCurrency === 'EUR') {
+      return {
+        annualPrice: isEn ? 'EUR €360/year' : 'EUR €360/año',
+        monthlyEquivalent: isEn ? 'under EUR €30/month' : 'menos de EUR €30/mes',
+        activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
+      }
+    }
+    if (isUs || USD_30_COUNTRIES.has(rawCountry)) {
+      return {
+        annualPrice: isEn ? 'USD $360/year' : 'USD $360/año',
+        monthlyEquivalent: isEn ? 'under USD $30/month' : 'menos de USD $30/mes',
+        activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
+      }
+    }
+    if (rawCurrency === 'USD') {
+      return {
+        annualPrice: isEn ? 'USD $360/year' : 'USD $360/año',
+        monthlyEquivalent: isEn ? 'under USD $30/month' : 'menos de USD $30/mes',
+        activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
+      }
+    }
+    // Default usd_9 for MX/AR/PE/CL etc. (e.g. MX/MXN, AR/ARS)
+    return {
+      annualPrice: isEn ? 'USD $108/year' : 'USD $108/año',
+      monthlyEquivalent: isEn ? 'under USD $9/month' : 'menos de USD $9/mes',
+      activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
+    }
+  }
+
   if (market.isUsEn) {
     return {
       annualPrice: market.annualPriceLabel,
