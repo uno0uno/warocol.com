@@ -1,0 +1,41 @@
+issue: 2436
+title: "[Bug] Constructor de recetas pierde datos al agregar 3+ categorías de bodega"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2436-fix-category-ingredient-loss
+
+paths:
+  - composables/useWarehouseCategoryIngredientSelector.ts
+  - composables/useWarehouseCategoryIngredientSelector.test.ts
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - pages/menu/recetas/crear.vue
+  - pages/menu/recetas/[id].vue
+
+ac:
+  - Al agregar categorías secuencialmente (Verduras → Grasas → Abarrotes) las filas y quantity/unit previas se conservan intactas
+  - existingIngredientIds solo excluye filas manuales (form.ingredients), no categoryPreparedRows
+  - resolve() hace merge defensivo preservando cantidades para ingredientes de categorías aún seleccionadas
+  - Test de regresión 3 categorías pasa
+  - Verificado en productos/crear, productos/[id], recetas/crear, recetas/[id]
+
+out_of_scope:
+  - cálculo de costo, migraciones DB, cambios backend
+  - UI single-category
+
+hints:
+  entry: "WarehouseCategoryIngredientSelector + useWarehouseCategoryIngredientSelector.resolve()"
+  pattern: "front_nuxt/composables/useWarehouseCategoryIngredientSelector.ts:77 existingPreparedRows merge + productos/crear.vue:1038 existingIngredientIds"
+  tests: "npm run test:catalog-search -- composables/useWarehouseCategoryIngredientSelector.test.ts components/ingredientes/WarehouseCategoryIngredientSelector.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "Verificar en staging con receta 5 categorías (Reporte Osadía/Dealer). Considerar modo agregar insumos uno-a-uno solicitado en PDF."

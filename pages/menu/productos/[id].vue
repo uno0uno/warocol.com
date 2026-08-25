@@ -1422,10 +1422,9 @@ const form = ref({
   costo_percibido: null as number | null,
 })
 
-const existingIngredientIds = computed(() => [
-  ...form.value.ingredients.map(row => row.ingredient_id),
-  ...categoryPreparedRows.value.map(row => row.ingredient_id),
-].filter(Boolean))
+const existingIngredientIds = computed(() =>
+  form.value.ingredients.map(row => row.ingredient_id).filter(Boolean),
+)
 const combinedIngredients = computed(() => [
   ...form.value.ingredients,
   ...mapPreparedRowsToProduct(categoryPreparedRows.value),
