@@ -197,6 +197,8 @@ async function printOrderComanda() {
   const queue = comandaPrintPayload.value
   document.body.classList.add('printing-comanda')
   void document.body.offsetHeight
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   const cleanup = () => {
     document.body.classList.remove('printing-comanda')
     window.removeEventListener('afterprint', cleanup)
@@ -204,7 +206,7 @@ async function printOrderComanda() {
   }
   const mode = await printComandasRouted(queue, {
     setQueue: (c) => { comandaPrintQueueOverride.value = c },
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
   })
   if (mode === 'bridge') {
     cleanup()
@@ -212,7 +214,7 @@ async function printOrderComanda() {
   }
   window.addEventListener('afterprint', cleanup, { once: true })
   setTimeout(cleanup, 4000)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
 }
 
 // Dashboard layout inject — dynamic back button

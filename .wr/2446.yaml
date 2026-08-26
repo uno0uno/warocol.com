@@ -1,0 +1,37 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2446
+title: "fix(print): Imprimir no abre nada en iPad — window.print fuera de transient activation por await PrintBridge"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: "/Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt"
+stack: nuxt
+branch: wr-2446-ipad-print-transient
+paths:
+  - pages/ventas/[id].vue
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - pages/finanzas/gastos/[id]/index.vue
+  - pages/despacho/en-mesa/[id].vue
+  - pages/despacho/domicilios/[id].vue
+  - pages/pos/checkout.vue
+  - pages/pos/index.vue
+  - composables/useCajaTicketPrint.ts
+  - components/pos/ReceiptPrintTicket.vue
+ac:
+  - iPad Safari/Chrome + Android Chrome toca Imprimir en ventas/{id} y despacho/domicilios, compras-directas, gastos, pos abre window.print sin requerir PrintBridge, incluso sin caja_printer_name (evita doble print post-await)
+  - No regresion termica: con caja_printer_name y bridge OK sigue ESC/POS raw + toast printOk; fallback window.print solo sin bridge/timeout
+  - Ninguna vista silencia browserPrint con () => {}; fallback sincrono cuando !printerName via browserPrintFiredSync flag
+  - ReceiptPrintTicket visible en preview iPad (afterprint no corta preview)
+out_of_scope:
+  - Cambios en api-warolabs recipe_bases_service
+  - Fix bot trail / lead traza
+hints:
+  entry: "pages/ventas/[id].vue:1272 printReceipt"
+  pattern: "composables/useLocalPrintBridge.ts:182 connectTimeoutMs/requestTimeoutMs"
+  tests: "vitest run composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts -q"
+risk:
+  sensitive: false
+  areas: []
+skip:
+  audits: []
+next:
+  after_pr: "verificar iPad fisico warocol.com/ventas/{id}"

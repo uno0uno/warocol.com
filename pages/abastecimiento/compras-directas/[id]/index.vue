@@ -1270,8 +1270,10 @@ const printPurchaseTicket = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   const printResult = await printTicketElement('direct-purchase-print-ticket', {
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
       return collectThermalTicketText(document.querySelector('#direct-purchase-print-ticket')) || null
@@ -1287,7 +1289,7 @@ const printPurchaseTicket = async () => {
         document.body.classList.add('printing-receipt-ticket')
         window.addEventListener('afterprint', cleanup)
         window.setTimeout(cleanup, 1500)
-        window.print()
+        syncBrowserPrint()
       },
     })
     return
@@ -1297,7 +1299,7 @@ const printPurchaseTicket = async () => {
     return
   }
   window.addEventListener('afterprint', cleanup)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
   window.setTimeout(cleanup, 1500)
 }
 

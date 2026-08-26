@@ -102,6 +102,15 @@ export async function printTicketViaCajaOrBrowser(
   const getContent = deps.getElementHtml ?? defaultGetElementContent
   const forceBrowser = deps.isForceBrowser ?? isCajaPrintForceBrowser
 
+  // iPad Safari transient activation ~0.5s (webkit): any await before window.print
+  // loses the gesture and the dialog is silently ignored. When the caller already
+  // showed that no caja printer is configured (assignments null / !printerName),
+  // that knowledge is synchronously available via a cached assignment, but the
+  // helper awaited getCajaPrinterName() (15s staleTime fetch) before fallback.
+  // The ventas caller now re-checks without await; here we keep the same no-op
+  // optimization: if deps declares browser-only (e.g. ventas iPad path), the
+  // caller passes browserPrint that already fired sync — we still return browser
+  // without double-print. No behavior change for POS thermal path with printer.
   try {
     if (forceBrowser()) {
       browserPrint()
