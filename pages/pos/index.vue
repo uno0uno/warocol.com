@@ -570,13 +570,15 @@ async function runComandaPrint(queue: ComandaPrintPayload[]) {
   if (!queue.length) return
   document.body.classList.add('printing-comanda')
   void document.body.offsetHeight
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   const cleanup = () => {
     document.body.classList.remove('printing-comanda')
     window.removeEventListener('afterprint', cleanup)
   }
   const mode = await printComandasRouted(queue, {
     setQueue: (c) => { printQueueComandas.value = c },
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
   })
   if (mode === 'bridge') {
     cleanup()
@@ -584,7 +586,7 @@ async function runComandaPrint(queue: ComandaPrintPayload[]) {
   }
   window.addEventListener('afterprint', cleanup, { once: true })
   setTimeout(cleanup, 4000)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
 }
 
 async function printLatestComanda() {

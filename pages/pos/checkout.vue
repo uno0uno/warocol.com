@@ -2926,6 +2926,8 @@ const printReceipt = async () => {
   }
   await nextTick()
   document.body.classList.add('printing-receipt-ticket')
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   const cleanup = () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
@@ -2933,7 +2935,7 @@ const printReceipt = async () => {
   // Defer window.print until after await so body print classes stay until fallback.
   // Prefer teleported ReceiptPrintTicket (plain-text layout #1979), not flex #pos-receipt.
   const printResult = await printTicketElement('pos-receipt', {
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
       const el = document.querySelector('.receipt-print-ticket')
@@ -2950,7 +2952,7 @@ const printReceipt = async () => {
         document.body.classList.add('printing-receipt-ticket')
         window.addEventListener('afterprint', cleanup)
         setTimeout(cleanup, 1500)
-        window.print()
+        syncBrowserPrint()
       },
     })
     return
@@ -2961,7 +2963,7 @@ const printReceipt = async () => {
   }
   window.addEventListener('afterprint', cleanup)
   setTimeout(cleanup, 1500)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
 }
 
 // Issue #535 — tenant fiscal data for the prefactura header.
@@ -3395,9 +3397,11 @@ const printPrefactura = async () => {
   }
 
   await nextTick()
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   // Defer window.print until after await so body print classes stay until fallback.
   const printResult = await printTicketElement('pos-prefactura', {
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
     getElementHtml: () => {
       if (typeof document === 'undefined') return null
       return collectThermalTicketText(document.getElementById('pos-prefactura')) || null
@@ -3413,7 +3417,7 @@ const printPrefactura = async () => {
         document.body.classList.add('printing-prefactura')
         window.addEventListener('afterprint', cleanup)
         setTimeout(cleanup, 2000)
-        window.print()
+        syncBrowserPrint()
       },
     })
     return
@@ -3425,7 +3429,7 @@ const printPrefactura = async () => {
   window.addEventListener('afterprint', cleanup)
   // Defensive fallback for browsers where afterprint may not fire on cancel.
   setTimeout(cleanup, 2000)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
 }
 
 // Re-emit after a recoverable failure (e.g. Matias 401) — skips fiscal wizard.

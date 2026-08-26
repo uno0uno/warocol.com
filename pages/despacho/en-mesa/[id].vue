@@ -270,6 +270,8 @@ async function printQrComanda() {
   const queue = comandaPrintPayload.value
   document.body.classList.add('printing-comanda')
   void document.body.offsetHeight
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
   const cleanup = () => {
     document.body.classList.remove('printing-comanda')
     window.removeEventListener('afterprint', cleanup)
@@ -277,7 +279,7 @@ async function printQrComanda() {
   }
   const mode = await printComandasRouted(queue, {
     setQueue: (c) => { comandaPrintQueueOverride.value = c },
-    browserPrint: () => {},
+    browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
   })
   if (mode === 'bridge') {
     cleanup()
@@ -285,7 +287,7 @@ async function printQrComanda() {
   }
   window.addEventListener('afterprint', cleanup, { once: true })
   setTimeout(cleanup, 4000)
-  window.print()
+  if (!browserPrintFiredSync) syncBrowserPrint()
 }
 </script>
 
