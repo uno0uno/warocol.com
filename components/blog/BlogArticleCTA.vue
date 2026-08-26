@@ -10,7 +10,12 @@ const leadModal = useLeadModal()
 const ctaContent = computed(() =>
   useBlogCta(props.slug, 'final', { lang: props.lang, country: props.country }),
 )
-const openLeadModal = () => leadModal.open(blogLeadSource(props.slug))
+const openLeadModal = () => {
+  const route = useRoute()
+  const qs = route.query.campaign_slug || route.query.campaignSlug
+  const campaignSlug = Array.isArray(qs) ? qs[0] : (typeof qs === 'string' ? qs : undefined)
+  leadModal.open(blogLeadSource(props.slug), { campaignSlug: campaignSlug?.trim() || undefined })
+}
 </script>
 
 <template>
