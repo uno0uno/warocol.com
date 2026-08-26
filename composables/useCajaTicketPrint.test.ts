@@ -225,6 +225,21 @@ describe('printTicketViaCajaOrBrowser', () => {
     deferred()
     expect(deferred).toHaveBeenCalledTimes(1)
   })
+
+  it('fast-paths via cached null without awaiting refetch (transient activation)', async () => {
+    const getCajaPrinterName = mock(async () => 'STAR_TP586')
+    const browserPrint = mock(() => {})
+    const result = await printTicketViaCajaOrBrowser('pos-receipt', {
+      getCajaPrinterName,
+      getCachedCajaPrinterName: () => null,
+      bridge: fakeBridge({ printRawEscPos: mock(() => Promise.resolve('completed' as const)) }),
+      getElementHtml: () => '<div>OK</div>',
+      browserPrint,
+    })
+    expect(result).toEqual({ mode: 'browser' })
+    expect(browserPrint).toHaveBeenCalledTimes(1)
+    expect(getCajaPrinterName).toHaveBeenCalledTimes(0)
+  })
 })
 
 describe('notifyCajaPrintResult', () => {

@@ -1264,15 +1264,13 @@ const printReceipt = async () => {
   }
 
   document.body.classList.add('printing-receipt-ticket')
-  await nextTick()
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
   const cleanup = () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Fix: don't await bridge when claramente no hay impresora caja (iPad nunca tiene 127.0.0.1:17890).
-  // El await rompe transient activation iOS (~0.5s) y el browserPrint sync posterior es ignorado.
-  // Si ya sabemos que no hay caja (sin refetch), imprimir directo mantiene el gesto.
+  // Keep transient activation: add print class before first await, then stay async for CUFE.
+  await nextTick()
   let browserPrintFiredSync = false
   const printResult = await printTicketElement('pos-receipt', {
     browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
