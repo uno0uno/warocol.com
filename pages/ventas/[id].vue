@@ -39,7 +39,7 @@ useHead({ title: () => t('ventas.head.detail') })
 
 // Tenant reactivity
 const { currentTenant, businessProfile } = useTenantReactive()
-const { printElement: printTicketElement } = useCajaTicketPrint()
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 const { singular: tableSingular } = useTableLabel()
 const {
   receiptPrintSettings,
@@ -1259,6 +1259,21 @@ const printReceipt = async () => {
     useToast().error(t('ventas.detail.printNoProducts'), { title: t('ventas.detail.noProducts') })
     return
   }
+  // iPad/Android transient: check cached caja sync BEFORE any await; if no printer, fire window.print in same tick (#2448).
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const cleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
+    window.print()
+    window.setTimeout(cleanup, 1500)
+    return
+  }
+
   if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
     invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
   }
@@ -1269,7 +1284,6 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Keep transient activation: add print class before first await, then stay async for CUFE.
   await nextTick()
   let browserPrintFiredSync = false
   const printResult = await printTicketElement('pos-receipt', {

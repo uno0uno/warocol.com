@@ -70,7 +70,7 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
-const { printElement: printTicketElement } = useCajaTicketPrint()
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 
 /** POS-scoped tenant display/settings — available to cashier via restaurant-context. */
 const posCheckoutContext = computed(() => settingsData.value?.data ?? null)
@@ -2919,6 +2919,22 @@ const generateInvoice = async () => {
 }
 
 const printReceipt = async () => {
+  // iPad/Android transient: if cached assignments show no caja, skip CUFE await and fire browser print sync (#2448).
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.remove('printing-prefactura')
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup)
+    window.print()
+    window.setTimeout(earlyCleanup, 1500)
+    return
+  }
+
   // Ensure post-payment receipt wins over a prior prefactura print (#939).
   document.body.classList.remove('printing-prefactura')
   document.body.classList.add('printing-receipt-ticket')
