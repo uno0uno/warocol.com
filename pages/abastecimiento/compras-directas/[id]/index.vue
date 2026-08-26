@@ -766,7 +766,7 @@ const toast = useToast()
 const cache = useQueryCache()
 const { t, locale } = useI18n({ useScope: 'global' })
 const WAREHOUSE_COPY = useWarehouseCopy()
-const { printElement: printTicketElement } = useCajaTicketPrint()
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 const { settingsData } = useReceiptPrintSettings()
 const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 const printFormatModalOpen = ref(false)
@@ -1262,6 +1262,19 @@ const onPrintFormatSelect = (format: PrintFormatChoice) => {
 const printPurchaseTicket = async () => {
   if (!purchase.value) {
     toast.error(t('abastecimiento.compraDirectaDetalle.printNoData'))
+    return
+  }
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup)
+    window.print()
+    window.setTimeout(earlyCleanup, 1500)
     return
   }
   document.body.classList.add('printing-receipt-ticket')

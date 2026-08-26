@@ -1,0 +1,41 @@
+# Compact Codex plan for wr-fast
+issue: 2448
+title: "fix(print): iPad/Android AirPrint no abre diálogo — fallback síncrono sin await PrintBridge"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: "/Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt"
+stack: nuxt
+branch: wr-2448-print-sync-fallback
+paths:
+  - composables/useCajaTicketPrint.ts
+  - composables/useStationTicketPrint.ts
+  - composables/usePrinterAssignments.ts
+  - composables/useCajaPrintPreference.ts
+  - pages/ventas/[id].vue
+  - pages/pos/checkout.vue
+  - pages/pos/index.vue
+  - pages/despacho/domicilios/[id].vue
+  - pages/despacho/en-mesa/[id].vue
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - pages/finanzas/gastos/[id]/index.vue
+  - utils/printBridgeDownloads.ts
+ac:
+  - iPad Safari + Android Chrome en ventas/[id], pos/checkout (recibo+prefactura), pos/index comandas, despacho, compras-directas, gastos abren window.print/AirPrint sin esperar PrintBridge (sin await 5s, sin doble print)
+  - Con caja_printer_name + bridge OK sigue ESC/POS raw + toast printOk/printSent; fallback window.print solo sin bridge/timeout
+  - Ninguna vista silencia browserPrint con () => {}; usa browserPrintFiredSync sync antes de await
+  - Fallback síncrono lee assignments.value sin await refetch; evita perder transient activation (~0.5s iOS)
+out_of_scope:
+  - waro-print-agent stub
+  - API changes
+  - PrintBridge SDK upgrade
+hints:
+  entry: "pages/ventas/[id].vue:1249 printReceipt; composables/useCajaTicketPrint.ts:92"
+  pattern: "composables/useLocalPrintBridge.ts:182 timeout; composables/usePrinterAssignments.ts:28 staleTime"
+  tests: "bun test composables/useCajaTicketPrint.test.ts composables/useLocalPrintBridge.test.ts composables/useStationTicketPrint.test.ts -q"
+risk:
+  sensitive: false
+  areas: []
+skip:
+  audits: []
+next:
+  after_pr: "verificar iPad fisico y Android Chrome en warocol.com/ventas/{id} y pos/checkout"

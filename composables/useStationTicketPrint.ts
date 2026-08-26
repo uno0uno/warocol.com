@@ -70,6 +70,7 @@ function defaultGetElementContent(elementId: string): string | null {
 export type PrintComandasViaBridgeDeps = {
   setQueue: (comandas: ComandaPrintPayload[]) => void
   getResolveMap: () => Promise<PrinterResolveMap | null>
+  getCachedResolveMap?: () => PrinterResolveMap | null | undefined
   bridge?: LocalPrintBridge
   elementId?: string
   getElementHtml?: (elementId: string) => string | null
@@ -94,6 +95,25 @@ export async function printComandasViaBridgeOrBrowser(
 
   if (!comandas.length) {
     return 'browser'
+  }
+
+  // Fast sync path to preserve transient activation on iPad/Android (#2448)
+  const cachedMap = deps.getCachedResolveMap?.()
+  if (typeof cachedMap !== 'undefined') {
+    if (!cachedMap) {
+      deps.setQueue(comandas)
+      await waitForDom()
+      browserPrint()
+      return 'browser'
+    }
+    const cachedGroups = groupComandasByPrinter(comandas, cachedMap)
+    const cachedWith = cachedGroups.filter((g) => g.printerName)
+    if (!cachedWith.length) {
+      deps.setQueue(comandas)
+      await waitForDom()
+      browserPrint()
+      return 'browser'
+    }
   }
 
   let map: PrinterResolveMap | null
@@ -173,6 +193,15 @@ export function useStationTicketPrint() {
     }
   }
 
+  function getCachedResolveMap(): PrinterResolveMap | null | undefined {
+    const data = assignments.value
+    if (!data) return undefined
+    return {
+      resolved: data.resolved ?? {},
+      resolved_caja: data.resolved_caja ?? data.caja_printer_name ?? null,
+    }
+  }
+
   async function printComandas(
     comandas: ComandaPrintPayload[],
     options: {
@@ -183,10 +212,11 @@ export function useStationTicketPrint() {
     return printComandasViaBridgeOrBrowser(comandas, {
       setQueue: options.setQueue,
       getResolveMap,
+      getCachedResolveMap,
       bridge,
       browserPrint: options.browserPrint,
     })
   }
 
-  return { printComandas, getResolveMap }
+  return { printComandas, getResolveMap, getCachedResolveMap }
 }

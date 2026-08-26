@@ -39,7 +39,7 @@ useHead({ title: () => t('ventas.head.detail') })
 
 // Tenant reactivity
 const { currentTenant, businessProfile } = useTenantReactive()
-const { printElement: printTicketElement } = useCajaTicketPrint()
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 const { singular: tableSingular } = useTableLabel()
 const {
   receiptPrintSettings,
@@ -1259,20 +1259,35 @@ const printReceipt = async () => {
     useToast().error(t('ventas.detail.printNoProducts'), { title: t('ventas.detail.noProducts') })
     return
   }
+  // iPad/Android transient: check cached caja sync BEFORE any await; if no printer, fire window.print in same tick (#2448).
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
+      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
+    }
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const cleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup, { once: true } as AddEventListenerOptions)
+    window.print()
+    window.setTimeout(cleanup, 1500)
+    return
+  }
+
   if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
     invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
   }
 
   document.body.classList.add('printing-receipt-ticket')
-  await nextTick()
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
   const cleanup = () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Fix: don't await bridge when claramente no hay impresora caja (iPad nunca tiene 127.0.0.1:17890).
-  // El await rompe transient activation iOS (~0.5s) y el browserPrint sync posterior es ignorado.
-  // Si ya sabemos que no hay caja (sin refetch), imprimir directo mantiene el gesto.
+  await nextTick()
   let browserPrintFiredSync = false
   const printResult = await printTicketElement('pos-receipt', {
     browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },

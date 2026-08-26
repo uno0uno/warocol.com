@@ -40,6 +40,8 @@ export function __resetCajaPrintInFlightForTests(): void {
 
 export type CajaTicketPrintDeps = {
   getCajaPrinterName: () => Promise<string | null | undefined>
+  /** Sync cached value — when provided, allows transient-preserving fast path without await refetch. */
+  getCachedCajaPrinterName?: () => string | null | undefined
   bridge?: LocalPrintBridge
   /** DOM/HTML content for the ticket; converted to ESC/POS text. */
   getElementHtml?: (elementId: string) => string | null
@@ -115,6 +117,16 @@ export async function printTicketViaCajaOrBrowser(
     if (forceBrowser()) {
       browserPrint()
       return { mode: 'browser' }
+    }
+
+    // Fast sync path: if caller cached assignments and they show no caja, skip
+    // the awaited refetch entirely so window.print stays inside transient activation (#2448).
+    const cached = deps.getCachedCajaPrinterName?.()
+    if (typeof cached !== 'undefined') {
+      if (!String(cached || '').trim()) {
+        browserPrint()
+        return { mode: 'browser' }
+      }
     }
 
     let caja: string | null | undefined
@@ -285,6 +297,12 @@ export function useCajaTicketPrint() {
     return name?.trim() || null
   }
 
+  function getCachedCajaPrinterName(): string | null | undefined {
+    const a = assignments.value
+    if (!a) return undefined
+    return (a.caja_printer_name || a.resolved_caja || null) as string | null | undefined
+  }
+
   async function printElement(
     elementId: string,
     options?: {
@@ -295,6 +313,7 @@ export function useCajaTicketPrint() {
   ): Promise<CajaTicketPrintResult> {
     return printTicketViaCajaOrBrowser(elementId, {
       getCajaPrinterName,
+      getCachedCajaPrinterName,
       bridge,
       browserPrint: options?.browserPrint,
       getElementHtml: options?.getElementHtml,
@@ -302,5 +321,5 @@ export function useCajaTicketPrint() {
     })
   }
 
-  return { printElement, getCajaPrinterName }
+  return { printElement, getCajaPrinterName, getCachedCajaPrinterName }
 }

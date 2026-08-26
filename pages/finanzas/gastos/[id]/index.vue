@@ -791,6 +791,7 @@ const { t, locale } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const expenseId = route.params.id as string
 
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 const {
   quotaLimitModalOpen,
   quotaLimitModalMessage,
@@ -805,7 +806,6 @@ const onNewInstanceClick = () => {
 
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
-const { printElement: printTicketElement } = useCajaTicketPrint()
 const setHeaderAction = inject<(action: { label: string; ariaLabel?: string; icon?: boolean | 'printer'; iconOnly?: boolean; handler: () => void } | undefined) => void>('setHeaderAction')
 const printFormatModalOpen = ref(false)
 
@@ -991,6 +991,19 @@ const onPrintFormatSelect = (format: PrintFormatChoice) => {
 const printExpenseTicket = async () => {
   if (!expense.value) {
     useToast().error(t('finanzas.gastos.printNoData'))
+    return
+  }
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup)
+    window.print()
+    window.setTimeout(earlyCleanup, 1500)
     return
   }
   document.body.classList.add('printing-receipt-ticket')

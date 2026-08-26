@@ -70,7 +70,7 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
-const { printElement: printTicketElement } = useCajaTicketPrint()
+const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
 
 /** POS-scoped tenant display/settings — available to cashier via restaurant-context. */
 const posCheckoutContext = computed(() => settingsData.value?.data ?? null)
@@ -2919,12 +2919,27 @@ const generateInvoice = async () => {
 }
 
 const printReceipt = async () => {
+  // iPad/Android transient: if cached assignments show no caja, keep CUFE QR then fire browser print (#2448).
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
+      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+    }
+    document.body.classList.remove('printing-prefactura')
+    document.body.classList.add('printing-receipt-ticket')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-receipt-ticket')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup, { once: true } as AddEventListenerOptions)
+    window.print()
+    window.setTimeout(earlyCleanup, 1500)
+    return
+  }
+
   // Ensure post-payment receipt wins over a prior prefactura print (#939).
   document.body.classList.remove('printing-prefactura')
-  if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
-    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
-  }
-  await nextTick()
   document.body.classList.add('printing-receipt-ticket')
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
   let browserPrintFiredSync = false
@@ -2932,6 +2947,11 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
+  // Keep transient activation: CUFE QR is async but must follow print setup.
+  if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
+    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+  }
+  await nextTick()
   // Defer window.print until after await so body print classes stay until fallback.
   // Prefer teleported ReceiptPrintTicket (plain-text layout #1979), not flex #pos-receipt.
   const printResult = await printTicketElement('pos-receipt', {
@@ -3389,7 +3409,22 @@ const checkoutSaleContactLine = computed(() => {
 const prefacturaDisabled = computed(() => false)
 const printPrefactura = async () => {
   capturePrefacturaPrintSnapshot()
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.add('printing-prefactura')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-prefactura')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup, { once: true } as AddEventListenerOptions)
+    setTimeout(earlyCleanup, 2000)
+    window.print()
+    return
+  }
   document.body.classList.add('printing-prefactura')
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
 
   const cleanup = () => {
     document.body.classList.remove('printing-prefactura')
@@ -3397,8 +3432,6 @@ const printPrefactura = async () => {
   }
 
   await nextTick()
-  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
-  let browserPrintFiredSync = false
   // Defer window.print until after await so body print classes stay until fallback.
   const printResult = await printTicketElement('pos-prefactura', {
     browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },

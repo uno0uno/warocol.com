@@ -175,4 +175,23 @@ describe('printComandasViaBridgeOrBrowser', () => {
     const lastQueue = queued[queued.length - 1]!
     expect(lastQueue.map((c) => c.comanda_number)).toEqual([2])
   })
+
+  it('fast-paths cached empty map to browser without awaiting refetch', async () => {
+    const getResolveMap = mock(async () => ({ resolved: { [STATION_A]: 'BAR' }, resolved_caja: 'CAJA' }))
+    const printRawEscPos = mock(() => Promise.resolve())
+    const browserPrint = mock(() => {})
+    const result = await printComandasViaBridgeOrBrowser([comanda(null, 1)], {
+      setQueue: mock(() => {}),
+      getResolveMap,
+      getCachedResolveMap: () => ({ resolved: {}, resolved_caja: null }),
+      bridge: fakeBridge({ printRawEscPos }),
+      getElementHtml: () => '<div/>',
+      browserPrint,
+      waitForDom: async () => {},
+    })
+    expect(result).toBe('browser')
+    expect(browserPrint).toHaveBeenCalledTimes(1)
+    expect(getResolveMap).toHaveBeenCalledTimes(0)
+    expect(printRawEscPos).toHaveBeenCalledTimes(0)
+  })
 })

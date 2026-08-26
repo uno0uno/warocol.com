@@ -190,11 +190,29 @@ const comandaPrintQueueOverride = ref<ComandaPrintPayload[] | null>(null)
 const comandaTicketsForPrint = computed(
   () => comandaPrintQueueOverride.value ?? comandaPrintPayload.value,
 )
-const { printComandas: printComandasRouted } = useStationTicketPrint()
+const { printComandas: printComandasRouted, getCachedResolveMap } = useStationTicketPrint()
 
 async function printOrderComanda() {
   if (!canPrintComanda.value) return
   const queue = comandaPrintPayload.value
+  const cached = getCachedResolveMap()
+  if (typeof cached !== 'undefined') {
+    const hasPrinter = cached && (cached.resolved_caja || Object.values(cached.resolved).some(Boolean))
+    if (!hasPrinter) {
+      document.body.classList.add('printing-comanda')
+      comandaPrintQueueOverride.value = queue
+      await nextTick()
+      const earlyCleanup = () => {
+        document.body.classList.remove('printing-comanda')
+        window.removeEventListener('afterprint', earlyCleanup)
+        comandaPrintQueueOverride.value = null
+      }
+      window.addEventListener('afterprint', earlyCleanup, { once: true })
+      setTimeout(earlyCleanup, 4000)
+      window.print()
+      return
+    }
+  }
   document.body.classList.add('printing-comanda')
   void document.body.offsetHeight
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
