@@ -70,7 +70,7 @@ function defaultGetElementContent(elementId: string): string | null {
 export type PrintComandasViaBridgeDeps = {
   setQueue: (comandas: ComandaPrintPayload[]) => void
   getResolveMap: () => Promise<PrinterResolveMap | null>
-  getCachedResolveMap?: () => PrinterResolveMap | null | undefined
+  getCachedResolveMap?: () => PrinterResolveMap | null
   bridge?: LocalPrintBridge
   elementId?: string
   getElementHtml?: (elementId: string) => string | null
@@ -193,9 +193,9 @@ export function useStationTicketPrint() {
     }
   }
 
-  function getCachedResolveMap(): PrinterResolveMap | null | undefined {
+  function getCachedResolveMap(): PrinterResolveMap | null {
     const data = assignments.value
-    if (!data) return undefined
+    if (!data) return null
     return {
       resolved: data.resolved ?? {},
       resolved_caja: data.resolved_caja ?? data.caja_printer_name ?? null,

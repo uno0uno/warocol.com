@@ -41,7 +41,7 @@ export function __resetCajaPrintInFlightForTests(): void {
 export type CajaTicketPrintDeps = {
   getCajaPrinterName: () => Promise<string | null | undefined>
   /** Sync cached value — when provided, allows transient-preserving fast path without await refetch. */
-  getCachedCajaPrinterName?: () => string | null | undefined
+  getCachedCajaPrinterName?: () => string | null
   bridge?: LocalPrintBridge
   /** DOM/HTML content for the ticket; converted to ESC/POS text. */
   getElementHtml?: (elementId: string) => string | null
@@ -298,10 +298,10 @@ export function useCajaTicketPrint() {
     return name?.trim() || null
   }
 
-  function getCachedCajaPrinterName(): string | null | undefined {
+  function getCachedCajaPrinterName(): string | null {
     const a = assignments.value
-    if (!a) return undefined
-    return (a.caja_printer_name || a.resolved_caja || null) as string | null | undefined
+    if (!a) return null
+    return (a.caja_printer_name || a.resolved_caja || null) as string | null
   }
 
   async function printElement(
