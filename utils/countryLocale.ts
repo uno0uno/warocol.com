@@ -40,3 +40,38 @@ export function suggestCountryFromLocale(locale?: string | null): string | null 
   if (code === 'pt') return 'BR'
   return null
 }
+
+/**
+ * Primary display currency per catalog country (first pair in API COUNTRY_CURRENCY_PAIRS).
+ * LATAM / unknown → COP at the caller.
+ */
+export const PRIMARY_CURRENCY_BY_COUNTRY: Record<string, string> = {
+  US: 'USD',
+  CA: 'CAD',
+  GB: 'GBP',
+  AU: 'AUD',
+  NZ: 'NZD',
+  BR: 'BRL',
+  DE: 'EUR',
+  FR: 'EUR',
+  NL: 'EUR',
+  SG: 'SGD',
+  AE: 'AED',
+  IN: 'INR',
+  CN: 'CNY',
+  MX: 'MXN',
+  ES: 'EUR',
+  CO: 'COP',
+  CR: 'CRC',
+  UY: 'UYU',
+  CL: 'CLP',
+  PE: 'PEN',
+  AR: 'ARS',
+  DO: 'DOP',
+  PA: 'USD',
+}
+
+export function currencyFromCountry(countryCode?: string | null): string {
+  const code = String(countryCode || '').trim().toUpperCase()
+  return PRIMARY_CURRENCY_BY_COUNTRY[code] || 'COP'
+}
