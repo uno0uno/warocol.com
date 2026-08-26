@@ -1262,13 +1262,16 @@ const printReceipt = async () => {
   // iPad/Android transient: check cached caja sync BEFORE any await; if no printer, fire window.print in same tick (#2448).
   const cachedCaja = getCachedCajaPrinterName()
   if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
+      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
+    }
     document.body.classList.add('printing-receipt-ticket')
     await nextTick()
     const cleanup = () => {
       document.body.classList.remove('printing-receipt-ticket')
       window.removeEventListener('afterprint', cleanup)
     }
-    window.addEventListener('afterprint', cleanup)
+    window.addEventListener('afterprint', cleanup, { once: true } as AddEventListenerOptions)
     window.print()
     window.setTimeout(cleanup, 1500)
     return

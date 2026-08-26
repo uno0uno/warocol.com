@@ -2919,9 +2919,12 @@ const generateInvoice = async () => {
 }
 
 const printReceipt = async () => {
-  // iPad/Android transient: if cached assignments show no caja, skip CUFE await and fire browser print sync (#2448).
+  // iPad/Android transient: if cached assignments show no caja, keep CUFE QR then fire browser print (#2448).
   const cachedCaja = getCachedCajaPrinterName()
   if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
+      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+    }
     document.body.classList.remove('printing-prefactura')
     document.body.classList.add('printing-receipt-ticket')
     await nextTick()
@@ -2929,7 +2932,7 @@ const printReceipt = async () => {
       document.body.classList.remove('printing-receipt-ticket')
       window.removeEventListener('afterprint', earlyCleanup)
     }
-    window.addEventListener('afterprint', earlyCleanup)
+    window.addEventListener('afterprint', earlyCleanup, { once: true } as AddEventListenerOptions)
     window.print()
     window.setTimeout(earlyCleanup, 1500)
     return
@@ -3406,6 +3409,19 @@ const checkoutSaleContactLine = computed(() => {
 const prefacturaDisabled = computed(() => false)
 const printPrefactura = async () => {
   capturePrefacturaPrintSnapshot()
+  const cachedCaja = getCachedCajaPrinterName()
+  if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
+    document.body.classList.add('printing-prefactura')
+    await nextTick()
+    const earlyCleanup = () => {
+      document.body.classList.remove('printing-prefactura')
+      window.removeEventListener('afterprint', earlyCleanup)
+    }
+    window.addEventListener('afterprint', earlyCleanup, { once: true } as AddEventListenerOptions)
+    setTimeout(earlyCleanup, 2000)
+    window.print()
+    return
+  }
   document.body.classList.add('printing-prefactura')
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
   let browserPrintFiredSync = false
