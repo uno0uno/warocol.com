@@ -32,8 +32,7 @@ const successMessage = ref('')
 const successTableName = ref('')
 const paymentError = ref('')
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(price)
+const { formatCurrency: formatPrice } = useFormatters()
 
 const canContinue = computed(() => {
   if (currentStep.value === 0) return !cartStore.isEmpty

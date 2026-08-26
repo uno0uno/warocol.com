@@ -20,7 +20,7 @@
               </span>
             </span>
             <span class="ms-4" :class="modifierLineAmount(modifier) === 0 ? 'text-success' : ''">
-              {{ modifierLineAmount(modifier) === 0 ? 'Gratis' : formatPrice(modifierLineAmount(modifier)) }}
+              {{ modifierLineAmount(modifier) === 0 ? 'Gratis' : formatCurrency(modifierLineAmount(modifier)) }}
             </span>
           </div>
         </div>
@@ -32,7 +32,7 @@
 
         <!-- Unit price -->
         <p class="text-sm text-muted-foreground">
-          {{ formatPrice(item.unit_price) }} c/u
+          {{ formatCurrency(item.unit_price) }} c/u
         </p>
       </div>
 
@@ -92,7 +92,7 @@
         </div>
 
         <!-- Item total -->
-        <p class="text-base font-bold text-foreground">{{ formatPrice(item.total) }}</p>
+        <p class="text-base font-bold text-foreground">{{ formatCurrency(item.total) }}</p>
 
         <!-- Remove button -->
         <button
@@ -138,13 +138,7 @@ const emit = defineEmits<{
   (e: 'customize-add', item: OnlineCartItem): void
 }>()
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(price)
-}
+const { formatCurrency } = useFormatters()
 
 const modifierLineAmount = (modifier: OnlineCartItem['modifiers'][number]) =>
   modifierLineTotal(modifier)

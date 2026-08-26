@@ -145,6 +145,20 @@ describe('formatMoney', () => {
     }), expected)
   })
 
+  it('formats EUR with locale punctuation for standard (non-compact) amounts', () => {
+    const expected = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(10)
+    assert.equal(formatMoney(10, { currency: 'EUR', locale: 'es', minorUnits: 2 }), expected)
+    assert.notEqual(
+      formatMoney(10, { currency: 'EUR', locale: 'es', minorUnits: 2 }),
+      formatMoney(10, { currency: 'COP', locale: 'es', minorUnits: 0 }),
+    )
+  })
+
   it('formats MXN amounts on a single line for Pagos table cells', () => {
     const formatted = formatMoney(900, { currency: 'MXN', locale: 'es', minorUnits: 2 })
     assert.equal(formatted.includes('\n'), false)
