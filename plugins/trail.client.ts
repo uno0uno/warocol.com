@@ -23,6 +23,8 @@ export default defineNuxtPlugin(() => {
 
 function shouldTrack(path: string): boolean {
   if (path === '/' || path.startsWith('/blog') || path.startsWith('/landing')) return true
+  if (path === '/registro' || path.startsWith('/registro')) return true
+  if (path === '/auth/login' || path.startsWith('/auth/login')) return true
   return false
 }
 
