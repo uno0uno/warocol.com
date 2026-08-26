@@ -1260,11 +1260,9 @@ const printReceipt = async () => {
     return
   }
   // iPad/Android transient: check cached caja sync BEFORE any await; if no printer, fire window.print in same tick (#2448).
+  // QR CUFE precargado via watch(invoiceData.cufe) #476-483, no bloquear gesto Safari aquí.
   const cachedCaja = getCachedCajaPrinterName()
   if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
-    if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
-      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
-    }
     document.body.classList.add('printing-receipt-ticket')
     await nextTick()
     const cleanup = () => {
@@ -1275,10 +1273,6 @@ const printReceipt = async () => {
     window.print()
     window.setTimeout(cleanup, 1500)
     return
-  }
-
-  if (invoiceData.value?.cufe && !invoiceQrDataUrl.value) {
-    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceData.value.cufe)
   }
 
   document.body.classList.add('printing-receipt-ticket')
