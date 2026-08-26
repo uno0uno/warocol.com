@@ -26,6 +26,16 @@
           key="group-actions"
           class="flex items-center gap-1"
         >
+          <button
+            v-if="!forceBrowserPrint"
+            type="button"
+            class="h-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border border-shell-action-border bg-shell-action-bg px-2 text-xs font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
+            title="Desactivar térmica — usar impresión del navegador"
+            aria-label="Desactivar térmica"
+            @click="enableForceBrowser"
+          >
+            Desactivar térmica
+          </button>
           <PosCajaPrintThermalChip v-if="forceBrowserPrint" />
 
           <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_button]:rounded-lg [&_button]:border [&_button]:border-shell-action-border [&_button]:bg-shell-action-bg [&_svg]:!w-5 [&_svg]:!h-5" />
@@ -129,7 +139,7 @@ import { getDashboardHome } from '~/utils/internalAccess'
 
 const { t } = useI18n()
 const accessStore = useAccessStore()
-const { forceBrowser: forceBrowserPrint } = useCajaPrintPreference()
+const { forceBrowser: forceBrowserPrint, enableForceBrowser } = useCajaPrintPreference()
 
 const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),

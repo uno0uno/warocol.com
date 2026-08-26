@@ -122,9 +122,10 @@ export async function printTicketViaCajaOrBrowser(
     // Fast sync path: if caller cached assignments and they show no caja, skip
     // the awaited refetch entirely so window.print stays inside transient activation (#2448).
     const cached = deps.getCachedCajaPrinterName?.()
+    console.log('[print-composable] cached=' + JSON.stringify(cached) + ' forceBrowser=' + forceBrowser())
     if (typeof cached !== 'undefined') {
       if (!String(cached || '').trim()) {
-        browserPrint()
+        console.log('[print-composable] no caja cached -> browser fallback'); browserPrint()
         return { mode: 'browser' }
       }
     }
