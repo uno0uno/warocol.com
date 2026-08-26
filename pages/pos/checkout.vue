@@ -2921,10 +2921,6 @@ const generateInvoice = async () => {
 const printReceipt = async () => {
   // Ensure post-payment receipt wins over a prior prefactura print (#939).
   document.body.classList.remove('printing-prefactura')
-  if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
-    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
-  }
-  await nextTick()
   document.body.classList.add('printing-receipt-ticket')
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
   let browserPrintFiredSync = false
@@ -2932,6 +2928,11 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
+  // Keep transient activation: CUFE QR is async but must follow print setup.
+  if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
+    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+  }
+  await nextTick()
   // Defer window.print until after await so body print classes stay until fallback.
   // Prefer teleported ReceiptPrintTicket (plain-text layout #1979), not flex #pos-receipt.
   const printResult = await printTicketElement('pos-receipt', {
@@ -3390,6 +3391,8 @@ const prefacturaDisabled = computed(() => false)
 const printPrefactura = async () => {
   capturePrefacturaPrintSnapshot()
   document.body.classList.add('printing-prefactura')
+  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
+  let browserPrintFiredSync = false
 
   const cleanup = () => {
     document.body.classList.remove('printing-prefactura')
@@ -3397,8 +3400,6 @@ const printPrefactura = async () => {
   }
 
   await nextTick()
-  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
-  let browserPrintFiredSync = false
   // Defer window.print until after await so body print classes stay until fallback.
   const printResult = await printTicketElement('pos-prefactura', {
     browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },

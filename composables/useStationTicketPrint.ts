@@ -218,5 +218,5 @@ export function useStationTicketPrint() {
     })
   }
 
-  return { printComandas, getResolveMap }
+  return { printComandas, getResolveMap, getCachedResolveMap }
 }
