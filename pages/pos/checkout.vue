@@ -2919,12 +2919,9 @@ const generateInvoice = async () => {
 }
 
 const printReceipt = async () => {
-  // iPad/Android transient: if cached assignments show no caja, keep CUFE QR then fire browser print (#2448).
+  // iPad/Android transient: if cached assignments show no caja, fire window.print sync; QR precargado via watch.
   const cachedCaja = getCachedCajaPrinterName()
   if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
-    if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
-      invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
-    }
     document.body.classList.remove('printing-prefactura')
     document.body.classList.add('printing-receipt-ticket')
     await nextTick()
@@ -2947,9 +2944,8 @@ const printReceipt = async () => {
     document.body.classList.remove('printing-receipt-ticket')
     window.removeEventListener('afterprint', cleanup)
   }
-  // Keep transient activation: CUFE QR is async but must follow print setup.
   if (invoiceResult.value?.cufe && !invoiceQrDataUrl.value) {
-    invoiceQrDataUrl.value = await buildInvoiceQrDataUrl(invoiceResult.value.cufe)
+    void buildInvoiceQrDataUrl(invoiceResult.value.cufe).then(url => { invoiceQrDataUrl.value = url })
   }
   await nextTick()
   // Defer window.print until after await so body print classes stay until fallback.
