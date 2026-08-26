@@ -235,8 +235,19 @@ const startItem = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PAG
 const endItem = computed(() => Math.min(page.value * PAGE_SIZE, total.value))
 const showPagination = computed(() => total.value > PAGE_SIZE)
 
-const scopeTypeLabel = computed(() => formatScopeTypeLabel(props.scopeType))
-const modalTitle = computed(() => `${props.promotionName} · ${scopeTypeLabel.value}`)
+const { t, locale } = useI18n({ useScope: 'global' })
+const scopeTypeLabel = computed(() => {
+  const key = `menu.promotionsScope.types.${props.scopeType}`
+  const fromI18n = t(key)
+  if (fromI18n !== key) return fromI18n
+  return formatScopeTypeLabel(props.scopeType, locale.value)
+})
+const modalTitle = computed(() =>
+  t('menu.promotionsScope.titleWithType', {
+    name: props.promotionName,
+    type: scopeTypeLabel.value,
+  }),
+)
 
 function closePanel() {
   open.value = false

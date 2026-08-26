@@ -771,6 +771,19 @@
       "warehouseItemMany": "{count}个库存商品",
       "viewAndFixOrder": "查看并修正订单 {order}",
       "correct": "修正"
+    },
+    "portalSheet": {
+      "orders": "订单",
+      "billing": "结算",
+      "refresh": "刷新",
+      "info": "信息",
+      "title": "供应商信息",
+      "company": "公司",
+      "supplierFallback": "供应商",
+      "email": "邮箱",
+      "phone": "电话",
+      "helpTitle": "需要帮助？",
+      "helpBody": "如有问题，请联系管理员或发邮件至 {email}"
     }
   }
 }

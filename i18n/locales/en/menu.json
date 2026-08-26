@@ -640,6 +640,22 @@
       "whatCreate": "What do you want to create?",
       "itemTypeAria": "Item type",
       "warehouseDesc": "Supply and recipes · gr, ml, und"
+    },
+    "promotionsScope": {
+      "title": "Selected products",
+      "searchPlaceholder": "Search product…",
+      "searchAria": "Search product",
+      "countInScope": "{count} in scope",
+      "clearAll": "Clear all",
+      "emptySearch": "No results for this search.",
+      "empty": "No products selected.",
+      "removeAria": "Remove {name}",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "Categories",
+        "products": "Products",
+        "all_products": "All products"
+      }
     }
   }
 }

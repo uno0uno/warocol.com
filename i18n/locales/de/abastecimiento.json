@@ -771,6 +771,19 @@
       "warehouseItemMany": "{count} Lagerartikel",
       "viewAndFixOrder": "Bestellung {order} ansehen und korrigieren",
       "correct": "Korrigieren"
+    },
+    "portalSheet": {
+      "orders": "Bestellungen",
+      "billing": "Abrechnung",
+      "refresh": "Aktualisieren",
+      "info": "Info",
+      "title": "Lieferanteninformationen",
+      "company": "Unternehmen",
+      "supplierFallback": "Lieferant",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "helpTitle": "Hilfe benötigt?",
+      "helpBody": "Bei Fragen wenden Sie sich an Ihren Administrator oder schreiben Sie an {email}"
     }
   }
 }

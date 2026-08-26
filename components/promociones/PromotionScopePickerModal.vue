@@ -1,18 +1,18 @@
 <template>
-  <UiModal v-model="open" title="Productos seleccionados">
+  <UiModal v-model="open" :title="t('menu.promotionsScope.title')">
     <div class="px-6 pb-6 space-y-4" role="document">
       <input
         ref="searchInputRef"
         v-model="searchTerm"
         type="search"
-        placeholder="Buscar producto…"
+        :placeholder="t('menu.promotionsScope.searchPlaceholder')"
         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface min-h-[44px]"
-        aria-label="Buscar producto"
+        :aria-label="t('menu.promotionsScope.searchAria')"
       />
 
       <div class="flex items-center justify-between gap-2">
         <p class="text-xs text-text-secondary">
-          {{ products.length }} producto{{ products.length === 1 ? '' : 's' }} en alcance
+          {{ t('menu.promotionsScope.countInScope', { count: products.length }) }}
         </p>
         <button
           v-if="products.length"
@@ -20,12 +20,12 @@
           class="text-xs font-medium text-destructive min-h-[44px] px-2"
           @click="emit('clear-all')"
         >
-          Limpiar todo
+          {{ t('menu.promotionsScope.clearAll') }}
         </button>
       </div>
 
       <p v-if="filteredProducts.length === 0" class="text-sm text-text-secondary text-center py-8">
-        {{ searchTerm.trim() ? 'Sin resultados para esta búsqueda.' : 'No hay productos seleccionados.' }}
+        {{ searchTerm.trim() ? t('menu.promotionsScope.emptySearch') : t('menu.promotionsScope.empty') }}
       </p>
 
       <ul v-else class="divide-y divide-border max-h-[50vh] overflow-y-auto">
@@ -38,7 +38,7 @@
           <button
             type="button"
             class="flex-shrink-0 text-destructive hover:opacity-70 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            :aria-label="`Quitar ${p.name}`"
+            :aria-label="t('menu.promotionsScope.removeAria', { name: p.name })"
             @click="emit('remove', p.id)"
           >
             ×
@@ -48,19 +48,19 @@
     </div>
   </UiModal>
 
-  <UiBottomSheetModal v-model="open" title="Productos seleccionados" max-height="lg">
+  <UiBottomSheetModal v-model="open" :title="t('menu.promotionsScope.title')" max-height="lg">
     <div class="px-4 pb-4 space-y-4" role="document">
       <input
         v-model="searchTerm"
         type="search"
-        placeholder="Buscar producto…"
+        :placeholder="t('menu.promotionsScope.searchPlaceholder')"
         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface min-h-[44px]"
-        aria-label="Buscar producto"
+        :aria-label="t('menu.promotionsScope.searchAria')"
       />
 
       <div class="flex items-center justify-between gap-2">
         <p class="text-xs text-text-secondary">
-          {{ products.length }} producto{{ products.length === 1 ? '' : 's' }} en alcance
+          {{ t('menu.promotionsScope.countInScope', { count: products.length }) }}
         </p>
         <button
           v-if="products.length"
@@ -68,12 +68,12 @@
           class="text-xs font-medium text-destructive min-h-[44px] px-2"
           @click="emit('clear-all')"
         >
-          Limpiar todo
+          {{ t('menu.promotionsScope.clearAll') }}
         </button>
       </div>
 
       <p v-if="filteredProducts.length === 0" class="text-sm text-text-secondary text-center py-8">
-        {{ searchTerm.trim() ? 'Sin resultados para esta búsqueda.' : 'No hay productos seleccionados.' }}
+        {{ searchTerm.trim() ? t('menu.promotionsScope.emptySearch') : t('menu.promotionsScope.empty') }}
       </p>
 
       <ul v-else class="divide-y divide-border max-h-[50vh] overflow-y-auto">
@@ -86,7 +86,7 @@
           <button
             type="button"
             class="flex-shrink-0 text-destructive hover:opacity-70 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            :aria-label="`Quitar ${p.name}`"
+            :aria-label="t('menu.promotionsScope.removeAria', { name: p.name })"
             @click="emit('remove', p.id)"
           >
             ×
@@ -113,6 +113,7 @@ const emit = defineEmits<{
   (e: 'remove', id: string): void
   (e: 'clear-all'): void
 }>()
+
 
 const open = computed({
   get: () => props.modelValue,

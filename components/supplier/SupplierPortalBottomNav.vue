@@ -33,7 +33,7 @@
             ? 'text-badge-primary-text font-semibold'
             : 'text-text-secondary'"
         >
-          Órdenes
+          {{ t('abastecimiento.portalSheet.orders') }}
         </span>
       </NuxtLink>
 
@@ -67,7 +67,7 @@
             ? 'text-badge-primary-text font-semibold'
             : 'text-text-secondary'"
         >
-          Facturación
+          {{ t('abastecimiento.portalSheet.billing') }}
         </span>
       </NuxtLink>
 
@@ -83,7 +83,7 @@
           </svg>
         </div>
         <span class="text-xs font-medium transition-colors text-text-secondary">
-          Refrescar
+          {{ t('abastecimiento.portalSheet.refresh') }}
         </span>
       </button>
 
@@ -98,14 +98,14 @@
           </svg>
         </div>
         <span class="text-xs font-medium transition-colors text-text-secondary">
-          Info
+          {{ t('abastecimiento.portalSheet.info') }}
         </span>
       </button>
 
     </div>
 
     <!-- Supplier Info Modal -->
-    <UiBottomSheetModal v-model="showSupplierModal" title="Información del Proveedor" max-height="md">
+    <UiBottomSheetModal v-model="showSupplierModal" :title="t('abastecimiento.portalSheet.title')" max-height="md">
       <div class="p-4 space-y-6">
         <!-- Supplier Info -->
         <div class="space-y-4">
@@ -118,8 +118,8 @@
                 </svg>
               </div>
               <div>
-                <div class="text-xs text-badge-primary-text font-medium">Empresa</div>
-                <div class="font-semibold text-sm text-text-primary">{{ supplierName || 'Proveedor' }}</div>
+                <div class="text-xs text-badge-primary-text font-medium">{{ t('abastecimiento.portalSheet.company') }}</div>
+                <div class="font-semibold text-sm text-text-primary">{{ supplierName || t('abastecimiento.portalSheet.supplierFallback') }}</div>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <div>
-                <div class="text-xs text-text-secondary">Email</div>
+                <div class="text-xs text-text-secondary">{{ t('abastecimiento.portalSheet.email') }}</div>
                 <div class="text-sm text-text-primary">{{ supplierEmail }}</div>
               </div>
             </div>
@@ -141,7 +141,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
               <div>
-                <div class="text-xs text-text-secondary">Teléfono</div>
+                <div class="text-xs text-text-secondary">{{ t('abastecimiento.portalSheet.phone') }}</div>
                 <div class="text-sm text-text-primary">{{ supplierPhone }}</div>
               </div>
             </div>
@@ -156,10 +156,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <div class="text-sm font-medium text-state-info-text">¿Necesitas ayuda?</div>
+                <div class="text-sm font-medium text-state-info-text">{{ t('abastecimiento.portalSheet.helpTitle') }}</div>
                 <div class="text-xs text-state-info-text mt-1">
-                  Si tienes alguna pregunta, contacta a tu administrador o escribe a
-                  <a href="mailto:hola@warolabs.com" class="font-medium underline">hola@warolabs.com</a>
+                  <i18n-t keypath="abastecimiento.portalSheet.helpBody" tag="span">
+                    <template #email>
+                      <a href="mailto:hola@warolabs.com" class="font-medium underline">hola@warolabs.com</a>
+                    </template>
+                  </i18n-t>
                 </div>
               </div>
             </div>
@@ -171,6 +174,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
+
 interface Props {
   token: string
   activePage?: 'purchases' | 'billing'

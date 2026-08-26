@@ -771,6 +771,19 @@
       "warehouseItemMany": "{count} गोदाम आइटम",
       "viewAndFixOrder": "ऑर्डर {order} देखें और ठीक करें",
       "correct": "ठीक करें"
+    },
+    "portalSheet": {
+      "orders": "ऑर्डर",
+      "billing": "बिलिंग",
+      "refresh": "रिफ़्रेश",
+      "info": "जानकारी",
+      "title": "आपूर्तिकर्ता जानकारी",
+      "company": "कंपनी",
+      "supplierFallback": "आपूर्तिकर्ता",
+      "email": "ईमेल",
+      "phone": "फ़ोन",
+      "helpTitle": "मदद चाहिए?",
+      "helpBody": "प्रश्न हो तो अपने एडमिन से संपर्क करें या {email} पर लिखें"
     }
   }
 }

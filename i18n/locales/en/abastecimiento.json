@@ -834,6 +834,19 @@
       "warehouseItemMany": "{count} warehouse items",
       "viewAndFixOrder": "View and fix order {order}",
       "correct": "Fix"
+    },
+    "portalSheet": {
+      "orders": "Orders",
+      "billing": "Billing",
+      "refresh": "Refresh",
+      "info": "Info",
+      "title": "Supplier information",
+      "company": "Company",
+      "supplierFallback": "Supplier",
+      "email": "Email",
+      "phone": "Phone",
+      "helpTitle": "Need help?",
+      "helpBody": "If you have a question, contact your administrator or write to {email}"
     }
   }
 }

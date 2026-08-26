@@ -124,18 +124,18 @@
       "dishCost": "تكلفة طبقي",
       "operationalCostHelp": "التكلفة التشغيلية التي تحددها؛ لا يغيرها النظام.",
       "realMargin": "الهامش الفعلي",
-      "operatingMargin": "الهامش التشغيلي"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "فئة الضريبة"
-      ,"taxResolution": "ضريبة المنتج"
-      ,"taxInherit": "وراثة من الفئة"
-      ,"taxInheritHint": "يستخدم خريطة الفوترة لفئة القائمة"
-      ,"taxOverrideLine": "سطر آخر"
-      ,"taxOverrideLineHint": "يفرض سطر ضريبة مختلفًا عن الفئة"
-      ,"taxSelectLine": "سطر الضريبة"
-      ,"taxInheritedLabel": "الافتراضي: {label}"
-      ,"taxInheritedExempt": "الافتراضي: معفى (الفئة)"
-      ,"taxNoCategory": "اختر فئة قائمة لعرض الضريبة الموروثة",
+      "operatingMargin": "الهامش التشغيلي",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
+      "taxCategory": "فئة الضريبة",
+      "taxResolution": "ضريبة المنتج",
+      "taxInherit": "وراثة من الفئة",
+      "taxInheritHint": "يستخدم خريطة الفوترة لفئة القائمة",
+      "taxOverrideLine": "سطر آخر",
+      "taxOverrideLineHint": "يفرض سطر ضريبة مختلفًا عن الفئة",
+      "taxSelectLine": "سطر الضريبة",
+      "taxInheritedLabel": "الافتراضي: {label}",
+      "taxInheritedExempt": "الافتراضي: معفى (الفئة)",
+      "taxNoCategory": "اختر فئة قائمة لعرض الضريبة الموروثة",
       "foodBeverage": "طعام / شراب",
       "incVatRates": "النسبة وفق إعدادات الفوترة",
       "takeawayLiquor": "مشروبات كحولية سفري",
@@ -513,6 +513,22 @@
       "whatCreate": "ماذا تريد أن تنشئ؟",
       "itemTypeAria": "نوع العنصر",
       "warehouseDesc": "الإمداد والوصفات · جرام، مل، وحدة"
+    },
+    "promotionsScope": {
+      "title": "المنتجات المحددة",
+      "searchPlaceholder": "بحث عن منتج…",
+      "searchAria": "بحث عن منتج",
+      "countInScope": "{count} في النطاق",
+      "clearAll": "مسح الكل",
+      "emptySearch": "لا نتائج لهذا البحث.",
+      "empty": "لا توجد منتجات محددة.",
+      "removeAria": "إزالة {name}",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "الفئات",
+        "products": "المنتجات",
+        "all_products": "كل المنتجات"
+      }
     }
   }
 }

@@ -124,18 +124,18 @@
       "dishCost": "Mon coût du plat",
       "operationalCostHelp": "Coût opérationnel que vous définissez ; le système ne le modifie pas.",
       "realMargin": "Marge réelle",
-      "operatingMargin": "Marge opérationnelle"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "Catégorie de taxe"
-      ,"taxResolution": "Taxe du produit"
-      ,"taxInherit": "Hériter de la catégorie"
-      ,"taxInheritHint": "Utilise le mapping Facturation de la catégorie du menu"
-      ,"taxOverrideLine": "Autre ligne"
-      ,"taxOverrideLineHint": "Force une ligne de taxe différente de la catégorie"
-      ,"taxSelectLine": "Ligne de taxe"
-      ,"taxInheritedLabel": "Par défaut : {label}"
-      ,"taxInheritedExempt": "Par défaut : exonéré (catégorie)"
-      ,"taxNoCategory": "Choisissez une catégorie de menu pour voir la taxe héritée",
+      "operatingMargin": "Marge opérationnelle",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
+      "taxCategory": "Catégorie de taxe",
+      "taxResolution": "Taxe du produit",
+      "taxInherit": "Hériter de la catégorie",
+      "taxInheritHint": "Utilise le mapping Facturation de la catégorie du menu",
+      "taxOverrideLine": "Autre ligne",
+      "taxOverrideLineHint": "Force une ligne de taxe différente de la catégorie",
+      "taxSelectLine": "Ligne de taxe",
+      "taxInheritedLabel": "Par défaut : {label}",
+      "taxInheritedExempt": "Par défaut : exonéré (catégorie)",
+      "taxNoCategory": "Choisissez une catégorie de menu pour voir la taxe héritée",
       "foodBeverage": "Aliment / Boisson",
       "incVatRates": "Taux selon Facturation",
       "takeawayLiquor": "Liqueur à emporter",
@@ -513,6 +513,22 @@
       "whatCreate": "Que souhaitez-vous créer ?",
       "itemTypeAria": "Type d'article",
       "warehouseDesc": "Approvisionnement et recettes · gr, ml, und"
+    },
+    "promotionsScope": {
+      "title": "Produits sélectionnés",
+      "searchPlaceholder": "Rechercher un produit…",
+      "searchAria": "Rechercher un produit",
+      "countInScope": "{count} dans la portée",
+      "clearAll": "Tout effacer",
+      "emptySearch": "Aucun résultat pour cette recherche.",
+      "empty": "Aucun produit sélectionné.",
+      "removeAria": "Retirer {name}",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "Catégories",
+        "products": "Produits",
+        "all_products": "Tous les produits"
+      }
     }
   }
 }
