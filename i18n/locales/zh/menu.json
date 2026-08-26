@@ -518,7 +518,7 @@
       "title": "已选产品",
       "searchPlaceholder": "搜索产品…",
       "searchAria": "搜索产品",
-      "countInScope": "范围内 {count} 项",
+      "countInScope": "范围内 {count} 个产品",
       "clearAll": "全部清除",
       "emptySearch": "没有符合此搜索的结果。",
       "empty": "尚未选择产品。",
@@ -528,7 +528,16 @@
         "categories": "分类",
         "products": "产品",
         "all_products": "全部产品"
-      }
+      },
+      "searchInScopePlaceholder": "在范围内搜索…",
+      "searchInScopeAria": "在范围内搜索",
+      "loadingAria": "正在加载范围",
+      "loadError": "无法加载范围。",
+      "retry": "重试",
+      "emptyItems": "范围内没有项目。",
+      "showingRange": "显示 {start}–{end} / {total}",
+      "previous": "上一页",
+      "next": "下一页"
     }
   }
 }

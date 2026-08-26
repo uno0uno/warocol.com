@@ -5,31 +5,31 @@
         ref="searchInputRef"
         v-model="searchTerm"
         type="search"
-        placeholder="Buscar en alcance…"
+        :placeholder="t('menu.promotionsScope.searchInScopePlaceholder')"
         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface min-h-[44px]"
-        aria-label="Buscar en alcance"
+        :aria-label="t('menu.promotionsScope.searchInScopeAria')"
       />
 
       <div v-if="isLoading" class="flex items-center justify-center py-10" aria-busy="true">
         <div
           class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"
-          aria-label="Cargando alcance"
+          :aria-label="t('menu.promotionsScope.loadingAria')"
         />
       </div>
 
       <div v-else-if="scopeError" class="flex flex-col items-center gap-3 py-8 text-center">
-        <p class="text-sm text-text-secondary">No se pudo cargar el alcance.</p>
+        <p class="text-sm text-text-secondary">{{ t('menu.promotionsScope.loadError') }}</p>
         <button
           type="button"
           class="btn-primary px-4 py-2 rounded-lg text-sm min-h-[44px]"
           @click="refetch()"
         >
-          Reintentar
+          {{ t('menu.promotionsScope.retry') }}
         </button>
       </div>
 
       <p v-else-if="items.length === 0" class="text-sm text-text-secondary text-center py-8">
-        {{ appliedSearch ? 'Sin resultados para esta búsqueda.' : 'No hay ítems en el alcance.' }}
+        {{ appliedSearch ? t('menu.promotionsScope.emptySearch') : t('menu.promotionsScope.emptyItems') }}
       </p>
 
       <ul v-else class="divide-y divide-border max-h-[50vh] overflow-y-auto">
@@ -47,7 +47,7 @@
         class="flex items-center justify-between gap-2 pt-2 border-t border-border"
       >
         <p class="text-xs text-text-secondary">
-          Mostrando {{ startItem }}–{{ endItem }} de {{ total }}
+          {{ t('menu.promotionsScope.showingRange', { start: startItem, end: endItem, total }) }}
         </p>
         <div class="flex gap-2">
           <button
@@ -57,7 +57,7 @@
             :class="canGoPrevious ? 'border-border text-text-primary hover:bg-surface-secondary' : 'border-border/50 text-text-tertiary cursor-not-allowed'"
             @click="previousPage"
           >
-            Anterior
+            {{ t('menu.promotionsScope.previous') }}
           </button>
           <button
             type="button"
@@ -66,7 +66,7 @@
             :class="canGoNext ? 'border-border text-text-primary hover:bg-surface-secondary' : 'border-border/50 text-text-tertiary cursor-not-allowed'"
             @click="nextPage"
           >
-            Siguiente
+            {{ t('menu.promotionsScope.next') }}
           </button>
         </div>
       </div>
@@ -78,31 +78,31 @@
       <input
         v-model="searchTerm"
         type="search"
-        placeholder="Buscar en alcance…"
+        :placeholder="t('menu.promotionsScope.searchInScopePlaceholder')"
         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface min-h-[44px]"
-        aria-label="Buscar en alcance"
+        :aria-label="t('menu.promotionsScope.searchInScopeAria')"
       />
 
       <div v-if="isLoading" class="flex items-center justify-center py-10" aria-busy="true">
         <div
           class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"
-          aria-label="Cargando alcance"
+          :aria-label="t('menu.promotionsScope.loadingAria')"
         />
       </div>
 
       <div v-else-if="scopeError" class="flex flex-col items-center gap-3 py-8 text-center">
-        <p class="text-sm text-text-secondary">No se pudo cargar el alcance.</p>
+        <p class="text-sm text-text-secondary">{{ t('menu.promotionsScope.loadError') }}</p>
         <button
           type="button"
           class="btn-primary px-4 py-2 rounded-lg text-sm min-h-[44px]"
           @click="refetch()"
         >
-          Reintentar
+          {{ t('menu.promotionsScope.retry') }}
         </button>
       </div>
 
       <p v-else-if="items.length === 0" class="text-sm text-text-secondary text-center py-8">
-        {{ appliedSearch ? 'Sin resultados para esta búsqueda.' : 'No hay ítems en el alcance.' }}
+        {{ appliedSearch ? t('menu.promotionsScope.emptySearch') : t('menu.promotionsScope.emptyItems') }}
       </p>
 
       <ul v-else class="divide-y divide-border max-h-[50vh] overflow-y-auto">
@@ -120,7 +120,7 @@
         class="flex items-center justify-between gap-2 pt-2 border-t border-border"
       >
         <p class="text-xs text-text-secondary">
-          Mostrando {{ startItem }}–{{ endItem }} de {{ total }}
+          {{ t('menu.promotionsScope.showingRange', { start: startItem, end: endItem, total }) }}
         </p>
         <div class="flex gap-2">
           <button
@@ -130,7 +130,7 @@
             :class="canGoPrevious ? 'border-border text-text-primary hover:bg-surface-secondary' : 'border-border/50 text-text-tertiary cursor-not-allowed'"
             @click="previousPage"
           >
-            Anterior
+            {{ t('menu.promotionsScope.previous') }}
           </button>
           <button
             type="button"
@@ -139,7 +139,7 @@
             :class="canGoNext ? 'border-border text-text-primary hover:bg-surface-secondary' : 'border-border/50 text-text-tertiary cursor-not-allowed'"
             @click="nextPage"
           >
-            Siguiente
+            {{ t('menu.promotionsScope.next') }}
           </button>
         </div>
       </div>

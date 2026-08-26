@@ -518,7 +518,7 @@
       "title": "المنتجات المحددة",
       "searchPlaceholder": "بحث عن منتج…",
       "searchAria": "بحث عن منتج",
-      "countInScope": "{count} في النطاق",
+      "countInScope": "{count} منتجات في النطاق",
       "clearAll": "مسح الكل",
       "emptySearch": "لا نتائج لهذا البحث.",
       "empty": "لا توجد منتجات محددة.",
@@ -528,7 +528,16 @@
         "categories": "الفئات",
         "products": "المنتجات",
         "all_products": "كل المنتجات"
-      }
+      },
+      "searchInScopePlaceholder": "بحث في النطاق…",
+      "searchInScopeAria": "بحث في النطاق",
+      "loadingAria": "جارٍ تحميل النطاق",
+      "loadError": "تعذر تحميل النطاق.",
+      "retry": "إعادة المحاولة",
+      "emptyItems": "لا عناصر في النطاق.",
+      "showingRange": "عرض {start}–{end} من {total}",
+      "previous": "السابق",
+      "next": "التالي"
     }
   }
 }

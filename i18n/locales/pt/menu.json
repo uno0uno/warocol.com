@@ -518,7 +518,7 @@
       "title": "Produtos selecionados",
       "searchPlaceholder": "Buscar produto…",
       "searchAria": "Buscar produto",
-      "countInScope": "{count} no alcance",
+      "countInScope": "{count} produtos no alcance",
       "clearAll": "Limpar tudo",
       "emptySearch": "Sem resultados para esta busca.",
       "empty": "Nenhum produto selecionado.",
@@ -528,7 +528,16 @@
         "categories": "Categorias",
         "products": "Produtos",
         "all_products": "Todos os produtos"
-      }
+      },
+      "searchInScopePlaceholder": "Buscar no alcance…",
+      "searchInScopeAria": "Buscar no alcance",
+      "loadingAria": "Carregando alcance",
+      "loadError": "Não foi possível carregar o alcance.",
+      "retry": "Tentar de novo",
+      "emptyItems": "Não há itens no alcance.",
+      "showingRange": "Mostrando {start}–{end} de {total}",
+      "previous": "Anterior",
+      "next": "Próximo"
     }
   }
 }

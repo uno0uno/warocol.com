@@ -98,6 +98,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n({ useScope: 'global' })
+
 interface ScopeProduct {
   id: string
   name: string

@@ -518,7 +518,7 @@
       "title": "चयनित उत्पाद",
       "searchPlaceholder": "उत्पाद खोजें…",
       "searchAria": "उत्पाद खोजें",
-      "countInScope": "{count} दायरे में",
+      "countInScope": "दायरे में {count} उत्पाद",
       "clearAll": "सब साफ़ करें",
       "emptySearch": "इस खोज के लिए कोई परिणाम नहीं।",
       "empty": "कोई उत्पाद चयनित नहीं।",
@@ -528,7 +528,16 @@
         "categories": "श्रेणियाँ",
         "products": "उत्पाद",
         "all_products": "सभी उत्पाद"
-      }
+      },
+      "searchInScopePlaceholder": "दायरे में खोजें…",
+      "searchInScopeAria": "दायरे में खोजें",
+      "loadingAria": "दायरा लोड हो रहा है",
+      "loadError": "दायरा लोड नहीं हो सका.",
+      "retry": "फिर कोशिश करें",
+      "emptyItems": "दायरे में कोई आइटम नहीं.",
+      "showingRange": "{start}–{end} / {total}",
+      "previous": "पिछला",
+      "next": "अगला"
     }
   }
 }

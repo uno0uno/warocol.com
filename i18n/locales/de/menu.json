@@ -518,7 +518,7 @@
       "title": "Ausgewählte Produkte",
       "searchPlaceholder": "Produkt suchen…",
       "searchAria": "Produkt suchen",
-      "countInScope": "{count} im Umfang",
+      "countInScope": "{count} Produkte im Umfang",
       "clearAll": "Alles leeren",
       "emptySearch": "Keine Ergebnisse für diese Suche.",
       "empty": "Keine Produkte ausgewählt.",
@@ -528,7 +528,16 @@
         "categories": "Kategorien",
         "products": "Produkte",
         "all_products": "Alle Produkte"
-      }
+      },
+      "searchInScopePlaceholder": "Im Umfang suchen…",
+      "searchInScopeAria": "Im Umfang suchen",
+      "loadingAria": "Umfang wird geladen",
+      "loadError": "Umfang konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "emptyItems": "Keine Einträge im Umfang.",
+      "showingRange": "{start}–{end} von {total}",
+      "previous": "Zurück",
+      "next": "Weiter"
     }
   }
 }
