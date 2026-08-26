@@ -375,7 +375,7 @@ const selectedComandaIds = ref<string[]>([])
 const lastFiredComandaSessionKey = ref<string | null>(null)
 const persistedComandasLoading = ref(false)
 const showComandasReprintPanel = ref(false)
-const { printComandas: printComandasRouted } = useStationTicketPrint()
+const { printComandas: printComandasRouted, getCachedResolveMap } = useStationTicketPrint()
 const posBusinessName = computed(
   () => settingsData.value?.data?.business_name
     ?? settingsData.value?.data?.display_name
@@ -568,6 +568,23 @@ async function openComandasReprintPanel() {
 
 async function runComandaPrint(queue: ComandaPrintPayload[]) {
   if (!queue.length) return
+  const cached = getCachedResolveMap()
+  if (typeof cached !== 'undefined') {
+    const hasPrinter = cached && (cached.resolved_caja || Object.values(cached.resolved).some(Boolean))
+    if (!hasPrinter) {
+      document.body.classList.add('printing-comanda')
+      printQueueComandas.value = queue
+      await nextTick()
+      const earlyCleanup = () => {
+        document.body.classList.remove('printing-comanda')
+        window.removeEventListener('afterprint', earlyCleanup)
+      }
+      window.addEventListener('afterprint', earlyCleanup, { once: true })
+      setTimeout(earlyCleanup, 4000)
+      window.print()
+      return
+    }
+  }
   document.body.classList.add('printing-comanda')
   void document.body.offsetHeight
   const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
