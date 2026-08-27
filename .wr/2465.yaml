@@ -1,0 +1,39 @@
+# Compact plan — warocol.com#2465
+issue: 2465
+title: "Equipo invite: show plan-limit modal like Menú (do not swallow quota 429)"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA
+stack: both
+branch: wr-2465-invitation-quota-modal
+
+paths:
+  - app/services/invitation_service.py
+  - tests/test_quota_enforcement.py
+  - pages/equipo/miembros/index.vue
+  - composables/useQuotaExceeded.test.ts
+
+ac:
+  - "Over-quota invite returns 429 quota_exceeded, not Failed to send invitation"
+  - "Equipo miembros opens plan-limit modal from that payload"
+  - "Invite CTA still uses handleCreateClick admin_users gate"
+  - "Tests: API re-raise + front isQuotaExceededError for admin_users 429"
+
+out_of_scope:
+  - "Changing starter/trial numeric limits"
+  - "SES delivery"
+
+hints:
+  entry: "pages/equipo/miembros/index.vue sendInvitation catch"
+  pattern: "useQuotaExceeded.isQuotaExceededError 429"
+  tests: "bunx --bun test composables/useQuotaExceeded.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""
