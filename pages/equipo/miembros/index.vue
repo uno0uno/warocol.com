@@ -643,7 +643,7 @@
 const { t } = useI18n()
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
-import { isQuotaExceededError } from '~/composables/useQuotaExceeded'
+import { extractQuotaExceededDetail, isQuotaExceededError } from '~/composables/useQuotaExceeded'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 const { formatDate: _fmtDate } = useFormatters()
 
@@ -914,7 +914,7 @@ const inviteForm = reactive({
 })
 
 const quotaExceededMessageFromError = (err: any) => {
-  const detail = err?.data?.detail ?? err?.data ?? {}
+  const detail = extractQuotaExceededDetail(err) ?? {}
   const used = typeof detail.used === 'number' ? detail.used : null
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 

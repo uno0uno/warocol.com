@@ -52,4 +52,23 @@ describe('useQuotaExceeded helpers', () => {
     expect(isQuotaExceededError(err)).toBe(true)
     expect(extractQuotaExceededDetail(err)?.resource).toBe('admin_users')
   })
+
+  it('reads WARO APIError envelope with details (plural)', () => {
+    const err = {
+      status: 429,
+      data: {
+        error: true,
+        message: 'Límite del plan alcanzado',
+        details: {
+          code: 'quota_exceeded',
+          resource: 'admin_users',
+          used: 2,
+          limit: 1,
+        },
+      },
+    }
+    expect(isQuotaExceededError(err)).toBe(true)
+    expect(extractQuotaExceededDetail(err)?.used).toBe(2)
+    expect(extractQuotaExceededDetail(err)?.resource).toBe('admin_users')
+  })
 })
