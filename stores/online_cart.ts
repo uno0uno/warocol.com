@@ -112,13 +112,8 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
   const itemCount = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
   const subtotal = computed(() => items.value.reduce((sum, item) => sum + item.total, 0))
   const isEmpty = computed(() => items.value.length === 0)
-  const formattedSubtotal = computed(() =>
-    new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(subtotal.value)
-  )
+  const { formatCurrency } = useFormatters()
+  const formattedSubtotal = computed(() => formatCurrency(subtotal.value))
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 

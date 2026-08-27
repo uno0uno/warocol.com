@@ -8,7 +8,7 @@
         <span class="text-muted-foreground">
           Subtotal ({{ itemCount }} {{ itemCount === 1 ? 'producto' : 'productos' }})
         </span>
-        <span class="text-foreground font-medium">{{ formatPrice(subtotal) }}</span>
+        <span class="text-foreground font-medium">{{ formatCurrency(subtotal) }}</span>
       </div>
 
       <!-- Delivery fee -->
@@ -19,13 +19,13 @@
             GRATIS
           </span>
         </span>
-        <span class="text-foreground font-medium">{{ formatPrice(deliveryFee) }}</span>
+        <span class="text-foreground font-medium">{{ formatCurrency(deliveryFee) }}</span>
       </div>
 
       <!-- Discount -->
       <div v-if="discount > 0" class="flex justify-between items-center text-[15px]">
         <span class="text-success">Descuento</span>
-        <span class="text-success font-semibold">-{{ formatPrice(discount) }}</span>
+        <span class="text-success font-semibold">-{{ formatCurrency(discount) }}</span>
       </div>
     </div>
 
@@ -34,7 +34,7 @@
     <!-- Total -->
     <div class="flex justify-between items-center mb-3">
       <span class="text-base font-bold text-foreground">Total</span>
-      <span class="text-xl font-extrabold text-primary">{{ formatPrice(total) }}</span>
+      <span class="text-xl font-extrabold text-primary">{{ formatCurrency(total) }}</span>
     </div>
 
     <!-- Minimum order warning -->
@@ -43,9 +43,9 @@
         <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.732 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
         </svg>
-        Pedido mínimo: {{ formatPrice(normalizedMinimumOrder) }}
+        Pedido mínimo: {{ formatCurrency(normalizedMinimumOrder) }}
       </span>
-      <small class="font-semibold mt-0.5">Faltan {{ formatPrice(normalizedMinimumOrder - subtotal) }}</small>
+      <small class="font-semibold mt-0.5">Faltan {{ formatCurrency(normalizedMinimumOrder - subtotal) }}</small>
     </div>
 
     <!-- Online orders disabled notice — takes priority over closed notice -->
@@ -147,11 +147,5 @@ const isCheckoutDisabled = computed(() => {
   return normalizedMinimumOrder.value > 0 && props.subtotal < normalizedMinimumOrder.value
 })
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(price)
-}
+const { formatCurrency } = useFormatters()
 </script>

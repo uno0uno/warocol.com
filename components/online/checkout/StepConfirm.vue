@@ -341,12 +341,7 @@ const orderTypeLabel = computed(() => ({
   'dine-in': 'En mesa',
 }[cartStore.orderType] ?? cartStore.orderType))
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(price)
+const { formatCurrency: formatPrice } = useFormatters()
 
 const modifierLineAmount = (modifier: { price: number; quantity?: number }) =>
   modifierLineTotal(modifier)

@@ -718,6 +718,8 @@ const isValid = computed(() => {
 
 // --- Price — shows total for current context ---
 
+const { formatCurrency: formatPrice } = useFormatters()
+
 const totalPrice = computed(() => {
   const base = Number(props.product?.price ?? productDetail.value?.price ?? 0)
   if (wizardMode.value) {
@@ -732,15 +734,6 @@ const totalPrice = computed(() => {
 
 function formatModifierPriceLabel(mod: Modifier): string {
   return formatSaleModifierPriceLabel(mod.price, formatPrice, mod.included_quantity)
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price)
 }
 
 const headerSubtitle = computed(() => {

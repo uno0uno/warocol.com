@@ -136,14 +136,9 @@ function handleClick() {
   emit('click', props.product)
 }
 
+const { formatCurrency } = useFormatters()
 function formatPrice(price: string | number) {
-  const numPrice = typeof price === 'string' ? parseFloat(price) : price
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numPrice)
+  return formatCurrency(price)
 }
 </script>
 
