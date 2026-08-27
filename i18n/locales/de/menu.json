@@ -124,18 +124,18 @@
       "dishCost": "Meine Gerichtskosten",
       "operationalCostHelp": "Betriebskosten, die Sie definieren; das System ändert sie nicht.",
       "realMargin": "Reale Marge",
-      "operatingMargin": "Betriebsmarge"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "Steuerkategorie"
-      ,"taxResolution": "Produktsteuer"
-      ,"taxInherit": "Von Kategorie erben"
-      ,"taxInheritHint": "Nutzt die Facturación-Zuordnung der Menükategorie"
-      ,"taxOverrideLine": "Andere Zeile"
-      ,"taxOverrideLineHint": "Erzwingt eine andere Steuerzeile als die Kategorie"
-      ,"taxSelectLine": "Steuerzeile"
-      ,"taxInheritedLabel": "Standard: {label}"
-      ,"taxInheritedExempt": "Standard: befreit (Kategorie)"
-      ,"taxNoCategory": "Wählen Sie eine Menükategorie für die geerbte Steuer",
+      "operatingMargin": "Betriebsmarge",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
+      "taxCategory": "Steuerkategorie",
+      "taxResolution": "Produktsteuer",
+      "taxInherit": "Von Kategorie erben",
+      "taxInheritHint": "Nutzt die Facturación-Zuordnung der Menükategorie",
+      "taxOverrideLine": "Andere Zeile",
+      "taxOverrideLineHint": "Erzwingt eine andere Steuerzeile als die Kategorie",
+      "taxSelectLine": "Steuerzeile",
+      "taxInheritedLabel": "Standard: {label}",
+      "taxInheritedExempt": "Standard: befreit (Kategorie)",
+      "taxNoCategory": "Wählen Sie eine Menükategorie für die geerbte Steuer",
       "foodBeverage": "Speise / Getränk",
       "incVatRates": "Satz laut Abrechnung",
       "takeawayLiquor": "Spirituosen zum Mitnehmen",
@@ -513,6 +513,31 @@
       "whatCreate": "Was möchten Sie erstellen?",
       "itemTypeAria": "Artikeltyp",
       "warehouseDesc": "Bestand und Rezepte · gr, ml, Stk."
+    },
+    "promotionsScope": {
+      "title": "Ausgewählte Produkte",
+      "searchPlaceholder": "Produkt suchen…",
+      "searchAria": "Produkt suchen",
+      "countInScope": "{count} Produkte im Umfang",
+      "clearAll": "Alles leeren",
+      "emptySearch": "Keine Ergebnisse für diese Suche.",
+      "empty": "Keine Produkte ausgewählt.",
+      "removeAria": "{name} entfernen",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "Kategorien",
+        "products": "Produkte",
+        "all_products": "Alle Produkte"
+      },
+      "searchInScopePlaceholder": "Im Umfang suchen…",
+      "searchInScopeAria": "Im Umfang suchen",
+      "loadingAria": "Umfang wird geladen",
+      "loadError": "Umfang konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "emptyItems": "Keine Einträge im Umfang.",
+      "showingRange": "{start}–{end} von {total}",
+      "previous": "Zurück",
+      "next": "Weiter"
     }
   }
 }

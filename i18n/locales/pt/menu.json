@@ -124,18 +124,18 @@
       "dishCost": "Meu custo do prato",
       "operationalCostHelp": "Custo operacional que você define; o sistema não o altera.",
       "realMargin": "Margem real",
-      "operatingMargin": "Margem operacional"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "Categoria de imposto"
-      ,"taxResolution": "Imposto do produto"
-      ,"taxInherit": "Herdar da categoria"
-      ,"taxInheritHint": "Usa o mapa de Faturamento para a categoria do menu"
-      ,"taxOverrideLine": "Outra linha"
-      ,"taxOverrideLineHint": "Define uma linha de imposto diferente da categoria"
-      ,"taxSelectLine": "Linha de imposto"
-      ,"taxInheritedLabel": "Padrão: {label}"
-      ,"taxInheritedExempt": "Padrão: isento (categoria)"
-      ,"taxNoCategory": "Escolha uma categoria do menu para ver o imposto herdado",
+      "operatingMargin": "Margem operacional",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
+      "taxCategory": "Categoria de imposto",
+      "taxResolution": "Imposto do produto",
+      "taxInherit": "Herdar da categoria",
+      "taxInheritHint": "Usa o mapa de Faturamento para a categoria do menu",
+      "taxOverrideLine": "Outra linha",
+      "taxOverrideLineHint": "Define uma linha de imposto diferente da categoria",
+      "taxSelectLine": "Linha de imposto",
+      "taxInheritedLabel": "Padrão: {label}",
+      "taxInheritedExempt": "Padrão: isento (categoria)",
+      "taxNoCategory": "Escolha uma categoria do menu para ver o imposto herdado",
       "foodBeverage": "Alimento / Bebida",
       "incVatRates": "Taxa conforme Faturamento",
       "takeawayLiquor": "Bebida alcoólica para levar",
@@ -513,6 +513,31 @@
       "whatCreate": "O que você quer criar?",
       "itemTypeAria": "Tipo de item",
       "warehouseDesc": "Abastecimento e receitas · gr, ml, und"
+    },
+    "promotionsScope": {
+      "title": "Produtos selecionados",
+      "searchPlaceholder": "Buscar produto…",
+      "searchAria": "Buscar produto",
+      "countInScope": "{count} produtos no alcance",
+      "clearAll": "Limpar tudo",
+      "emptySearch": "Sem resultados para esta busca.",
+      "empty": "Nenhum produto selecionado.",
+      "removeAria": "Remover {name}",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "Categorias",
+        "products": "Produtos",
+        "all_products": "Todos os produtos"
+      },
+      "searchInScopePlaceholder": "Buscar no alcance…",
+      "searchInScopeAria": "Buscar no alcance",
+      "loadingAria": "Carregando alcance",
+      "loadError": "Não foi possível carregar o alcance.",
+      "retry": "Tentar de novo",
+      "emptyItems": "Não há itens no alcance.",
+      "showingRange": "Mostrando {start}–{end} de {total}",
+      "previous": "Anterior",
+      "next": "Próximo"
     }
   }
 }

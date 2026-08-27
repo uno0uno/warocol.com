@@ -771,6 +771,19 @@
       "warehouseItemMany": "{count} أصناف مستودع",
       "viewAndFixOrder": "عرض وتصحيح الطلب {order}",
       "correct": "تصحيح"
+    },
+    "portalSheet": {
+      "orders": "الطلبات",
+      "billing": "الفوترة",
+      "refresh": "تحديث",
+      "info": "معلومات",
+      "title": "معلومات المورّد",
+      "company": "الشركة",
+      "supplierFallback": "مورّد",
+      "email": "البريد",
+      "phone": "الهاتف",
+      "helpTitle": "هل تحتاج مساعدة؟",
+      "helpBody": "إذا كان لديك سؤال، تواصل مع المسؤول أو اكتب إلى {email}"
     }
   }
 }

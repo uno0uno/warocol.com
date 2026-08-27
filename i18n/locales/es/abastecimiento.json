@@ -834,6 +834,19 @@
       "warehouseItemMany": "{count} artículos de bodega",
       "viewAndFixOrder": "Ver y corregir orden {order}",
       "correct": "Corregir"
+    },
+    "portalSheet": {
+      "orders": "Órdenes",
+      "billing": "Facturación",
+      "refresh": "Refrescar",
+      "info": "Info",
+      "title": "Información del proveedor",
+      "company": "Empresa",
+      "supplierFallback": "Proveedor",
+      "email": "Email",
+      "phone": "Teléfono",
+      "helpTitle": "¿Necesitas ayuda?",
+      "helpBody": "Si tienes alguna pregunta, contacta a tu administrador o escribe a {email}"
     }
   }
 }

@@ -640,6 +640,31 @@
       "whatCreate": "¿Qué quieres crear?",
       "itemTypeAria": "Tipo de ítem",
       "warehouseDesc": "Abastecimiento y recetas · gr, ml, und"
+    },
+    "promotionsScope": {
+      "title": "Productos seleccionados",
+      "searchPlaceholder": "Buscar producto…",
+      "searchAria": "Buscar producto",
+      "countInScope": "{count} productos en alcance",
+      "clearAll": "Limpiar todo",
+      "emptySearch": "Sin resultados para esta búsqueda.",
+      "empty": "No hay productos seleccionados.",
+      "removeAria": "Quitar {name}",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "Categorías",
+        "products": "Productos",
+        "all_products": "Todos los productos"
+      },
+      "searchInScopePlaceholder": "Buscar en alcance…",
+      "searchInScopeAria": "Buscar en alcance",
+      "loadingAria": "Cargando alcance",
+      "loadError": "No se pudo cargar el alcance.",
+      "retry": "Reintentar",
+      "emptyItems": "No hay ítems en el alcance.",
+      "showingRange": "Mostrando {start}–{end} de {total}",
+      "previous": "Anterior",
+      "next": "Siguiente"
     }
   }
 }

@@ -124,18 +124,18 @@
       "dishCost": "मेरे व्यंजन की लागत",
       "operationalCostHelp": "परिचालन लागत जिसे आप परिभाषित करते हैं; सिस्टम इसे नहीं बदलता है।",
       "realMargin": "वास्तविक मार्जिन",
-      "operatingMargin": "परिचालन मार्जिन"
-      ,"marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
-      "taxCategory": "कर श्रेणी"
-      ,"taxResolution": "उत्पाद कर"
-      ,"taxInherit": "श्रेणी से विरासत"
-      ,"taxInheritHint": "मेनू श्रेणी के लिए बिलिंग मैप उपयोग करता है"
-      ,"taxOverrideLine": "अन्य लाइन"
-      ,"taxOverrideLineHint": "श्रेणी से अलग कर लाइन तय करें"
-      ,"taxSelectLine": "कर लाइन"
-      ,"taxInheritedLabel": "डिफ़ॉल्ट: {label}"
-      ,"taxInheritedExempt": "डिफ़ॉल्ट: छूट (श्रेणी)"
-      ,"taxNoCategory": "विरासत कर देखने के लिए मेनू श्रेणी चुनें",
+      "operatingMargin": "परिचालन मार्जिन",
+      "marginsHelp": "Real = purchases/warehouse. Operating = your dish cost. The % uses each margin's cost.",
+      "taxCategory": "कर श्रेणी",
+      "taxResolution": "उत्पाद कर",
+      "taxInherit": "श्रेणी से विरासत",
+      "taxInheritHint": "मेनू श्रेणी के लिए बिलिंग मैप उपयोग करता है",
+      "taxOverrideLine": "अन्य लाइन",
+      "taxOverrideLineHint": "श्रेणी से अलग कर लाइन तय करें",
+      "taxSelectLine": "कर लाइन",
+      "taxInheritedLabel": "डिफ़ॉल्ट: {label}",
+      "taxInheritedExempt": "डिफ़ॉल्ट: छूट (श्रेणी)",
+      "taxNoCategory": "विरासत कर देखने के लिए मेनू श्रेणी चुनें",
       "foodBeverage": "खाद्य / पेय",
       "incVatRates": "दर बिलिंग सेटिंग्स के अनुसार",
       "takeawayLiquor": "ले जाने के लिए शराब",
@@ -513,6 +513,31 @@
       "whatCreate": "आप क्या बनाना चाहते हैं?",
       "itemTypeAria": "आइटम का प्रकार",
       "warehouseDesc": "आपूर्ति और रेसिपी · ग्राम, मिलीलीटर, इकाई"
+    },
+    "promotionsScope": {
+      "title": "चयनित उत्पाद",
+      "searchPlaceholder": "उत्पाद खोजें…",
+      "searchAria": "उत्पाद खोजें",
+      "countInScope": "दायरे में {count} उत्पाद",
+      "clearAll": "सब साफ़ करें",
+      "emptySearch": "इस खोज के लिए कोई परिणाम नहीं।",
+      "empty": "कोई उत्पाद चयनित नहीं।",
+      "removeAria": "{name} हटाएँ",
+      "titleWithType": "{name} · {type}",
+      "types": {
+        "categories": "श्रेणियाँ",
+        "products": "उत्पाद",
+        "all_products": "सभी उत्पाद"
+      },
+      "searchInScopePlaceholder": "दायरे में खोजें…",
+      "searchInScopeAria": "दायरे में खोजें",
+      "loadingAria": "दायरा लोड हो रहा है",
+      "loadError": "दायरा लोड नहीं हो सका.",
+      "retry": "फिर कोशिश करें",
+      "emptyItems": "दायरे में कोई आइटम नहीं.",
+      "showingRange": "{start}–{end} / {total}",
+      "previous": "पिछला",
+      "next": "अगला"
     }
   }
 }

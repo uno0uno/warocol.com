@@ -771,6 +771,19 @@
       "warehouseItemMany": "{count} itens de estoque",
       "viewAndFixOrder": "Ver e corrigir pedido {order}",
       "correct": "Corrigir"
+    },
+    "portalSheet": {
+      "orders": "Pedidos",
+      "billing": "Faturamento",
+      "refresh": "Atualizar",
+      "info": "Info",
+      "title": "Informações do fornecedor",
+      "company": "Empresa",
+      "supplierFallback": "Fornecedor",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "helpTitle": "Precisa de ajuda?",
+      "helpBody": "Se tiver alguma dúvida, fale com seu administrador ou escreva para {email}"
     }
   }
 }
