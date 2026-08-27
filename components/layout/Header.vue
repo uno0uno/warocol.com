@@ -9,7 +9,7 @@
       </NuxtLink>
 
       <!-- Nav principal (centro) — solo desktop -->
-      <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-1 ms-6">
+      <nav :aria-label="t('blog.nav.aria')" class="hidden md:flex items-center gap-1 ms-6">
         <NuxtLink
           v-for="link in navLinks"
           :key="link.to"
@@ -56,6 +56,7 @@ import { useCityCatalog } from '~/composables/useCityCatalog'
 import {
   type AppLocaleCode,
 } from '~/utils/appLocales'
+import { resolveAnonymousReaderMarket } from '~/utils/articleMarket'
 import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
 import logo from '~/public/logo_waro_colombia.png'
 
@@ -87,11 +88,15 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', syncCompactLocaleSelect)
 })
 
-// Default CO market until a dedicated US landing exists (epic #2093 decision).
-const headerCta = getPublicCta('pos', 'header', { lang: 'es', country: 'Colombia' })
+const requestHeaders = useRequestHeaders(['accept-language', 'cf-ipcountry'])
+const headerMarket = computed(() => resolveAnonymousReaderMarket({
+  acceptLanguage: requestHeaders['accept-language'],
+  cfIpCountry: requestHeaders['cf-ipcountry'],
+}))
+const headerCta = computed(() => getPublicCta('pos', 'header', headerMarket.value))
 
 const startRegistration = () => router.push(activatePublicCta(
-  headerCta,
+  headerCta.value,
   { source: 'public_header', content: 'primary' },
   undefined,
   import.meta.client ? window.sessionStorage : null,
@@ -103,18 +108,18 @@ const isDocs = computed(() => route.path.startsWith('/docs'))
 // prefixes win before the catalog lookup so future cities can't shadow
 // `/docs` or `/blog` accidentally (warocol.com#619).
 const badgeText = computed(() => {
-  if (route.path.startsWith('/docs')) return 'Docs'
-  if (route.path.startsWith('/blog')) return 'Blog'
-  if (route.path === '/ciudades') return 'Ciudades'
+  if (route.path.startsWith('/docs')) return t('blog.badge.docs')
+  if (route.path.startsWith('/blog')) return t('blog.badge.blog')
+  if (route.path === '/ciudades') return t('blog.badge.cities')
   const city = cityFromRoute(route.path)
   return city?.city ?? null
 })
 
-const navLinks = [
-  { to: '/ciudades', label: 'Ciudades' },
-  { to: '/blog', label: 'Blog' },
-  { to: '/docs', label: 'Docs' },
-]
+const navLinks = computed(() => [
+  { to: '/ciudades', label: t('blog.nav.cities') },
+  { to: '/blog', label: t('blog.nav.blog') },
+  { to: '/docs', label: t('blog.nav.docs') },
+])
 
 function isActive(path: string) {
   // The "Ciudades" link highlights on both /ciudades and any /<city_slug>

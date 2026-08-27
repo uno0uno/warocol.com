@@ -1,0 +1,28 @@
+{
+  "blog": {
+    "nav": {
+      "aria": "Navigation principale",
+      "cities": "Villes",
+      "blog": "Blog",
+      "docs": "Docs"
+    },
+    "badge": {
+      "docs": "Docs",
+      "blog": "Blog",
+      "cities": "Villes"
+    },
+    "index": {
+      "eyebrow": "Blog et ressources",
+      "heroTitle": "Les connaissances dont votre restaurant a besoin",
+      "heroSubtitle": "Guides pratiques et stratégies éprouvées pour maîtriser les coûts, optimiser les stocks et décider avec des données.",
+      "forRestaurants": "Contenu pour restaurants",
+      "quickRead": "Lecture rapide",
+      "metaTitle": "Blog - Articles et ressources | WARO Colombia",
+      "metaDescription": "Articles, tutoriels et ressources sur la gestion de restaurants, les coûts, les stocks et plus.",
+      "siteName": "WARO Colombia",
+      "articlesFallback": "Articles",
+      "loadError": "Impossible de charger les articles",
+      "retry": "Réessayer"
+    }
+  }
+}

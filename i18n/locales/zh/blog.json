@@ -1,0 +1,28 @@
+{
+  "blog": {
+    "nav": {
+      "aria": "主导航",
+      "cities": "城市",
+      "blog": "博客",
+      "docs": "文档"
+    },
+    "badge": {
+      "docs": "文档",
+      "blog": "博客",
+      "cities": "城市"
+    },
+    "index": {
+      "eyebrow": "博客与资源",
+      "heroTitle": "餐厅需要的运营知识",
+      "heroSubtitle": "控制成本、优化库存、用数据做决策的实用指南。",
+      "forRestaurants": "面向餐厅的内容",
+      "quickRead": "快速阅读",
+      "metaTitle": "博客 - 文章与资源 | WARO Colombia",
+      "metaDescription": "餐厅运营、成本控制和库存相关的文章与教程。",
+      "siteName": "WARO Colombia",
+      "articlesFallback": "文章",
+      "loadError": "无法加载文章",
+      "retry": "重试"
+    }
+  }
+}

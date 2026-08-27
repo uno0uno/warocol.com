@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { BLOG_PILLARS, getPillarLabel } from '~/utils/blogPillars'
 import { resolveAnonymousReaderMarket } from '~/utils/articleMarket'
 import { articleLangToLocale } from '~/utils/articleLangToLocale'
@@ -9,23 +9,34 @@ definePageMeta({
   publicAccess: true,
 })
 
-const heroTitle = 'El conocimiento que necesita tu restaurante'
+const { t } = useI18n({ useScope: 'global' })
+const heroTitle = computed(() => t('blog.index.heroTitle'))
 const displayedTitle = ref('')
 const titleDone = ref(false)
+let typeTimer: ReturnType<typeof setTimeout> | null = null
 
-onMounted(() => {
+function startTypewriter(text: string) {
+  if (typeTimer) clearTimeout(typeTimer)
+  displayedTitle.value = ''
+  titleDone.value = false
   let i = 0
   const speed = 28
   const type = () => {
-    if (i < heroTitle.length) {
-      displayedTitle.value += heroTitle[i]
+    if (i < text.length) {
+      displayedTitle.value += text[i]
       i++
-      setTimeout(type, speed)
+      typeTimer = setTimeout(type, speed)
     } else {
       titleDone.value = true
     }
   }
-  setTimeout(type, 120)
+  typeTimer = setTimeout(type, 120)
+}
+
+watch(heroTitle, (text) => startTypewriter(text), { immediate: true })
+
+onBeforeUnmount(() => {
+  if (typeTimer) clearTimeout(typeTimer)
 })
 
 interface ArticleSummary {
@@ -124,7 +135,7 @@ const articlesByPillar = computed(() => {
 })
 
 const filteredViewTitle = computed(() =>
-  getPillarLabel(activePillar.value) ?? 'Artículos'
+  getPillarLabel(activePillar.value) ?? t('blog.index.articlesFallback')
 )
 
 const gradientClasses = [
@@ -145,23 +156,20 @@ const goToPage = (page: number) => {
 const siteUrl = config.public.siteUrl || 'https://warocol.com'
 const canonicalUrl = `${siteUrl}${route.path}`
 
-const blogTitle = 'Blog - Artículos y Recursos | Waro Colombia'
-const blogDescription = 'Descubre artículos, tutoriales y recursos sobre gestión de restaurantes, control de costos, inventarios y más. Aprende a optimizar tu negocio gastronómico.'
-
 useHead({
-  title: blogTitle,
+  title: () => t('blog.index.metaTitle'),
   meta: [
-    { name: 'description', content: blogDescription },
+    { name: 'description', content: () => t('blog.index.metaDescription') },
     { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: blogTitle },
-    { property: 'og:description', content: blogDescription },
+    { property: 'og:title', content: () => t('blog.index.metaTitle') },
+    { property: 'og:description', content: () => t('blog.index.metaDescription') },
     { property: 'og:url', content: canonicalUrl },
     { property: 'og:image', content: `${siteUrl}/og-image.png` },
-    { property: 'og:site_name', content: 'Waro Colombia' },
-    { property: 'og:locale', content: 'es_CO' },
+    { property: 'og:site_name', content: () => t('blog.index.siteName') },
+    { property: 'og:locale', content: () => readerMarket.value.ogLocale },
     { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: blogTitle },
-    { name: 'twitter:description', content: blogDescription },
+    { name: 'twitter:title', content: () => t('blog.index.metaTitle') },
+    { name: 'twitter:description', content: () => t('blog.index.metaDescription') },
     { name: 'twitter:image', content: `${siteUrl}/og-image.png` },
     { name: 'twitter:site', content: '@warocolombia' },
   ],
@@ -179,7 +187,7 @@ useHead({
       <div class="relative z-10 public-page-container pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
         <div class="inline-flex items-center gap-2 mb-5 lg:mb-7">
           <span class="w-5 h-px bg-badge-primary-border" />
-          <span class="text-xs font-bold uppercase tracking-[0.25em] text-badge-primary-text">Blog & Recursos</span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-badge-primary-text">{{ t('blog.index.eyebrow') }}</span>
           <span class="w-5 h-px bg-badge-primary-border" />
         </div>
 
@@ -188,18 +196,18 @@ useHead({
         </h1>
 
         <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-light">
-          Guías prácticas y estrategias probadas para controlar costos, optimizar inventarios y tomar decisiones con datos.
+          {{ t('blog.index.heroSubtitle') }}
         </p>
 
         <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-surface rounded-xl border border-border text-xs sm:text-sm text-text-secondary">
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Contenido para restaurantes
+            {{ t('blog.index.forRestaurants') }}
           </span>
           <span class="w-px h-4 bg-border" />
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-badge-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Lectura rápida
+            {{ t('blog.index.quickRead') }}
           </span>
         </div>
       </div>
@@ -212,13 +220,13 @@ useHead({
 
       <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
         <div class="text-center">
-          <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los artículos</p>
+          <p class="text-xl font-semibold text-text-primary mb-2">{{ t('blog.index.loadError') }}</p>
           <p class="text-sm text-text-secondary mb-4">{{ fetchError.message }}</p>
           <button
             class="px-4 py-2 bg-text-primary text-surface rounded-xl hover:bg-action-primary-bg hover:text-action-primary-text transition-colors"
             @click="refresh()"
           >
-            Reintentar
+            {{ t('blog.index.retry') }}
           </button>
         </div>
       </div>

@@ -1,0 +1,28 @@
+{
+  "blog": {
+    "nav": {
+      "aria": "Navegación principal",
+      "cities": "Ciudades",
+      "blog": "Blog",
+      "docs": "Docs"
+    },
+    "badge": {
+      "docs": "Docs",
+      "blog": "Blog",
+      "cities": "Ciudades"
+    },
+    "index": {
+      "eyebrow": "Blog & Recursos",
+      "heroTitle": "El conocimiento que necesita tu restaurante",
+      "heroSubtitle": "Guías prácticas y estrategias probadas para controlar costos, optimizar inventarios y tomar decisiones con datos.",
+      "forRestaurants": "Contenido para restaurantes",
+      "quickRead": "Lectura rápida",
+      "metaTitle": "Blog - Artículos y Recursos | Waro Colombia",
+      "metaDescription": "Descubre artículos, tutoriales y recursos sobre gestión de restaurantes, control de costos, inventarios y más. Aprende a optimizar tu negocio gastronómico.",
+      "siteName": "Waro Colombia",
+      "articlesFallback": "Artículos",
+      "loadError": "Error al cargar los artículos",
+      "retry": "Reintentar"
+    }
+  }
+}

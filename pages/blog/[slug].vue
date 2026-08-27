@@ -162,19 +162,23 @@ const articleSchema = computed(() => {
         operatingSystem: 'Web, iOS, Android',
         url: siteUrl,
         publisher: { '@id': `${siteUrl}#organization` },
-        offers: {
-          '@type': 'Offer',
-          price: market.annualPrice,
-          priceCurrency: market.currency,
-          availability: 'https://schema.org/InStock',
-          priceSpecification: {
-            '@type': 'UnitPriceSpecification',
-            price: market.monthlyPrice,
-            priceCurrency: market.currency,
-            billingDuration: 'P1M',
-            description: market.monthlyOfferDescription
-          }
-        },
+        ...(market.annualPrice
+          ? {
+              offers: {
+                '@type': 'Offer',
+                price: market.annualPrice,
+                priceCurrency: market.currency,
+                availability: 'https://schema.org/InStock',
+                priceSpecification: {
+                  '@type': 'UnitPriceSpecification',
+                  price: market.monthlyPrice,
+                  priceCurrency: market.currency,
+                  billingDuration: 'P1M',
+                  description: market.monthlyOfferDescription
+                }
+              }
+            }
+          : {}),
         featureList: [
           'Punto de venta con catálogo y modificadores',
           'Plano de mesas con estados en tiempo real',
@@ -272,6 +276,7 @@ useHead({
         :slug="slug"
         :lang="article.lang"
         :country="article.country"
+        :country_code="article.country_code"
       >
         <!-- Breadcrumb Slot -->
         <template #breadcrumb>
@@ -284,6 +289,7 @@ useHead({
             :slug="slug"
             :lang="article.lang"
             :country="article.country"
+            :country_code="article.country_code"
           />
         </template>
 
