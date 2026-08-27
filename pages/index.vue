@@ -34,9 +34,6 @@ watch(
   },
   { immediate: true },
 )
-  acceptLanguage: requestHeaders['accept-language'],
-  cfIpCountry: requestHeaders['cf-ipcountry'],
-}))
 
 const canonicalUrl = computed(() => {
   const baseUrl = config.siteUrl || 'https://warocol.com'
