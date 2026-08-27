@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { BLOG_PILLARS, getPillarLabel } from '~/utils/blogPillars'
+import { resolveAnonymousReaderMarket } from '~/utils/articleMarket'
+import { articleLangToLocale } from '~/utils/articleLangToLocale'
 
 definePageMeta({
   layout: 'blog',
@@ -40,6 +42,8 @@ interface ArticleSummary {
   created_at: string
   author_name: string | null
   author_avatar: string | null
+  lang?: string | null
+  country_code?: string | null
 }
 
 interface ArticlesResponse {
@@ -89,6 +93,24 @@ const { data: articlesData, pending: isLoading, error: fetchError, refresh } = u
 const articles = computed(() => articlesData.value?.data || [])
 const totalPages = computed(() =>
   Math.ceil((articlesData.value?.total || 0) / articlesPerPage)
+)
+
+const requestHeaders = useRequestHeaders(['accept-language', 'cf-ipcountry'])
+const authStore = useAuthStore()
+const { applyPersonalLocale } = useAppLocale()
+const readerMarket = computed(() => resolveAnonymousReaderMarket({
+  acceptLanguage: requestHeaders['accept-language'],
+  cfIpCountry: requestHeaders['cf-ipcountry'],
+}))
+
+watch(
+  () => authStore.session,
+  async (session) => {
+    if (session) return
+    const code = articleLangToLocale(readerMarket.value.inLanguage)
+    if (code) await applyPersonalLocale(code)
+  },
+  { immediate: true },
 )
 
 const articlesByPillar = computed(() => {

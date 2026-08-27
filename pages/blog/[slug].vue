@@ -39,6 +39,7 @@ interface Article {
   lang: string
   planet: string
   country: string
+  country_code?: string | null
   city: string
   created_at: string
   updated_at: string | null
@@ -80,6 +81,7 @@ const articleMarket = computed(() =>
   resolveArticleMarket({
     lang: article.value?.lang,
     country: article.value?.country,
+    country_code: article.value?.country_code,
   }),
 )
 
