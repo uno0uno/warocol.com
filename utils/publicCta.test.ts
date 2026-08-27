@@ -149,6 +149,13 @@ test('public CTAs render EN + USD $30/month for US English market', () => {
   assert.match(price.body, /USD \$30\/month/)
 })
 
+test('Spain public CTAs stay Spanish and use EUR not COP', () => {
+  const spain = getPublicCta('pos', 'final', { lang: 'es', country_code: 'ES' })
+  assert.match(spain.body, /EUR €360\/año/)
+  assert.doesNotMatch(spain.body, /COP/i)
+  assert.equal(spain.button, 'Crear cuenta y elegir plan')
+})
+
 test('omitted market keeps Colombia ES COP public CTAs', () => {
   const omitted = getPublicCta('pos', 'final')
   const co = getPublicCta('pos', 'final', { lang: 'es', country: 'Colombia' })

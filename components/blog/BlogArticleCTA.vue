@@ -5,10 +5,15 @@ const props = defineProps<{
   slug: string
   lang?: string | null
   country?: string | null
+  country_code?: string | null
 }>()
 const leadModal = useLeadModal()
 const ctaContent = computed(() =>
-  useBlogCta(props.slug, 'final', { lang: props.lang, country: props.country }),
+  useBlogCta(props.slug, 'final', {
+    lang: props.lang,
+    country: props.country,
+    country_code: props.country_code,
+  }),
 )
 const openLeadModal = () => {
   const route = useRoute()

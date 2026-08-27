@@ -284,6 +284,7 @@ useHead({
             :slug="slug"
             :lang="article.lang"
             :country="article.country"
+            :country_code="article.country_code"
           />
         </template>
 

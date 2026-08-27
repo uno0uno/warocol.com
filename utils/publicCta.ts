@@ -65,11 +65,30 @@ function toArticleMarket(marketInput: ArticleMarketInput | ArticleMarket = {}): 
 /** Resolve public offer strings from article/public market input. Default → CO. Unified with trial pricing for consistency. */
 export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMarket = {}): PublicOffer {
   const market = toArticleMarket(marketInput)
-  const rawCountry = String((marketInput as any).countryCode || (marketInput as any).country || '').trim().toUpperCase()
-  const rawCurrency = String((marketInput as any).currencyCode || '').trim().toUpperCase()
-  const isEn = String((marketInput as any).locale || (marketInput as any).lang || market.localeTag || '').toLowerCase().startsWith('en') || market.isUsEn
+  if (market.isUsEn) {
+    return {
+      annualPrice: market.annualPriceLabel,
+      monthlyEquivalent: 'under USD $30/month',
+      activation: 'Module access activates after payment.',
+    }
+  }
 
-  // If caller passed explicit countryCode/currencyCode (trial-style), use same segmentation as trial for consistency
+  const rawCountry = String(
+    (marketInput as ArticleMarketInput).country_code
+    || (marketInput as { countryCode?: string }).countryCode
+    || (marketInput as ArticleMarketInput).country
+    || market.market
+    || '',
+  ).trim().toUpperCase()
+  const rawCurrency = String((marketInput as { currencyCode?: string }).currencyCode || '').trim().toUpperCase()
+  const isEn = String(
+    (marketInput as { locale?: string }).locale
+    || (marketInput as ArticleMarketInput).lang
+    || market.localeTag
+    || '',
+  ).toLowerCase().startsWith('en')
+
+  // Country / currency segmentation (ISO-2, names, or resolved ArticleMarket.market)
   if (rawCountry || rawCurrency) {
     const isCo = rawCountry === 'CO' || rawCountry === 'COL' || rawCountry.includes('COLOMBIA') || rawCurrency === 'COP'
     const isUs = rawCountry === 'US' || rawCountry === 'USA' || rawCountry.includes('UNITED STATES')
@@ -103,13 +122,6 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
     }
   }
 
-  if (market.isUsEn) {
-    return {
-      annualPrice: market.annualPriceLabel,
-      monthlyEquivalent: 'under USD $30/month',
-      activation: 'Module access activates after payment.',
-    }
-  }
   return PUBLIC_OFFER
 }
 
@@ -299,7 +311,7 @@ export const getPublicCta = (
 ): PublicCta => {
   const market = toArticleMarket(marketInput)
   const offer = resolvePublicOffer(market)
-  const isEn = market.isUsEn
+  const isEn = market.isUsEn || market.localeTag.toLowerCase().startsWith('en')
 
   const benefit = isEn ? BENEFIT_COPY_EN[intent] : BENEFIT_COPY_ES[intent]
   const finals = isEn ? finalCopyEn(offer) : finalCopyEs(offer)

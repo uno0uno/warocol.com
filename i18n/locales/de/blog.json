@@ -1,0 +1,28 @@
+{
+  "blog": {
+    "nav": {
+      "aria": "Hauptnavigation",
+      "cities": "Städte",
+      "blog": "Blog",
+      "docs": "Docs"
+    },
+    "badge": {
+      "docs": "Docs",
+      "blog": "Blog",
+      "cities": "Städte"
+    },
+    "index": {
+      "eyebrow": "Blog & Ressourcen",
+      "heroTitle": "Das Wissen, das dein Restaurant braucht",
+      "heroSubtitle": "Praktische Leitfäden und bewährte Strategien für Kostenkontrolle, Inventar und datenbasierte Entscheidungen.",
+      "forRestaurants": "Inhalte für Restaurants",
+      "quickRead": "Kurze Lektüre",
+      "metaTitle": "Blog - Artikel und Ressourcen | WARO Colombia",
+      "metaDescription": "Artikel, Tutorials und Ressourcen zu Restaurantbetrieb, Kostenkontrolle, Inventar und mehr.",
+      "siteName": "WARO Colombia",
+      "articlesFallback": "Artikel",
+      "loadError": "Artikel konnten nicht geladen werden",
+      "retry": "Erneut versuchen"
+    }
+  }
+}

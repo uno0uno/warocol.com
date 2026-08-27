@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { resolveAnonymousReaderMarket } from '~/utils/articleMarket'
 
 definePageMeta({
   layout: 'home',
@@ -15,6 +16,11 @@ definePageMeta({
 
 const route = useRoute()
 const { public: config } = useRuntimeConfig()
+const requestHeaders = useRequestHeaders(['accept-language', 'cf-ipcountry'])
+const readerMarket = computed(() => resolveAnonymousReaderMarket({
+  acceptLanguage: requestHeaders['accept-language'],
+  cfIpCountry: requestHeaders['cf-ipcountry'],
+}))
 
 const canonicalUrl = computed(() => {
   const baseUrl = config.siteUrl || 'https://warocol.com'
@@ -28,6 +34,7 @@ useHead({
     { property: 'og:title', content: config.ogTitle },
     { property: 'og:description', content: config.ogDescription },
     { property: 'og:url', content: canonicalUrl },
+    { property: 'og:locale', content: () => readerMarket.value.ogLocale },
     { name: 'twitter:title', content: config.twitterTitle },
     { name: 'twitter:description', content: config.twitterDescription }
   ],
