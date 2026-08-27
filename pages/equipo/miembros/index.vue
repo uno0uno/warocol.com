@@ -643,6 +643,7 @@
 const { t } = useI18n()
 import { useFormatters } from '~/composables/useFormatters'
 import { filterSelectClass } from '~/composables/useFilterSelectClass'
+import { extractQuotaExceededDetail, isQuotaExceededError } from '~/composables/useQuotaExceeded'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 const { formatDate: _fmtDate } = useFormatters()
 
@@ -913,7 +914,7 @@ const inviteForm = reactive({
 })
 
 const quotaExceededMessageFromError = (err: any) => {
-  const detail = err?.data?.detail ?? err?.data ?? {}
+  const detail = extractQuotaExceededDetail(err) ?? {}
   const used = typeof detail.used === 'number' ? detail.used : null
   const limit = typeof detail.limit === 'number' ? detail.limit : null
 
@@ -924,16 +925,6 @@ const quotaExceededMessageFromError = (err: any) => {
   return typeof detail === 'string'
     ? detail
     : (detail?.message || t('equipo.miembros.quotaBlocked'))
-}
-
-const isQuotaExceededError = (err: any) => {
-  const detail = err?.data?.detail
-  return err?.status === 429 ||
-    err?.statusCode === 429 ||
-    err?.data?.code === 'quota_exceeded' ||
-    err?.data?.error === 'quota_exceeded' ||
-    detail?.code === 'quota_exceeded' ||
-    detail?.error === 'quota_exceeded'
 }
 
 // Delete Modal State

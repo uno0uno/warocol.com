@@ -34,22 +34,24 @@ export function extractQuotaExceededDetail(err: unknown): QuotaExceededDetail | 
     statusCode?: number
     data?: {
       code?: string
-      error?: string
+      error?: string | boolean
       detail?: QuotaExceededDetail | string
+      details?: QuotaExceededDetail | Record<string, unknown>
+      message?: string
     }
   } | null
 
   if (!payload) return null
 
-  const rawDetail = payload.data?.detail
+  const rawDetail = payload.data?.detail ?? payload.data?.details
   const detail = typeof rawDetail === 'object' && rawDetail !== null
-    ? rawDetail
+    ? rawDetail as QuotaExceededDetail
     : null
 
   const code = detail?.code
     ?? detail?.error
-    ?? payload.data?.code
-    ?? payload.data?.error
+    ?? (typeof payload.data?.code === 'string' ? payload.data.code : undefined)
+    ?? (typeof payload.data?.error === 'string' ? payload.data.error : undefined)
 
   if (
     payload.status !== 429
