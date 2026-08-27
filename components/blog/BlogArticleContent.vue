@@ -14,6 +14,7 @@ interface Props {
   slug?: string
   lang?: string | null
   country?: string | null
+  country_code?: string | null
   showBreadcrumb?: boolean
 }
 
@@ -22,6 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
   slug: '',
   lang: null,
   country: null,
+  country_code: null,
 })
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true })
@@ -192,7 +194,11 @@ onMounted(() => {
     // Inject contextual CTA banners at natural reading breaks.
     if (props.slug) {
       const source = blogLeadSource(props.slug)
-      const marketInput = { lang: props.lang, country: props.country }
+      const marketInput = {
+        lang: props.lang,
+        country: props.country,
+        country_code: props.country_code,
+      }
       getMidCtaTargets(articleRef.value).forEach((h2, index) => {
         const cta = useBlogCta(props.slug, index === 0 ? 'benefit' : 'price', marketInput)
         const banner = buildMidCta(cta, index, source)
