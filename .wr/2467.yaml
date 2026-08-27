@@ -1,0 +1,35 @@
+# Compact plan — warocol.com#2467
+issue: 2467
+title: "Starter banner: Colombia uses USD $9/month, not COP 8.000"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2467-co-trial-usd9
+
+paths:
+  - utils/publicCta.ts
+  - utils/publicCta.test.ts
+
+ac:
+  - "CO / COP-only trial banner uses USD $9 not COP 8.000"
+  - "EUR €30 and USD $30 segments unchanged"
+  - "MX/AR stay USD $9"
+
+out_of_scope:
+  - "PUBLIC_OFFER homepage CTAs (COP 95.900)"
+  - "Paddle catalog"
+
+hints:
+  entry: "resolveTrialPriceAnchor"
+  tests: "node --test utils/publicCta.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""
