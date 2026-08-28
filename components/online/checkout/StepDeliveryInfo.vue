@@ -141,7 +141,7 @@
           <input
             v-model="scheduledDate"
             type="date"
-            class="w-full h-11 px-3 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            class="w-full h-11 px-3 rounded-md border border-input bg-background text-sm outline-none shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
             :min="minDate"
           />
         </div>
@@ -150,7 +150,7 @@
           <input
             v-model="scheduledTime"
             type="time"
-            class="w-full h-11 px-3 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            class="w-full h-11 px-3 rounded-md border border-input bg-background text-sm outline-none shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
           />
         </div>
       </div>
@@ -164,7 +164,7 @@
       </label>
       <textarea
         v-model="deliveryInstructions"
-        class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none outline-none shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
         placeholder="Ej: Sin cebolla, bien cocido, timbrar al portero..."
         rows="3"
         maxlength="300"

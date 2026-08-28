@@ -40,7 +40,7 @@
         <input
           v-model="phone"
           type="tel"
-          class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground outline-none shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
           placeholder="3001234567"
           @keyup.enter="handleSendOTP"
         />
