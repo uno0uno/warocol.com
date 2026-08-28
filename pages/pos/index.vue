@@ -98,7 +98,7 @@ watch(settingsAsyncStatus, (status) => {
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
 // Fetching here (parent) ensures data is ready before MesasFloorPlan mounts,
 // eliminating the empty-grid flash caused by the child's query starting cold.
-const { status: tablesStatus } = useQuery({
+const { status: tablesStatus, data: tablesData } = useQuery({
   key: () => ['tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
   enabled: () => posStore.tablesEnabled === true && !!currentTenant.value,
@@ -245,7 +245,7 @@ const handleChangeSessionCovers = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const covers = Number.parseInt(target.value, 10)
   if (!Number.isFinite(covers) || covers < 1) {
-    target.value = String(posStore.activeTableSession?.covers ?? 1)
+    target.value = String(bannerSessionCoversValue.value)
     return
   }
   await persistSessionGuests({ covers }, t('pos.banner.coversUpdated'))
@@ -257,6 +257,25 @@ const handleBlurSessionLabel = async (event: Event) => {
   if (next === current) return
   await persistSessionGuests({ custom_label: next || null }, t('pos.banner.labelUpdated'))
 }
+
+/** Catalog capacity for active table (from prefetched /api/tables). */
+const activeTableCatalogCapacity = computed(() => {
+  const tableId = posStore.activeTableSession?.tableId
+  if (!tableId) return null
+  const table = (tablesData.value?.data ?? []).find((t: { id: string }) => t.id === tableId)
+  const cap = table?.capacity
+  return typeof cap === 'number' && cap >= 1 ? cap : null
+})
+
+/** Editable session covers — defaults to preconfigured table capacity when unset. */
+const bannerSessionCoversValue = computed(() => {
+  const session = posStore.activeTableSession
+  if (!session) return 1
+  if (session.covers != null && session.covers >= 1) return session.covers
+  if (session.capacitySnapshot != null && session.capacitySnapshot >= 1) return session.capacitySnapshot
+  return activeTableCatalogCapacity.value ?? 1
+})
+
 const showExpediterPanel = ref(false)
 const readyComandasCount = ref(0)
 let readyCountInterval: ReturnType<typeof setInterval> | null = null
@@ -1862,8 +1881,8 @@ onUnmounted(() => {
       <!-- Main POS Container -->
       <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <!-- Products Panel (Left) -->
-        <div class="min-w-0 flex flex-col space-y-4">
-          <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-3 bg-background pt-2 pb-2">
+        <div class="min-w-0 flex flex-col space-y-5">
+          <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-4 bg-background pt-1 pb-4 lg:pb-5">
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
@@ -2019,18 +2038,12 @@ onUnmounted(() => {
               <input
                 type="number"
                 min="1"
-                :value="posStore.activeTableSession.covers ?? 1"
+                :value="bannerSessionCoversValue"
                 :disabled="isSavingSessionGuests"
                 :aria-label="t('pos.banner.coversAria')"
                 class="banner-covers-input h-7 w-11 min-w-0 flex-shrink-0 bg-transparent text-center text-sm font-semibold tabular-nums text-text-primary border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none accent-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 @change="handleChangeSessionCovers"
               >
-              <span
-                v-if="posStore.activeTableSession.capacitySnapshot"
-                class="text-[11px] font-normal text-text-tertiary whitespace-nowrap truncate"
-              >
-                {{ t('pos.banner.coversOf', { count: posStore.activeTableSession.capacitySnapshot }) }}
-              </span>
             </label>
             <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
@@ -2182,29 +2195,27 @@ onUnmounted(() => {
         </div>
       </div>
 
-          <!-- Search and Filters -->
-          <div class="flex flex-col sm:flex-row gap-3">
-            <div class="flex-1">
-              <UiSearchBar
-                v-model="searchQuery"
-                :placeholder="t('pos.catalog.searchPlaceholder')"
-              />
-            </div>
-          </div>
+          <!-- Catalog controls: search + category filters -->
+          <div class="flex flex-col gap-3.5 sm:gap-4">
+            <UiSearchBar
+              v-model="searchQuery"
+              :placeholder="t('pos.catalog.searchPlaceholder')"
+              class="min-h-10 px-3.5"
+            />
 
-          <!-- Category Tabs -->
-          <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <button
-              v-for="cat in categories"
-              :key="cat"
-              class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
-              :class="selectedCategory === cat
-                ? 'bg-action-primary-bg text-action-primary-text shadow-md'
-                : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
-              @click="selectedCategory = cat"
-            >
-              {{ cat === 'all' ? t('pos.catalog.all') : cat }}
-            </button>
+            <div class="flex gap-2.5 sm:gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5">
+              <button
+                v-for="cat in categories"
+                :key="cat"
+                class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
+                :class="selectedCategory === cat
+                  ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
+                  : 'bg-surface-secondary/50 border border-border/70 text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
+                @click="selectedCategory = cat"
+              >
+                {{ cat === 'all' ? t('pos.catalog.all') : cat }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2220,7 +2231,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4 p-1 pb-4">
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4 pb-4">
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"
