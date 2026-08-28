@@ -281,6 +281,8 @@ const ordersTableColumns = computed<Column[]>(() => [
   { key: 'invoice', title: t('ventas.common.factura'), sortable: false },
   { key: 'items_count', title: t('ventas.ordenes.colItems'), sortable: false },
   { key: 'source', title: t('ventas.ordenes.colSource'), sortable: false },
+  { key: 'table_custom_label', title: t('ventas.ordenes.colTableLabel'), sortable: false },
+  { key: 'table_covers', title: t('ventas.ordenes.colCovers'), sortable: false },
   { key: 'payment_method', title: t('ventas.common.metodoPagoShort'), sortable: true },
   { key: 'payment_status', title: t('ventas.ordenes.colPaymentStatus'), sortable: false },
   ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: t('ventas.common.descuentoManual'), sortable: true }] : []),
@@ -700,7 +702,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ getInvoiceLabel(item) }} · {{ item.items_count }} {{ t('ventas.common.items') }} · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ getOrderSourceLabel(item) }}
+                {{ getInvoiceLabel(item) }} · {{ item.items_count }} {{ t('ventas.common.items') }} · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ getOrderSourceLabel(item) }}<template v-if="item.table_custom_label || item.table_covers"> · {{ item.table_custom_label || item.table_name || '' }}<template v-if="item.table_covers"> · {{ item.table_covers }}{{ item.table_capacity_snapshot ? `/${item.table_capacity_snapshot}` : '' }}</template></template>
               </p>
               <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">{{ t('ventas.ordenes.manualDiscountLine', { amount: formatCurrency(item.discount_amount) }) }}</p>
             </div>
@@ -828,6 +830,19 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
             {{ getOrderSourceLabel(row) }}
+          </span>
+        </template>
+
+        <template #cell-table_custom_label="{ row }">
+          <span class="text-sm text-text-secondary truncate">
+            {{ row?.table_custom_label || row?.table_name || '—' }}
+          </span>
+        </template>
+
+        <template #cell-table_covers="{ row }">
+          <span class="text-sm text-text-secondary tabular-nums">
+            <template v-if="row?.table_covers">{{ row.table_covers }}<template v-if="row.table_capacity_snapshot">/{{ row.table_capacity_snapshot }}</template></template>
+            <template v-else>—</template>
           </span>
         </template>
 

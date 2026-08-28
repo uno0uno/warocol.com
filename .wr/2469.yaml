@@ -1,0 +1,34 @@
+issue: 2469
+title: "feat(sales): snapshot table occupancy and custom table label on orders"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2469-table-covers-label
+risk: low
+
+paths:
+  - pages/pos/index.vue
+  - stores/usePOSStore.ts
+  - pages/ventas/ordenes.vue
+  - pages/ventas/[id].vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - i18n/locales/es/ventas.json
+  - i18n/locales/en/ventas.json
+
+ac:
+  - POS banner selectors next to accumulated, duration, waiter, Volver
+  - Show covers and custom label on /ventas/ordenes and /ventas/[id]
+
+out_of_scope:
+  - Floor-plan select-table fields
+  - Bar session guest UI
+
+hints:
+  entry: "pages/pos/index.vue table banner + applyTableSessionFromApi"
+  pattern: "handleChangeSessionWaiter"
+  tests: none
+
+skip:
+  audits: [ux, color, typography]
