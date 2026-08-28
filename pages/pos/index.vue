@@ -1953,7 +1953,7 @@ onUnmounted(() => {
                   :value="posStore.activeTableSession.covers ?? 1"
                   :disabled="isSavingSessionGuests"
                   :aria-label="t('pos.banner.coversAria')"
-                  class="h-7 w-10 bg-transparent text-center text-[10px] font-bold tabular-nums text-text-primary focus:outline-none"
+                  class="h-7 w-10 bg-transparent text-center text-[10px] font-bold tabular-nums text-text-primary outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
                   @change="handleChangeSessionCovers"
                 >
                 <span
@@ -1970,7 +1970,7 @@ onUnmounted(() => {
                 :disabled="isSavingSessionGuests"
                 :placeholder="t('pos.banner.customLabelPlaceholder')"
                 :aria-label="t('pos.banner.customLabelAria')"
-                class="h-8 min-w-0 sm:min-w-[8rem] max-w-[12rem] px-2.5 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
+                class="h-8 min-w-0 sm:min-w-[8rem] max-w-[12rem] px-2.5 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider text-text-primary placeholder:text-text-tertiary outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
                 @blur="handleBlurSessionLabel"
               >
             </template>
@@ -1990,7 +1990,7 @@ onUnmounted(() => {
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 :aria-label="t('pos.banner.changeWaiterAria')"
-                class="h-8 w-full inline-flex items-center leading-none ps-7 pe-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                class="h-8 w-full inline-flex items-center leading-none ps-7 pe-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
