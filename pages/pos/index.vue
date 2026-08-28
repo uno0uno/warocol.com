@@ -1947,11 +1947,12 @@ onUnmounted(() => {
       <!-- Mesa Banner skeleton (initial tab load only) -->
       <div
         v-if="showMesaBannerSkeleton"
-        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse"
+        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse flex flex-col"
+        :class="siblingGapClass"
         aria-busy="true"
         aria-live="polite"
       >
-        <div class="flex items-start sm:items-center gap-2 min-w-0">
+        <div class="flex items-start sm:items-center min-w-0" :class="siblingGapClass">
           <div class="min-w-0 flex-1 space-y-1.5">
             <div class="flex flex-wrap items-center gap-2">
               <div class="h-3.5 w-24 bg-surface-secondary rounded" />
@@ -1959,13 +1960,13 @@ onUnmounted(() => {
             </div>
             <div class="h-2.5 w-44 max-w-full bg-surface-secondary rounded" />
           </div>
-          <div class="flex flex-shrink-0 gap-1">
+          <div class="flex flex-shrink-0" :class="siblingGapClass">
             <div class="h-9 w-14 bg-surface-secondary rounded-lg hidden sm:block" />
             <div class="h-9 w-9 bg-surface-secondary rounded-lg" />
             <div class="h-9 w-9 bg-surface-secondary rounded-lg" />
           </div>
         </div>
-        <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3" :class="siblingGapClass">
+        <div class="grid grid-cols-2 sm:grid-cols-3" :class="siblingGapClass">
           <div class="h-9 bg-surface-secondary rounded-lg" />
           <div class="h-9 bg-surface-secondary rounded-lg" />
           <div class="h-9 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
