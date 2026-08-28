@@ -1965,7 +1965,7 @@ onUnmounted(() => {
             <div class="h-9 w-9 bg-surface-secondary rounded-lg" />
           </div>
         </div>
-        <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3" :class="siblingGapClass">
           <div class="h-9 bg-surface-secondary rounded-lg" />
           <div class="h-9 bg-surface-secondary rounded-lg" />
           <div class="h-9 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
