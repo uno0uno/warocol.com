@@ -2004,9 +2004,13 @@ onUnmounted(() => {
       </div>
 
       <!-- Mesa Banner — B: 2 fixed rows (identity+actions / session fields grid) -->
-      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm">
+      <div
+        v-else-if="posStore.activeTableSession"
+        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm flex flex-col"
+        :class="siblingGapClass"
+      >
         <!-- Row 1: entity + metric + actions -->
-        <div class="flex items-start sm:items-center gap-2 min-w-0">
+        <div class="flex items-start sm:items-center min-w-0" :class="siblingGapClass">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span class="inline-flex items-center gap-1.5 min-w-0">
@@ -2085,7 +2089,7 @@ onUnmounted(() => {
         <!-- Row 2: session fields — fixed grid (no free wrap) -->
         <div
           v-if="!posStore.activeTableSession.isBar || waiterAttributionEnabled"
-          class="relative mt-1.5"
+          class="relative"
         >
           <div
             class="grid"
