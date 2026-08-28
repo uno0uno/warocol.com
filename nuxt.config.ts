@@ -270,12 +270,12 @@ export default defineNuxtConfig({
     ['@nuxtjs/google-fonts', {
       families: {
         Lato: [400, 700, 900],
-        Fraunces: [400, 600, 700],
-        Newsreader: {
+        'Playfair Display': [400, 600, 700],
+        Lora: {
           wght: [400, 500],
           ital: [400]
         },
-        Outfit: [400, 500, 700]
+        'Source Sans 3': [400, 500, 700]
       },
       display: 'swap'
     }],

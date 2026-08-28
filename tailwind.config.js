@@ -425,9 +425,9 @@ module.exports = {
         principal: ['Lato'],
         sans: ['Lato', 'sans-serif'],
         quantico: ['Quantico', 'Lato', 'sans-serif'],
-        display: ['Fraunces', 'serif'],
-        reading: ['Newsreader', 'Georgia', 'serif'],
-        ui: ['Outfit', 'sans-serif'],
+        display: ['Playfair Display', 'serif'],
+        reading: ['Lora', 'Georgia', 'serif'],
+        ui: ['Source Sans 3', 'sans-serif'],
       },
       fontSize: {
         "dense-label": [
