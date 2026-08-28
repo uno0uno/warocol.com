@@ -782,7 +782,7 @@ const mergeSessionGuestFieldsFromApi = (
     capacitySnapshot: apiCapacitySnapshot ?? prev?.capacitySnapshot ?? null,
     customLabel: isSavingSessionAlias.value
       ? (prev?.customLabel ?? apiCustomLabel)
-      : apiCustomLabel,
+      : (apiCustomLabel ?? prev?.customLabel ?? null),
   }
 }
 
@@ -1935,7 +1935,7 @@ onUnmounted(() => {
         </p>
       </div>
 
-      <!-- Mesa Banner skeleton (tab load or session field save) -->
+      <!-- Mesa Banner skeleton (initial tab load only) -->
       <div
         v-if="showMesaBannerSkeleton"
         class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse"
@@ -2126,6 +2126,7 @@ onUnmounted(() => {
               </span>
               <select
                 :value="bannerEffectiveWaiterId || ''"
+                :disabled="isBannerSessionFieldsSaving"
                 :aria-label="t('pos.banner.changeWaiterAria')"
                 class="h-8 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-xs font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
@@ -2152,7 +2153,7 @@ onUnmounted(() => {
           </div>
           <div
             v-if="isBannerSessionFieldsSaving"
-            class="pointer-events-none absolute inset-0 rounded-lg bg-surface/35"
+            class="absolute inset-0 z-[2] rounded-lg bg-surface/35"
             aria-hidden="true"
           />
         </div>
