@@ -1909,60 +1909,112 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Mesa Banner (when arriving from a table session) -->
-      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
-          <div class="flex items-center gap-2.5 min-w-0 flex-1">
-            <div class="bg-status-success-bg p-2 rounded-lg flex-shrink-0">
-              <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-              </svg>
+      <!-- Mesa Banner — B: 2 fixed rows (identity+actions / session fields grid) -->
+      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm">
+        <!-- Row 1: entity + metric + actions -->
+        <div class="flex items-start sm:items-center gap-2 min-w-0">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span class="inline-flex items-center gap-1.5 min-w-0">
+                <span class="text-sm font-semibold text-text-primary truncate">{{ posStore.activeTableSession.tableName }}</span>
+                <span class="text-[11px] font-medium text-status-success-text/80 flex-shrink-0">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
+              </span>
+              <span
+                v-if="activeMinimumStatusLabel"
+                class="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-none whitespace-nowrap tabular-nums"
+                :class="activeMinimumStatusClass"
+              >
+                {{ activeMinimumStatusLabel }}
+              </span>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
-                <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-                <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
-                <span
-                  v-if="activeMinimumStatusLabel"
-                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none whitespace-nowrap"
-                  :class="activeMinimumStatusClass"
-                >
-                  {{ activeMinimumStatusLabel }}
-                </span>
-              </div>
-              <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-secondary tabular-nums leading-snug">
-                <span>{{ t('pos.banner.accumulated', { amount: formatCurrencyPOS(posStore.activeTableSession.runningTotal) }) }}</span>
+            <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-text-secondary tabular-nums leading-tight">
+              <span>{{ t('pos.banner.accumulated', { amount: formatCurrencyPOS(posStore.activeTableSession.runningTotal) }) }}</span>
+              <span class="text-text-tertiary" aria-hidden="true">·</span>
+              <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
+              <template v-if="showActiveMinimumConsumption && activeMinimumConsumption">
                 <span class="text-text-tertiary" aria-hidden="true">·</span>
-                <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
-                <template v-if="showActiveMinimumConsumption && activeMinimumConsumption">
-                  <span class="text-text-tertiary" aria-hidden="true">·</span>
-                  <span>{{ t('pos.banner.min', { amount: formatCurrencyPOS(activeMinimumConsumption.amount) }) }}</span>
-                </template>
-              </div>
+                <span>{{ t('pos.banner.min', { amount: formatCurrencyPOS(activeMinimumConsumption.amount) }) }}</span>
+              </template>
             </div>
           </div>
-          <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
-          <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-shrink-0 xl:justify-end">
-            <!-- warocol.com#2469 — covers + custom label (mesa only) -->
-            <template v-if="!posStore.activeTableSession.isBar">
-              <label class="h-8 min-w-0 inline-flex items-center gap-1 rounded-lg border border-border bg-surface-secondary px-2">
-                <input
-                  type="number"
-                  min="1"
-                  :value="posStore.activeTableSession.covers ?? 1"
-                  :disabled="isSavingSessionGuests"
-                  :aria-label="t('pos.banner.coversAria')"
-                  class="h-7 w-10 bg-transparent text-center text-[10px] font-bold tabular-nums text-text-primary outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
-                  @change="handleChangeSessionCovers"
-                >
-                <span
-                  v-if="posStore.activeTableSession.capacitySnapshot"
-                  class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary whitespace-nowrap"
-                >
-                  {{ t('pos.banner.coversOf', { count: posStore.activeTableSession.capacitySnapshot }) }}
-                </span>
-              </label>
+
+          <div class="flex flex-shrink-0 flex-wrap items-center justify-end gap-1">
+            <button
+              v-if="canPayTableAdvance"
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-badge-primary-text bg-badge-primary-bg border border-badge-primary-border hover:bg-badge-primary-hover-bg px-2.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :aria-label="t('pos.banner.payAdvanceAria', { table: tableSingularLower })"
+              @click="showTableAdvancePanel = true"
+            >
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <span class="hidden sm:inline">{{ t('pos.banner.payAdvance') }}</span>
+            </button>
+            <button
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary px-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
+              @click="leaveActiveTableSession"
+            >
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+              </svg>
+              <span class="hidden sm:inline">{{ t('pos.banner.back') }}</span>
+            </button>
+            <button
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-status-error-text border border-status-error-text/25 hover:bg-status-error-bg px-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :aria-label="t('pos.banner.releaseAria', { table: tableSingularLower })"
+              @click="handleReleaseMesa"
+            >
+              <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
+              <template v-else>
+                <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                <span class="hidden sm:inline">{{ t('pos.banner.release') }}</span>
+              </template>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: session fields — fixed grid (no free wrap) -->
+        <div
+          v-if="!posStore.activeTableSession.isBar || waiterAttributionEnabled"
+          class="mt-1.5 grid gap-1.5"
+          :class="!posStore.activeTableSession.isBar && waiterAttributionEnabled
+            ? 'grid-cols-2 sm:grid-cols-3'
+            : 'grid-cols-2'"
+        >
+          <template v-if="!posStore.activeTableSession.isBar">
+            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+              <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
+                {{ t('pos.banner.coversLabel') }}:
+              </span>
+              <input
+                type="number"
+                min="1"
+                :value="posStore.activeTableSession.covers ?? 1"
+                :disabled="isSavingSessionGuests"
+                :aria-label="t('pos.banner.coversAria')"
+                class="banner-covers-input h-7 w-11 min-w-0 flex-shrink-0 bg-transparent text-center text-sm font-semibold tabular-nums text-text-primary border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none accent-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                @change="handleChangeSessionCovers"
+              >
+              <span
+                v-if="posStore.activeTableSession.capacitySnapshot"
+                class="text-[11px] font-normal text-text-tertiary whitespace-nowrap truncate"
+              >
+                {{ t('pos.banner.coversOf', { count: posStore.activeTableSession.capacitySnapshot }) }}
+              </span>
+            </label>
+            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+              <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
+                {{ t('pos.banner.customLabelLabel') }}:
+              </span>
               <input
                 type="text"
                 maxlength="80"
@@ -1970,28 +2022,33 @@ onUnmounted(() => {
                 :disabled="isSavingSessionGuests"
                 :placeholder="t('pos.banner.customLabelPlaceholder')"
                 :aria-label="t('pos.banner.customLabelAria')"
-                class="h-8 min-w-0 sm:min-w-[8rem] max-w-[12rem] px-2.5 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider text-text-primary placeholder:text-text-tertiary outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border"
+                class="h-7 min-w-0 flex-1 bg-transparent border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-xs font-medium text-text-primary placeholder:text-text-tertiary/80"
                 @blur="handleBlurSessionLabel"
               >
-            </template>
-            <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
-                 phrase so it doesn't overflow the original chip. Same pattern
-                 as the dashboard header progressive-load indicator. -->
+            </label>
+          </template>
+          <div
+            v-if="waiterAttributionEnabled && isChangingSessionWaiter"
+            class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 px-2 rounded-md border border-border bg-surface text-text-secondary text-xs font-medium whitespace-nowrap"
+            :class="!posStore.activeTableSession.isBar ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
+            aria-live="polite"
+          >
+            <UiLoadingDots size="7px" color="currentColor" />
+            <span class="truncate">{{ waiterChipLoadingPhrase }}</span>
+          </div>
             <div
-              v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
-              aria-live="polite"
+              v-else-if="waiterAttributionEnabled"
+              class="banner-session-field relative min-w-0 rounded-lg border border-border bg-surface transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
+              :class="!posStore.activeTableSession.isBar ? '' : 'col-span-2'"
             >
-              <UiLoadingDots size="7px" color="currentColor" />
-              <span>{{ waiterChipLoadingPhrase }}</span>
-            </div>
-            <!-- Issue #574 — Idle waiter chip with auto-handoff dropdown -->
-            <div v-else-if="waiterAttributionEnabled" class="relative min-w-0 sm:min-w-[11rem]">
+              <span class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-[11px] font-normal text-text-tertiary z-[1]">
+                {{ t('pos.banner.waiterLabel') }}:
+              </span>
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 :aria-label="t('pos.banner.changeWaiterAria')"
-                class="h-8 w-full inline-flex items-center leading-none ps-7 pe-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors outline-none shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-form-control-focus-ring focus-visible:border-form-control-focus-border appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
-                style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
+                class="h-8 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-xs font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
               >
@@ -2004,15 +2061,6 @@ onUnmounted(() => {
                   {{ m.name }}
                 </option>
               </select>
-              <!-- User icon (overlapping left) -->
-              <svg
-                class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] flex-shrink-0 text-text-secondary"
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                stroke="currentColor" aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <!-- Caret (overlapping right) -->
               <svg
                 class="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -2021,57 +2069,11 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
             </div>
-            <!-- warocol.com#1376 — session-scoped minimum-consumption advance -->
-            <button
-              v-if="canPayTableAdvance"
-              type="button"
-              :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider px-2.5 rounded-lg border border-primary/30 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="t('pos.banner.payAdvanceAria', { table: tableSingularLower })"
-              @click="showTableAdvancePanel = true"
-            >
-              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              </svg>
-              {{ t('pos.banner.payAdvance') }}
-            </button>
-            <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
-            <button
-              type="button"
-              :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
-              @click="leaveActiveTableSession"
-            >
-              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-              </svg>
-              {{ t('pos.banner.back') }}
-            </button>
-            <!-- Liberar — destructive: closes the session via confirm modal -->
-            <button
-              type="button"
-              :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              :aria-label="t('pos.banner.releaseAria', { table: tableSingularLower })"
-              @click="handleReleaseMesa"
-            >
-              <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
-              <template v-else>
-                <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                </svg>
-                {{ t('pos.banner.release') }}
-              </template>
-            </button>
-          </div>
         </div>
 
-        <!-- Tab error -->
         <p v-if="tabError" class="mt-1.5 text-xs text-destructive bg-destructive/10 rounded-lg px-2.5 py-1">
           {{ tabError }}
         </p>
-        <!-- Tab success (fire to kitchen) -->
         <p v-if="tabSuccess" class="mt-1.5 text-xs text-state-success-text bg-state-success-bg rounded-lg px-2.5 py-1 border border-state-success-border">
           {{ tabSuccess }}
         </p>
