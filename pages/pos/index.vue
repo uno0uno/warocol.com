@@ -154,22 +154,6 @@ const bannerEffectiveWaiterId = computed(() =>
   posStore.activeTableSession?.effectiveWaiterMemberId ?? null,
 )
 const isChangingSessionWaiter = ref(false)
-// Rotating "Asignando mesero..." copy while the PATCH is in flight —
-// same UX pattern as the progressive-load indicator in the dashboard
-// header (UiLoadingDots + cycling phrase).
-const {
-  currentPhrase: waiterChipLoadingPhrase,
-  start: startWaiterChipPhrases,
-  stop: stopWaiterChipPhrases,
-} = useLoadingPhrases([
-  t('pos.banner.assigningWaiter'),
-  t('pos.banner.syncing'),
-  t('pos.banner.applyingChanges'),
-])
-watch(isChangingSessionWaiter, (loading) => {
-  if (loading) startWaiterChipPhrases()
-  else stopWaiterChipPhrases()
-})
 const handleChangeSessionWaiter = async (event: Event) => {
   if (isChangingSessionWaiter.value) return
   if (!posStore.activeTableSession) return
@@ -219,32 +203,9 @@ const handleChangeSessionWaiter = async (event: Event) => {
 }
 const isSavingSessionCovers = ref(false)
 const isSavingSessionAlias = ref(false)
-const {
-  currentPhrase: coversLoadingPhrase,
-  start: startCoversLoadingPhrases,
-  stop: stopCoversLoadingPhrases,
-} = useLoadingPhrases([
-  t('pos.banner.savingCovers'),
-  t('pos.banner.syncing'),
-  t('pos.banner.applyingChanges'),
-])
-const {
-  currentPhrase: aliasLoadingPhrase,
-  start: startAliasLoadingPhrases,
-  stop: stopAliasLoadingPhrases,
-} = useLoadingPhrases([
-  t('pos.banner.savingAlias'),
-  t('pos.banner.syncing'),
-  t('pos.banner.applyingChanges'),
-])
-watch(isSavingSessionCovers, (loading) => {
-  if (loading) startCoversLoadingPhrases()
-  else stopCoversLoadingPhrases()
-})
-watch(isSavingSessionAlias, (loading) => {
-  if (loading) startAliasLoadingPhrases()
-  else stopAliasLoadingPhrases()
-})
+const isBannerSessionFieldsSaving = computed(
+  () => isSavingSessionCovers.value || isSavingSessionAlias.value || isChangingSessionWaiter.value,
+)
 const persistSessionGuests = async (
   field: 'covers' | 'alias',
   body: { covers?: number; custom_label?: string | null },
@@ -466,6 +427,9 @@ const showOpenSaleInPanel = computed(
 )
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
+const showMesaBannerSkeleton = computed(
+  () => isLoadingTabItems.value || isAddingToTab.value || isBannerSessionFieldsSaving.value,
+)
 const isClearingTab = ref(false)
 const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
@@ -1928,16 +1892,31 @@ onUnmounted(() => {
         </p>
       </div>
 
-      <!-- Mesa Banner skeleton while loading tab items -->
-      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-xl p-2.5 shadow-sm animate-pulse">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-surface-secondary flex-shrink-0" />
-          <div class="flex-1 flex items-center gap-2.5">
-            <div class="h-2.5 w-20 bg-surface-secondary rounded" />
-            <div class="h-2.5 w-16 bg-surface-secondary rounded" />
-            <div class="h-2.5 w-32 bg-surface-secondary rounded" />
+      <!-- Mesa Banner skeleton (tab load or session field save) -->
+      <div
+        v-if="showMesaBannerSkeleton"
+        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <div class="flex items-start sm:items-center gap-2 min-w-0">
+          <div class="min-w-0 flex-1 space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="h-3.5 w-24 bg-surface-secondary rounded" />
+              <div class="h-3 w-14 bg-surface-secondary rounded" />
+            </div>
+            <div class="h-2.5 w-44 max-w-full bg-surface-secondary rounded" />
           </div>
-          <div class="h-7 w-14 bg-surface-secondary rounded-lg flex-shrink-0" />
+          <div class="flex flex-shrink-0 gap-1">
+            <div class="h-8 w-14 bg-surface-secondary rounded-md hidden sm:block" />
+            <div class="h-8 w-8 bg-surface-secondary rounded-md" />
+            <div class="h-8 w-8 bg-surface-secondary rounded-md" />
+          </div>
+        </div>
+        <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+          <div class="h-8 bg-surface-secondary rounded-lg" />
+          <div class="h-8 bg-surface-secondary rounded-lg" />
+          <div class="h-8 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
         </div>
       </div>
 
@@ -1978,24 +1957,14 @@ onUnmounted(() => {
         <div class="flex items-start sm:items-center gap-2 min-w-0">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span
-                class="inline-flex items-center gap-1.5 min-w-0"
-                :aria-busy="isSavingSessionAlias"
-                aria-live="polite"
-              >
-                <template v-if="isSavingSessionAlias">
-                  <UiLoadingDots size="7px" color="currentColor" />
-                  <span class="text-sm font-medium text-text-secondary truncate">{{ aliasLoadingPhrase }}</span>
-                </template>
-                <template v-else>
-                  <span class="text-sm font-semibold text-text-primary truncate">{{ activeSessionDisplayName }}</span>
-                  <span
-                    v-if="activeSessionShowsCatalogName"
-                    class="text-[11px] font-normal text-text-tertiary truncate"
-                  >
-                    {{ posStore.activeTableSession.tableName }}
-                  </span>
-                </template>
+              <span class="inline-flex items-center gap-1.5 min-w-0">
+                <span class="text-sm font-semibold text-text-primary truncate">{{ activeSessionDisplayName }}</span>
+                <span
+                  v-if="activeSessionShowsCatalogName"
+                  class="text-[11px] font-normal text-text-tertiary truncate"
+                >
+                  {{ posStore.activeTableSession.tableName }}
+                </span>
                 <span class="text-[11px] font-medium text-status-success-text/80 flex-shrink-0">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
               </span>
               <span
@@ -2070,23 +2039,11 @@ onUnmounted(() => {
             : 'grid-cols-2'"
         >
           <template v-if="!posStore.activeTableSession.isBar">
-            <label
-              class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
-              :aria-busy="isSavingSessionCovers"
-              aria-live="polite"
-            >
+            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.coversLabel') }}:
               </span>
-              <div
-                v-if="isSavingSessionCovers"
-                class="flex min-w-0 flex-1 items-center gap-1.5"
-              >
-                <UiLoadingDots size="7px" color="currentColor" />
-                <span class="truncate text-xs font-medium text-text-secondary">{{ coversLoadingPhrase }}</span>
-              </div>
               <input
-                v-else
                 type="number"
                 min="1"
                 :value="bannerSessionCoversValue"
@@ -2095,23 +2052,11 @@ onUnmounted(() => {
                 @change="handleChangeSessionCovers"
               >
             </label>
-            <label
-              class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
-              :aria-busy="isSavingSessionAlias"
-              aria-live="polite"
-            >
+            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.customLabelLabel') }}:
               </span>
-              <div
-                v-if="isSavingSessionAlias"
-                class="flex min-w-0 flex-1 items-center gap-1.5"
-              >
-                <UiLoadingDots size="7px" color="currentColor" />
-                <span class="truncate text-xs font-medium text-text-secondary">{{ aliasLoadingPhrase }}</span>
-              </div>
               <input
-                v-else
                 type="text"
                 maxlength="80"
                 :value="posStore.activeTableSession.customLabel || ''"
@@ -2122,17 +2067,8 @@ onUnmounted(() => {
               >
             </label>
           </template>
-          <div
-            v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-            class="h-8 min-w-0 inline-flex items-center justify-center gap-1.5 px-2 rounded-md border border-border bg-surface text-text-secondary text-xs font-medium whitespace-nowrap"
-            :class="!posStore.activeTableSession.isBar ? 'col-span-2 sm:col-span-1' : 'col-span-2'"
-            aria-live="polite"
-          >
-            <UiLoadingDots size="7px" color="currentColor" />
-            <span class="truncate">{{ waiterChipLoadingPhrase }}</span>
-          </div>
             <div
-              v-else-if="waiterAttributionEnabled"
+              v-if="waiterAttributionEnabled"
               class="banner-session-field relative min-w-0 rounded-lg border border-border bg-surface transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
               :class="!posStore.activeTableSession.isBar ? '' : 'col-span-2'"
             >
