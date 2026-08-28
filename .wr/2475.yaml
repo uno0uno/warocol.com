@@ -1,0 +1,38 @@
+# Machine contract for wr-fast — keep ≤80 lines.
+issue: 2475
+title: "fix(shell): refine sidebar type, align padding, soft multi-point canvas"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2475-shell-polish
+risk: low
+depends_on: 2473
+
+paths:
+  - components/ui/BaseSidebar.vue
+  - components/DashboardSidebar.vue
+  - components/dashboard/DashboardShellHeader.vue
+  - layouts/dashboard.vue
+  - assets/css/design-tokens.css
+
+ac:
+  - Toggle panel icon 24×24 (match .nav-icon)
+  - Sidebar labels ~14px; section headings ~12px medium (less uppercase/heavy)
+  - DashboardShellHeader horizontal padding matches inset body (px-4 / sm:px-6 / md:px-8)
+  - Soft multi-point radial canvas with muted crocus/lavender (not strong blues)
+  - No regression to #2473 transparent sidebar / inset / resize
+
+out_of_scope:
+  - resize rail redesign
+  - POS card redesign
+  - API
+  - home/public fonts
+
+hints:
+  entry: "layouts/dashboard.vue .dashboard-shell; BaseSidebar .base-sidebar-panel-icon; DashboardSidebar .nav-item/.nav-section-label"
+  pattern: "Branch from wr-2473-dashboard-buzz-shell (PR #2474); PR base that branch until merged"
+  tests: "manual — no bun build/lint"
+
+skip:
+  audits: [ux, color, typography]

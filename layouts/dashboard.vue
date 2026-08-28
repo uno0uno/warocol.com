@@ -261,11 +261,28 @@ useHead({
 
 <style scoped>
 .dashboard-shell {
-  background: linear-gradient(
-    180deg,
-    hsl(var(--shell-canvas-top)) 0%,
-    hsl(var(--shell-canvas-bottom)) 100%
-  );
+  background-color: hsl(var(--shell-canvas-base));
+  background-image:
+    radial-gradient(
+      ellipse 85% 65% at 8% 12%,
+      hsl(var(--shell-canvas-glow-a) / 0.85),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 70% 55% at 92% 18%,
+      hsl(var(--shell-canvas-glow-b) / 0.7),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 65% 50% at 72% 88%,
+      hsl(var(--shell-canvas-glow-c) / 0.75),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 55% 45% at 18% 82%,
+      hsl(var(--shell-canvas-bottom) / 0.65),
+      transparent 50%
+    );
 }
 
 @media (min-width: 768px) {
