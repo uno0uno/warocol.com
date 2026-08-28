@@ -399,7 +399,8 @@
       "noActiveConsumption": "Sin consumo activo",
       "barAlwaysOpenAria": "Barra — siempre abierta",
       "remaining": "{amount} faltante",
-      "accumulated": "{amount} acumulado"
+      "accumulated": "{amount} acumulado",
+      "tableAriaWithAlias": "{alias} — {name} — {status}"
     },
     "delivery": {
       "notesPlaceholder": "Ej: portería en la calle 51, edificio amarillo",
