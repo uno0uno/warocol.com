@@ -1,0 +1,39 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines.
+issue: 2473
+title: "feat(shell): Buzz-like dashboard canvas with preserved header chrome"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2473-dashboard-buzz-shell
+risk: low
+
+paths:
+  - layouts/dashboard.vue
+  - components/ui/BaseSidebar.vue
+  - components/dashboard/DashboardShellHeader.vue
+  - assets/css/design-tokens.css
+  - .wr/2473.yaml
+
+ac:
+  - Soft vertical canvas wash behind desktop dashboard shell
+  - Toggle sidebar transparent over canvas; expand/collapse preserved
+  - Main content in opaque rounded inset panel
+  - Fonts/icons/header actions unchanged (header border framing only)
+  - Desktop sidebar resize rail with min/max + localStorage
+  - Mobile chrome unchanged
+
+out_of_scope:
+  - Internal page redesigns
+  - Mobile bottom nav redesign
+  - Native macOS glass
+  - API
+  - Home typography
+
+hints:
+  entry: "layouts/dashboard.vue dashboard-shell + dashboard-shell-inset"
+  pattern: "BaseSidebar toggle mode transparent + SidebarRail resize; overlay/portal unchanged"
+  tests: "none — visual shell; no bun build"
+
+skip:
+  audits: [ux, color, typography]

@@ -272,6 +272,13 @@
 
   --shell-header-bg: var(--surface);
   --shell-header-border: var(--border);
+  /* Buzz-like dashboard canvas (very soft WARO wash) */
+  --shell-canvas-top: 250 20% 93%; /* whisper crocus → #ebe9f0-ish */
+  --shell-canvas-bottom: 214 18% 89%; /* whisper cool → #dbe2ea-ish */
+  --shell-inset-radius: 0.875rem; /* 14px */
+  --shell-sidebar-width-default: 14rem;
+  --shell-sidebar-width-min: 11.25rem; /* 180px */
+  --shell-sidebar-width-max: 22.5rem; /* 360px */
   --layout-public-header-height: 3.75rem; /* 60px inner bar */
   --layout-public-header-offset: calc(var(--layout-public-header-height) + 1px); /* incl. border-b */
   --layout-public-bottom-nav-height: 3.625rem; /* 58px — LayoutBottomNav */
