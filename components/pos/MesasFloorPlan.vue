@@ -2,7 +2,7 @@
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
-import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 
 const { formatCurrency } = useFormatters()
@@ -178,65 +178,82 @@ const badgeLabel = (status: string) => {
 }
 
 
-/** Una sola familia de color por card (sin mezclar verde + gris/morado en el mismo bloque). */
+/** Status theme — soft tint on body, stronger tint on footer (no left border). */
 const tableStatusTheme = (status: string) => {
+  const panel = 'px-2.5 py-1.5 flex flex-col gap-0.5'
+  const text = {
+    title: 'text-text-primary',
+    meta: 'text-text-secondary',
+    amount: 'text-text-primary',
+    time: 'text-text-secondary',
+    waiter: 'text-text-tertiary',
+  }
+  const moveHover = 'hover:bg-black/5 focus-visible:ring-border/50'
+
   if (status === 'open') {
     return {
-      card: 'border-2 border-status-success-text/45 bg-status-success-bg hover:shadow-md',
-      focus: 'focus-visible:ring-status-success-text/50 focus-visible:ring-offset-status-success-bg',
-      square: 'bg-status-success-text/12 border-status-success-text text-status-success-text',
-      chair: 'bg-status-success-text/55',
-      strip: 'border-t border-status-success-text/30',
-      footer: 'border-t border-status-success-text/30',
-      text: 'text-status-success-text',
-      footerText: 'text-status-success-text',
-      name: 'text-status-success-text/75',
-      divider: 'bg-status-success-text/22',
+      card: 'border-2 border-border/50 hover:border-status-success-text hover:shadow-sm',
+      bodyPanel: 'table-card-body table-card-body--open',
+      footerPanel: 'table-card-footer table-card-footer--open',
+      focus: 'focus-visible:ring-status-success-text/30 focus-visible:ring-offset-surface',
+      panel,
+      divider: 'border-border/50',
+      statusLabel: 'text-status-success-text',
       dot: 'bg-status-success-text',
-      moveHover: 'hover:bg-status-success-text/10 focus-visible:ring-status-success-text/40',
+      moveHover,
+      ...text,
     }
   }
   if (status === 'bill_requested') {
     return {
-      card: 'border-2 border-status-warning-text/45 bg-status-warning-bg hover:shadow-md',
-      focus: 'focus-visible:ring-status-warning-text/50 focus-visible:ring-offset-status-warning-bg',
-      square: 'bg-status-warning-text/12 border-status-warning-text text-status-warning-text',
-      chair: 'bg-status-warning-text/55',
-      strip: 'border-t border-status-warning-text/30',
-      footer: 'border-t border-status-warning-text/30',
-      text: 'text-status-warning-text',
-      footerText: 'text-status-warning-text',
-      name: 'text-status-warning-text/75',
-      divider: 'bg-status-warning-text/22',
+      card: 'border-2 border-border/50 hover:border-status-warning-text hover:shadow-sm',
+      bodyPanel: 'table-card-body table-card-body--bill',
+      footerPanel: 'table-card-footer table-card-footer--bill',
+      focus: 'focus-visible:ring-status-warning-text/30 focus-visible:ring-offset-surface',
+      panel,
+      divider: 'border-border/50',
+      statusLabel: 'text-status-warning-text',
       dot: 'bg-status-warning-text',
-      moveHover: 'hover:bg-status-warning-text/10 focus-visible:ring-status-warning-text/40',
+      moveHover,
+      ...text,
     }
   }
   return {
-    card: 'border-2 border-border bg-surface hover:shadow-md hover:border-border/80',
-    focus: 'focus-visible:ring-border focus-visible:ring-offset-surface',
-    square: 'bg-surface border-border text-text-primary',
-    chair: 'bg-border',
-    strip: 'border-t border-border',
-    footer: 'border-t border-border',
-    text: 'text-text-secondary',
-    footerText: 'text-text-secondary',
-    name: 'text-text-secondary',
-    divider: 'bg-border',
-    dot: 'bg-text-tertiary',
-    moveHover: 'hover:bg-surface-secondary/50 focus-visible:ring-border/60',
+    card: 'border-2 border-border/50 hover:border-status-info-text hover:shadow-sm',
+    bodyPanel: 'table-card-body table-card-body--free',
+    footerPanel: 'table-card-footer table-card-footer--free',
+    focus: 'focus-visible:ring-status-info-text/30 focus-visible:ring-offset-surface',
+    panel,
+    divider: 'border-border/50',
+    statusLabel: 'text-status-info-text',
+    dot: 'bg-status-info-text',
+    moveHover,
+    ...text,
   }
 }
 
 const cardClass = (status: string) => tableStatusTheme(status).card
 const focusRingClass = (status: string) => tableStatusTheme(status).focus
-const squareClass = (status: string) => tableStatusTheme(status).square
-const chairClass = (status: string) => tableStatusTheme(status).chair
-const stripClass = (status: string) => tableStatusTheme(status).strip
-const stripTextClass = (status: string) => tableStatusTheme(status).text
-const stripDividerClass = (status: string) => tableStatusTheme(status).divider
+const tableCardPanelClass = (status: string) => tableStatusTheme(status).panel
+const tableCardPanelDividerClass = (status: string) => tableStatusTheme(status).divider
+const tableCardBodyPanelClass = (status: string) =>
+  `${tableCardPanelClass(status)} border-b ${tableCardPanelDividerClass(status)} ${tableStatusTheme(status).bodyPanel} flex-1 min-h-[3.75rem] text-start`
+const tableCardFooterPanelClass = (status: string) =>
+  `${tableCardPanelClass(status)} border-t ${tableCardPanelDividerClass(status)} ${tableStatusTheme(status).footerPanel} shrink-0 text-start`
+const themeTitleClass = (status: string) => tableStatusTheme(status).title
+const themeMetaClass = (status: string) => tableStatusTheme(status).meta
+const themeAmountClass = (status: string) => tableStatusTheme(status).amount
+const themeTimeClass = (status: string) => tableStatusTheme(status).time
+const themeWaiterClass = (status: string) => tableStatusTheme(status).waiter
+const themeStatusLabelClass = (status: string) => tableStatusTheme(status).statusLabel
 const dotClass = (status: string) => tableStatusTheme(status).dot
-const tableNameClass = (status: string) => tableStatusTheme(status).name
+const moveButtonClass = (status: string) => tableStatusTheme(status).moveHover
+
+/** Shared row typography — same scale in body and footer panels. */
+const tableCardTitleTextClass = 'text-lg font-bold leading-tight'
+const tableCardPrimaryTextClass = 'text-sm font-bold tabular-nums leading-none'
+const tableCardSecondaryTextClass = 'text-xs font-medium tabular-nums leading-none'
+const tableCardTertiaryTextClass = 'text-xs font-normal leading-none truncate'
 
 const tableCardDisplayName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
   tableSessionDisplayName(table.name, table.session?.custom_label)
@@ -266,30 +283,67 @@ const parsePositiveInt = (value: unknown): number | null => {
 
 const tableCatalogCapacity = (table: { capacity?: unknown }) => parsePositiveInt(table.capacity)
 
+const sessionCapacitySnapshot = (session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null) =>
+  parsePositiveInt(session?.capacity_snapshot) ?? parsePositiveInt(session?.capacitySnapshot)
+
 const tableEffectiveCapacity = (table: {
   capacity?: unknown
-  session?: { capacity_snapshot?: unknown } | null
-}) => parsePositiveInt(table.session?.capacity_snapshot) ?? tableCatalogCapacity(table)
+  session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
+}) => sessionCapacitySnapshot(table.session) ?? tableCatalogCapacity(table)
 
 const tableCardCapacityLabel = (table: {
   status: string
   capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown } | null
+  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
 }): string | null => {
   const capacity = tableEffectiveCapacity(table)
-  if (!capacity) return null
+  const covers = parsePositiveInt(table.session?.covers)
+
   if (table.status === 'free') {
+    if (!capacity) return null
     return t('pos.floor.capacityOnly', { count: capacity })
   }
-  const covers = parsePositiveInt(table.session?.covers)
-  if (covers != null) {
+
+  if (covers != null && capacity != null) {
     return t('pos.floor.coversOfCapacity', { covers, capacity })
   }
-  return t('pos.floor.capacityOnly', { count: capacity })
+  if (covers != null) {
+    return t('pos.floor.coversOnly', { covers })
+  }
+  if (capacity != null) {
+    return t('pos.floor.capacityOnly', { count: capacity })
+  }
+  return null
 }
-const footerClass = (status: string) => tableStatusTheme(status).footer
-const footerTextClass = (status: string) => tableStatusTheme(status).footerText ?? tableStatusTheme(status).text
-const moveButtonClass = (status: string) => tableStatusTheme(status).moveHover
+
+const tableCardTitle = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
+  tableCardDisplayName(table)
+
+/** Secondary line split into parts — bold highlights codes, capacity, minimum. */
+type TableCardSecondaryPart = { text: string; bold?: boolean }
+
+const tableCardSecondaryParts = (table: {
+  name: string
+  status: string
+  capacity?: unknown
+  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown; custom_label?: string | null } | null
+}): TableCardSecondaryPart[] => {
+  const parts: TableCardSecondaryPart[] = []
+  const code = displayTableCode(table)
+  const title = tableCardTitle(table)
+  if (code && code !== title && !title.includes(code)) parts.push({ text: code, bold: true })
+  if (tableCardShowsCatalogName(table)) parts.push({ text: table.name })
+  const capacity = tableCardCapacityLabel(table)
+  if (capacity) parts.push({ text: capacity, bold: true })
+  const minLabel = minimumConsumptionLabel(table)
+  if (minLabel) parts.push({ text: minLabel, bold: true })
+  return parts
+}
+
+const tableCardWaiterLine = (table: { status: string; effective_waiter_member_name?: string | null }) => {
+  if (table.status === 'free' && !table.effective_waiter_member_name) return null
+  return table.effective_waiter_member_name || t('pos.floor.unassigned')
+}
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
 const openCount = computed(() => regularTables.value.filter((t: any) => t.status === 'open').length)
@@ -362,122 +416,85 @@ onUnmounted(() => {
       </div>
 
       <!-- Table grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-32">
-        <div v-for="table in regularTables" :key="table.id" class="flex flex-col gap-1">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
+        <div v-for="table in regularTables" :key="table.id" class="h-full">
 
-          <!-- Card -->
+          <!-- Card — uniform height across grid -->
           <button
-            class="group w-full flex flex-col rounded-2xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="table-card group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
             :class="[cardClass(table.status), focusRingClass(table.status)]"
             :disabled="openingTableId === table.id"
             :aria-label="tableCardAriaLabel(table)"
             @click="handleTableClick(table)"
           >
-            <!-- Top: table graphic -->
-            <div class="flex flex-col items-center justify-center py-4 px-3 gap-3">
-              <div class="relative">
-                <!-- Chairs -->
-                <div class="absolute -top-3 start-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -bottom-3 start-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -start-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-s-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <div class="absolute -end-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-e-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <!-- Table square with short code -->
-                <div
-                  class="w-20 h-20 min-w-[5rem] flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1.5 overflow-hidden"
-                  :class="squareClass(table.status)"
-                >
-                  <span :class="tableCodeTypographyClass(displayTableCode(table))">{{ displayTableCode(table) }}</span>
-                </div>
-              </div>
-              <div class="flex flex-col items-center gap-0.5 w-full min-h-[2.5rem]">
-                <span class="text-xs sm:text-sm font-medium text-center leading-snug line-clamp-2 w-full" :class="tableNameClass(table.status)">
-                  {{ tableCardDisplayName(table) }}
-                </span>
-                <span
-                  v-if="tableCardShowsCatalogName(table)"
-                  class="text-[10px] font-normal text-center leading-snug line-clamp-1 w-full text-text-tertiary"
-                >
-                  {{ table.name }}
-                </span>
-                <span
-                  v-if="tableCardCapacityLabel(table)"
-                  class="text-[10px] font-semibold text-center tabular-nums leading-snug"
-                  :class="tableNameClass(table.status)"
-                >
-                  {{ tableCardCapacityLabel(table) }}
-                </span>
-              </div>
-              <span
-                v-if="minimumConsumptionLabel(table)"
-                class="text-[11px] font-semibold text-center tabular-nums -mt-2"
-                :class="tableNameClass(table.status)"
+            <!-- Body panel — same chrome as footer -->
+            <div :class="tableCardBodyPanelClass(table.status)">
+              <p
+                class="uppercase tracking-wide line-clamp-2 min-h-[2.75rem]"
+                :class="[tableCardTitleTextClass, themeTitleClass(table.status)]"
               >
-                {{ minimumConsumptionLabel(table) }}
-              </span>
+                {{ tableCardTitle(table) }}
+              </p>
+              <p
+                class="line-clamp-2 min-h-[1.125rem]"
+                :class="tableCardSecondaryTextClass"
+              >
+                <span v-if="tableCardSecondaryParts(table).length" :class="themeMetaClass(table.status)">
+                  <template v-for="(part, partIdx) in tableCardSecondaryParts(table)" :key="partIdx">
+                    <span v-if="partIdx > 0" class="font-normal opacity-70"> · </span>
+                    <span :class="part.bold ? 'font-bold' : 'font-normal'">{{ part.text }}</span>
+                  </template>
+                </span>
+                <span v-else aria-hidden="true">&nbsp;</span>
+              </p>
             </div>
 
-            <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
-            <template v-if="table.status !== 'free'">
-              <div class="flex items-center justify-around px-1 min-h-11 border-t" :class="stripClass(table.status)">
-                <!-- Cell 1: dot + time + unfired indicator -->
-                <div class="flex items-center gap-1.5 min-w-0">
-                  <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
-                  <span class="text-xs font-semibold tabular-nums whitespace-nowrap" :class="stripTextClass(table.status)">
-                    {{ formatDuration(table.session.opened_at) }}
-                    <template v-if="tableCardCapacityLabel(table)">
-                      <span class="opacity-70" aria-hidden="true"> · </span>{{ tableCardCapacityLabel(table) }}
-                    </template>
-                  </span>
-                  <!-- Pulsing red dot when there are unfired items (KDS enabled) -->
-                  <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
-                    <span class="relative flex h-2 w-2 flex-shrink-0">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
+            <!-- Footer panel -->
+            <div :class="tableCardFooterPanelClass(table.status)">
+              <div class="flex items-center min-h-[1.75rem]">
+                <template v-if="table.status !== 'free'">
+                  <div class="flex w-full items-center justify-between gap-2">
+                    <span class="truncate min-w-0" :class="[tableCardPrimaryTextClass, themeAmountClass(table.status)]">
+                      {{ formatCurrency(table.session?.running_total ?? 0) }}
                     </span>
-                  </template>
-                </div>
-                <span class="w-px h-4" :class="stripDividerClass(table.status)" />
-                <!-- Cell 2: running total -->
-                <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
-                  {{ formatCurrency(table.session?.running_total ?? 0) }}
-                </span>
-                <span class="w-px h-4" :class="stripDividerClass(table.status)" />
-                <!-- Cell 3: move/transfer button -->
-                <button
-                  type="button"
-                  class="min-h-11 min-w-11 flex items-center justify-center rounded transition-colors focus:outline-none focus-visible:ring-2"
-                  :class="[stripTextClass(table.status), moveButtonClass(table.status)]"
-                  :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
-                  @click.stop="handleMoveTable(table, $event)"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                </button>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="dotClass(table.status)" aria-hidden="true" />
+                      <span class="whitespace-nowrap" :class="[tableCardSecondaryTextClass, themeTimeClass(table.status)]">
+                        {{ formatDuration(table.session.opened_at) }}
+                      </span>
+                      <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
+                        <span class="relative flex h-2 w-2 flex-shrink-0" aria-hidden="true">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
+                        </span>
+                      </template>
+                      <button
+                        type="button"
+                        class="min-h-7 min-w-7 flex items-center justify-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 -me-0.5 text-text-tertiary"
+                        :class="moveButtonClass(table.status)"
+                        :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
+                        @click.stop="handleMoveTable(table, $event)"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <span class="uppercase tracking-wide" :class="[tableCardPrimaryTextClass, themeStatusLabelClass(table.status)]">
+                    {{ t('pos.floor.free') }}
+                  </span>
+                </template>
               </div>
-            </template>
-            <template v-else>
-              <!-- Free table — "Libre" label (Reabrir UI removed; endpoint /session/reopen still exists) -->
-              <div class="flex items-center justify-center px-3 min-h-11" :class="footerClass(table.status)">
-                <span class="text-xs font-semibold" :class="stripTextClass(table.status)">{{ t('pos.floor.free') }}</span>
-              </div>
-            </template>
-
-            <!-- Issue #574 — Waiter line (below strip). Always rendered when the
-                 feature is on so every card has the same height; centered text
-                 only (no icon) — shows the effective waiter (session override >
-                 table default) or a "Sin asignar" placeholder when null. -->
-            <div
-              v-if="waiterAttributionEnabled"
-              class="flex items-center justify-center px-3 h-7"
-              :class="footerClass(table.status)"
-            >
-              <span
-                class="text-xs font-medium truncate text-center"
-                :class="[footerTextClass(table.status), !table.effective_waiter_member_name && 'italic']"
+              <p
+                v-if="waiterAttributionEnabled"
+                class="w-full text-start min-h-[1rem]"
+                :class="[tableCardTertiaryTextClass, themeWaiterClass(table.status), !table.effective_waiter_member_name && tableCardWaiterLine(table) && 'italic']"
               >
-                {{ table.effective_waiter_member_name || t('pos.floor.unassigned') }}
-              </span>
+                {{ tableCardWaiterLine(table) || '\u00A0' }}
+              </p>
             </div>
           </button>
 
@@ -487,3 +504,34 @@ onUnmounted(() => {
 
   </div>
 </template>
+
+<style scoped>
+.table-card {
+  min-height: 8.75rem;
+}
+
+/* status-bg tokens are too faint + Tailwind /opacity doesn't apply to var() colors */
+.table-card-body--free {
+  background-color: color-mix(in oklch, var(--status-info-text) 9%, hsl(var(--surface)));
+}
+
+.table-card-footer--free {
+  background-color: color-mix(in oklch, var(--status-info-text) 20%, hsl(var(--surface)));
+}
+
+.table-card-body--open {
+  background-color: color-mix(in oklch, var(--status-success-text) 9%, hsl(var(--surface)));
+}
+
+.table-card-footer--open {
+  background-color: color-mix(in oklch, var(--status-success-text) 20%, hsl(var(--surface)));
+}
+
+.table-card-body--bill {
+  background-color: color-mix(in oklch, var(--status-warning-text) 10%, hsl(var(--surface)));
+}
+
+.table-card-footer--bill {
+  background-color: color-mix(in oklch, var(--status-warning-text) 22%, hsl(var(--surface)));
+}
+</style>

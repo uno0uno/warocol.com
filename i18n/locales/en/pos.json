@@ -387,7 +387,7 @@
       "yesClear": "Yes, clear"
     },
     "floor": {
-      "minCovered": "Minimum cover met",
+      "minCovered": "Min. ok",
       "unassigned": "Unassigned",
       "mainPlan": "Main floor plan",
       "bar": "Bar",
@@ -398,10 +398,11 @@
       "alwaysOpen": "Always open",
       "noActiveConsumption": "No active consumption",
       "barAlwaysOpenAria": "Bar — always open",
-      "remaining": "{amount} remaining",
+      "remaining": "{amount} left",
       "accumulated": "{amount} accumulated",
       "capacityOnly": "Cap. {count}",
       "coversOfCapacity": "{covers}/{capacity}",
+      "coversOnly": "{covers}",
       "tableAriaWithCapacity": "{name} — {capacity} — {status}",
       "tableAriaWithAliasCapacity": "{alias} — {name} — {capacity} — {status}",
       "tableAriaWithAlias": "{alias} — {name} — {status}"
