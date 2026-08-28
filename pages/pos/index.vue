@@ -192,6 +192,9 @@ const handleChangeSessionWaiter = async (event: Event) => {
         attendedByMemberName: s.attended_by_member_name ?? null,
         effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
         effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
+        covers: s.covers ?? posStore.activeTableSession.covers ?? null,
+        capacitySnapshot: s.capacity_snapshot ?? posStore.activeTableSession.capacitySnapshot ?? null,
+        customLabel: s.custom_label ?? posStore.activeTableSession.customLabel ?? null,
       })
     }
     toast.success(
@@ -212,6 +215,46 @@ const handleChangeSessionWaiter = async (event: Event) => {
   } finally {
     isChangingSessionWaiter.value = false
   }
+}
+const isSavingSessionGuests = ref(false)
+const persistSessionGuests = async (
+  body: { covers?: number; custom_label?: string | null },
+  okMessage: string,
+) => {
+  if (isSavingSessionGuests.value) return
+  if (!posStore.activeTableSession || posStore.activeTableSession.isBar) return
+  isSavingSessionGuests.value = true
+  try {
+    await $fetch(`/api/pos/tables/${posStore.activeTableSession.tableId}/session-guests`, {
+      method: 'PATCH',
+      body,
+    })
+    const sessionData = await $fetch<{ success: boolean; data: any }>(
+      `/api/tables/${posStore.activeTableSession.tableId}/current`,
+    )
+    applyTableSessionFromApi(sessionData?.data, tableSessionFetchGen)
+    toast.success(okMessage, { title: t('pos.banner.updated') })
+  } catch (error: any) {
+    toast.error(error?.data?.detail || t('pos.banner.guestsChangeError'), { title: t('pos.banner.error') })
+  } finally {
+    isSavingSessionGuests.value = false
+  }
+}
+const handleChangeSessionCovers = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const covers = Number.parseInt(target.value, 10)
+  if (!Number.isFinite(covers) || covers < 1) {
+    target.value = String(posStore.activeTableSession?.covers ?? 1)
+    return
+  }
+  await persistSessionGuests({ covers }, t('pos.banner.coversUpdated'))
+}
+const handleBlurSessionLabel = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const next = target.value.trim()
+  const current = (posStore.activeTableSession?.customLabel || '').trim()
+  if (next === current) return
+  await persistSessionGuests({ custom_label: next || null }, t('pos.banner.labelUpdated'))
 }
 const showExpediterPanel = ref(false)
 const readyComandasCount = ref(0)
@@ -695,6 +738,9 @@ const applyTableSessionFromApi = (
     attendedByMemberName: s.attended_by_member_name ?? null,
     effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
     effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
+    covers: s.covers ?? null,
+    capacitySnapshot: s.capacity_snapshot ?? null,
+    customLabel: s.custom_label ?? null,
     minimumConsumption: mapMinimumConsumptionFromApi(s.minimum_consumption),
   })
   posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
@@ -1898,6 +1944,36 @@ onUnmounted(() => {
           </div>
           <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
           <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-shrink-0 xl:justify-end">
+            <!-- warocol.com#2469 — covers + custom label (mesa only) -->
+            <template v-if="!posStore.activeTableSession.isBar">
+              <label class="h-8 min-w-0 inline-flex items-center gap-1 rounded-lg border border-border bg-surface-secondary px-2">
+                <input
+                  type="number"
+                  min="1"
+                  :value="posStore.activeTableSession.covers ?? 1"
+                  :disabled="isSavingSessionGuests"
+                  :aria-label="t('pos.banner.coversAria')"
+                  class="h-7 w-10 bg-transparent text-center text-[10px] font-bold tabular-nums text-text-primary focus:outline-none"
+                  @change="handleChangeSessionCovers"
+                >
+                <span
+                  v-if="posStore.activeTableSession.capacitySnapshot"
+                  class="text-[10px] font-bold uppercase tracking-wider text-text-tertiary whitespace-nowrap"
+                >
+                  {{ t('pos.banner.coversOf', { count: posStore.activeTableSession.capacitySnapshot }) }}
+                </span>
+              </label>
+              <input
+                type="text"
+                maxlength="80"
+                :value="posStore.activeTableSession.customLabel || ''"
+                :disabled="isSavingSessionGuests"
+                :placeholder="t('pos.banner.customLabelPlaceholder')"
+                :aria-label="t('pos.banner.customLabelAria')"
+                class="h-8 min-w-0 sm:min-w-[8rem] max-w-[12rem] px-2.5 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
+                @blur="handleBlurSessionLabel"
+              >
+            </template>
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->

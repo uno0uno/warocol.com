@@ -1097,7 +1097,7 @@ const saleReceiptLocationLabel = computed(() => {
   if (o.is_delivery) return t('ventas.common.domicilio')
   if (o.source === 'barra') return t('ventas.common.barra')
   if (o.source === 'mesa') {
-    const tableName = o.table_display_name || o.table_name || o.table?.name || null
+    const tableName = o.table_custom_label || o.table_display_name || o.table_name || o.table?.name || null
     const tableCode = o.table_code || o.table?.code || null
     return [tableSingular.value, tableCode, tableName].filter(Boolean).join(' ')
   }
@@ -1839,6 +1839,23 @@ onUnmounted(() => {
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.ordenes.colSource') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary">
               {{ saleReceiptLocationLabel || t('ventas.common.pos') }}
+            </dd>
+          </div>
+
+          <div class="px-4 py-3 border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.tableLabel') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary">
+              {{ order.table_custom_label || order.table_name || '—' }}
+            </dd>
+          </div>
+
+          <div class="px-4 py-3 min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.covers') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
+              <template v-if="order.table_covers">
+                {{ order.table_covers }}<template v-if="order.table_capacity_snapshot"> / {{ order.table_capacity_snapshot }}</template>
+              </template>
+              <span v-else :class="emptyFieldChipClass">—</span>
             </dd>
           </div>
         </dl>

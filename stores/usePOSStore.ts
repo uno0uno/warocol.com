@@ -75,6 +75,9 @@ export interface ActiveTableSession {
     attendedByMemberName?: string | null
     effectiveWaiterMemberId?: string | null
     effectiveWaiterMemberName?: string | null
+    covers?: number | null
+    capacitySnapshot?: number | null
+    customLabel?: string | null
     minimumConsumption?: MinimumConsumptionState | null
 }
 
