@@ -244,12 +244,49 @@ const tableCardDisplayName = (table: { name: string; session?: { custom_label?: 
 const tableCardShowsCatalogName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
   tableSessionHasAlias(table.name, table.session?.custom_label)
 
-const tableCardAriaLabel = (table: { name: string; status: string; session?: { custom_label?: string | null } | null }) => {
+const tableCardAriaLabel = (table: { name: string; status: string; capacity?: number | null; session?: { custom_label?: string | null; covers?: number | null; capacity_snapshot?: number | null } | null }) => {
   const display = tableCardDisplayName(table)
+  const capacity = tableCardCapacityLabel(table)
+  const status = badgeLabel(table.status)
   if (tableCardShowsCatalogName(table)) {
-    return t('pos.floor.tableAriaWithAlias', { alias: display, name: table.name, status: badgeLabel(table.status) })
+    return capacity
+      ? t('pos.floor.tableAriaWithAliasCapacity', { alias: display, name: table.name, status, capacity })
+      : t('pos.floor.tableAriaWithAlias', { alias: display, name: table.name, status })
   }
-  return `${display} — ${badgeLabel(table.status)}`
+  return capacity
+    ? t('pos.floor.tableAriaWithCapacity', { name: display, status, capacity })
+    : `${display} — ${status}`
+}
+
+const tableCatalogCapacity = (table: { capacity?: number | null }) => {
+  const cap = table.capacity
+  return typeof cap === 'number' && cap >= 1 ? cap : null
+}
+
+const tableEffectiveCapacity = (table: {
+  capacity?: number | null
+  session?: { capacity_snapshot?: number | null } | null
+}) => {
+  const snap = table.session?.capacity_snapshot
+  if (typeof snap === 'number' && snap >= 1) return snap
+  return tableCatalogCapacity(table)
+}
+
+const tableCardCapacityLabel = (table: {
+  status: string
+  capacity?: number | null
+  session?: { covers?: number | null; capacity_snapshot?: number | null } | null
+}): string | null => {
+  const capacity = tableEffectiveCapacity(table)
+  if (!capacity) return null
+  if (table.status === 'free') {
+    return t('pos.floor.capacityOnly', { count: capacity })
+  }
+  const covers = table.session?.covers
+  if (typeof covers === 'number' && covers >= 1) {
+    return t('pos.floor.coversOfCapacity', { covers, capacity })
+  }
+  return t('pos.floor.capacityOnly', { count: capacity })
 }
 const footerClass = (status: string) => tableStatusTheme(status).footer
 const footerTextClass = (status: string) => tableStatusTheme(status).footerText ?? tableStatusTheme(status).text
@@ -362,6 +399,12 @@ onUnmounted(() => {
                   class="text-[10px] font-normal text-center leading-snug line-clamp-1 w-full text-text-tertiary"
                 >
                   {{ table.name }}
+                </span>
+                <span
+                  v-if="tableCardCapacityLabel(table)"
+                  class="text-[10px] font-semibold text-center tabular-nums leading-snug text-text-tertiary"
+                >
+                  {{ tableCardCapacityLabel(table) }}
                 </span>
               </div>
               <span

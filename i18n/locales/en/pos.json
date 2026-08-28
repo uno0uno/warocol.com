@@ -400,6 +400,10 @@
       "barAlwaysOpenAria": "Bar — always open",
       "remaining": "{amount} remaining",
       "accumulated": "{amount} accumulated",
+      "capacityOnly": "Cap. {count}",
+      "coversOfCapacity": "{covers}/{capacity}",
+      "tableAriaWithCapacity": "{name} — {capacity} — {status}",
+      "tableAriaWithAliasCapacity": "{alias} — {name} — {capacity} — {status}",
       "tableAriaWithAlias": "{alias} — {name} — {status}"
     },
     "delivery": {
