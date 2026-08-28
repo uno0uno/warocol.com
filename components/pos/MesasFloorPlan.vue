@@ -3,6 +3,7 @@ const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
+import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 
 const { formatCurrency } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
@@ -236,6 +237,20 @@ const stripTextClass = (status: string) => tableStatusTheme(status).text
 const stripDividerClass = (status: string) => tableStatusTheme(status).divider
 const dotClass = (status: string) => tableStatusTheme(status).dot
 const tableNameClass = (status: string) => tableStatusTheme(status).name
+
+const tableCardDisplayName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
+  tableSessionDisplayName(table.name, table.session?.custom_label)
+
+const tableCardShowsCatalogName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
+  tableSessionHasAlias(table.name, table.session?.custom_label)
+
+const tableCardAriaLabel = (table: { name: string; status: string; session?: { custom_label?: string | null } | null }) => {
+  const display = tableCardDisplayName(table)
+  if (tableCardShowsCatalogName(table)) {
+    return t('pos.floor.tableAriaWithAlias', { alias: display, name: table.name, status: badgeLabel(table.status) })
+  }
+  return `${display} — ${badgeLabel(table.status)}`
+}
 const footerClass = (status: string) => tableStatusTheme(status).footer
 const footerTextClass = (status: string) => tableStatusTheme(status).footerText ?? tableStatusTheme(status).text
 const moveButtonClass = (status: string) => tableStatusTheme(status).moveHover
@@ -319,7 +334,7 @@ onUnmounted(() => {
             class="group w-full flex flex-col rounded-2xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
             :class="[cardClass(table.status), focusRingClass(table.status)]"
             :disabled="openingTableId === table.id"
-            :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
+            :aria-label="tableCardAriaLabel(table)"
             @click="handleTableClick(table)"
           >
             <!-- Top: table graphic -->
@@ -338,9 +353,17 @@ onUnmounted(() => {
                   <span :class="tableCodeTypographyClass(displayTableCode(table))">{{ displayTableCode(table) }}</span>
                 </div>
               </div>
-              <span class="text-xs sm:text-sm font-medium text-center leading-snug line-clamp-2 w-full min-h-[2.5rem]" :class="tableNameClass(table.status)">
-                {{ table.name }}
-              </span>
+              <div class="flex flex-col items-center gap-0.5 w-full min-h-[2.5rem]">
+                <span class="text-xs sm:text-sm font-medium text-center leading-snug line-clamp-2 w-full" :class="tableNameClass(table.status)">
+                  {{ tableCardDisplayName(table) }}
+                </span>
+                <span
+                  v-if="tableCardShowsCatalogName(table)"
+                  class="text-[10px] font-normal text-center leading-snug line-clamp-1 w-full text-text-tertiary"
+                >
+                  {{ table.name }}
+                </span>
+              </div>
               <span
                 v-if="minimumConsumptionLabel(table)"
                 class="text-[11px] font-semibold text-center tabular-nums -mt-2"

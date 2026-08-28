@@ -399,7 +399,8 @@
       "noActiveConsumption": "No active consumption",
       "barAlwaysOpenAria": "Bar — always open",
       "remaining": "{amount} remaining",
-      "accumulated": "{amount} accumulated"
+      "accumulated": "{amount} accumulated",
+      "tableAriaWithAlias": "{alias} — {name} — {status}"
     },
     "delivery": {
       "notesPlaceholder": "e.g. gate on 51st street, yellow building",

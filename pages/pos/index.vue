@@ -20,6 +20,7 @@ import { isStarterAccessLevel, isStarterPlanSlug } from '~/composables/useBillin
 import { promoBadgeForProduct } from '~/utils/promoProductMatch'
 import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
+import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 
 definePageMeta({
   layout: 'dashboard',
@@ -300,6 +301,18 @@ const isKitchenServiceMode = computed(() => {
 const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
 )
+
+const activeSessionDisplayName = computed(() => {
+  const session = posStore.activeTableSession
+  if (!session) return ''
+  return tableSessionDisplayName(session.tableName, session.customLabel)
+})
+
+const activeSessionShowsCatalogName = computed(() => {
+  const session = posStore.activeTableSession
+  if (!session) return false
+  return tableSessionHasAlias(session.tableName, session.customLabel)
+})
 
 /** Backend confirmed open session (#1105) — avoids /current and tab/add 404 spam. */
 const tableSessionBackendReady = ref(false)
@@ -1812,28 +1825,30 @@ onUnmounted(() => {
     <CommonsTheCustomLoader size="large" />
   </div>
 
-  <!-- Floor plan view -->
-  <div v-else-if="showFloorPlan">
-    <PosMesasFloorPlan
-      :comandas-enabled="comandasEnabled"
-      :waiter-attribution-enabled="waiterAttributionEnabled"
-      @enter-table="handleEnterTable"
-      @no-tables="noTablesConfigured = true"
-      @move-table="handleMoveTable"
-    />
-    <!-- Modal uses Teleport to="body" internally — safe to nest here -->
-    <PosMoveTableModal
-      v-if="showMoveModal && moveTableSource"
-      :show="showMoveModal"
-      :source-table="moveTableSource"
-      :tables="tablesForModal"
-      @close="showMoveModal = false; moveTableSource = null"
-      @moved="handleMoveDone"
-    />
-  </div>
+  <!-- Floor plan ↔ catalog transition (#2483) -->
+  <template v-else>
+    <Transition name="pos-view" mode="out-in">
+      <div v-if="showFloorPlan" key="pos-floor">
+        <PosMesasFloorPlan
+          :comandas-enabled="comandasEnabled"
+          :waiter-attribution-enabled="waiterAttributionEnabled"
+          @enter-table="handleEnterTable"
+          @no-tables="noTablesConfigured = true"
+          @move-table="handleMoveTable"
+        />
+        <!-- Modal uses Teleport to="body" internally — safe to nest here -->
+        <PosMoveTableModal
+          v-if="showMoveModal && moveTableSource"
+          :show="showMoveModal"
+          :source-table="moveTableSource"
+          :tables="tablesForModal"
+          @close="showMoveModal = false; moveTableSource = null"
+          @moved="handleMoveDone"
+        />
+      </div>
 
-  <!-- POS sales view -->
-  <div v-else>
+      <!-- POS sales view -->
+      <div v-else key="pos-catalog">
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -1916,7 +1931,13 @@ onUnmounted(() => {
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span class="inline-flex items-center gap-1.5 min-w-0">
-                <span class="text-sm font-semibold text-text-primary truncate">{{ posStore.activeTableSession.tableName }}</span>
+                <span class="text-sm font-semibold text-text-primary truncate">{{ activeSessionDisplayName }}</span>
+                <span
+                  v-if="activeSessionShowsCatalogName"
+                  class="text-[11px] font-normal text-text-tertiary truncate"
+                >
+                  {{ posStore.activeTableSession.tableName }}
+                </span>
                 <span class="text-[11px] font-medium text-status-success-text/80 flex-shrink-0">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
               </span>
               <span
@@ -2258,7 +2279,9 @@ onUnmounted(() => {
       />
       </div>
     </div>
-  </div>
+      </div>
+    </Transition>
+  </template>
 
   <!-- Issue #956 — destructive POS actions (motivo required) -->
   <PosDestructiveReasonModal
@@ -2331,14 +2354,14 @@ onUnmounted(() => {
     v-if="expediterEnabled && comandasEnabled"
     v-model="showExpediterPanel"
     :table-session-id="posStore.activeTableSession?.tableId ?? null"
-    :table-display-name="posStore.activeTableSession?.tableName ?? null"
+    :table-display-name="activeSessionDisplayName || null"
     @success="refreshReadyComandasCount"
   />
 
   <PosTableSessionAdvancePanel
     v-model="showTableAdvancePanel"
     :table-id="posStore.activeTableSession?.tableId ?? null"
-    :table-name="posStore.activeTableSession?.tableName ?? null"
+    :table-name="activeSessionDisplayName || null"
     :minimum-consumption="activeMinimumConsumption"
     @success="refreshTableSession"
   />
@@ -2355,7 +2378,7 @@ onUnmounted(() => {
     :comandas="sentComandasForPanel"
     :selected-ids="selectedComandaIds"
     :loading="persistedComandasLoading"
-    :table-display-name="posStore.activeTableSession?.tableName ?? null"
+    :table-display-name="activeSessionDisplayName || null"
     @toggle-comanda="toggleComandaSelection"
     @select-all="selectAllPersistedComandas"
     @clear-selection="clearPersistedComandaSelection"
@@ -2417,3 +2440,18 @@ onUnmounted(() => {
   />
 
 </template>
+
+<style>
+@media (prefers-reduced-motion: no-preference) {
+  .pos-view-enter-active,
+  .pos-view-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .pos-view-enter-from,
+  .pos-view-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+</style>
