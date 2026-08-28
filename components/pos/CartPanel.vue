@@ -4,7 +4,7 @@
     :class="fitHeight ? 'h-fit lg:h-[calc(100dvh-7rem)] lg:max-h-[calc(100dvh-7rem)]' : 'h-full'"
   >
     <!-- Cart Header -->
-    <div class="px-4 py-2.5 border-b border-border bg-surface">
+    <div class="px-3 py-3 border-b border-border bg-surface">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-text-primary tracking-wide">{{ t('pos.cart.currentOrder') }}</h2>
         <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
@@ -59,7 +59,7 @@
     </div>
 
     <!-- Cart summary/actions: sticky at the top of the order panel -->
-    <div class="flex-shrink-0 px-3.5 py-3 border-b border-border space-y-3 bg-surface-secondary/40">
+    <div class="flex-shrink-0 px-3 py-3 border-b border-border space-y-3 bg-surface-secondary/40">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"

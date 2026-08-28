@@ -1947,7 +1947,7 @@ onUnmounted(() => {
       <!-- Mesa Banner skeleton (initial tab load only) -->
       <div
         v-if="showMesaBannerSkeleton"
-        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse flex flex-col"
+        class="bg-surface border border-border rounded-xl p-3 shadow-sm animate-pulse flex flex-col"
         :class="siblingGapClass"
         aria-busy="true"
         aria-live="polite"
@@ -1974,7 +1974,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Bar banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-2.5 shadow-sm">
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-3 shadow-sm">
         <div class="flex items-center gap-2.5">
           <div class="bg-state-warning-bg p-2 rounded-lg flex-shrink-0">
             <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -2007,7 +2007,7 @@ onUnmounted(() => {
       <!-- Mesa Banner — B: 2 fixed rows (identity+actions / session fields grid) -->
       <div
         v-else-if="posStore.activeTableSession"
-        class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm flex flex-col"
+        class="bg-surface border border-border rounded-xl p-3 shadow-sm flex flex-col"
         :class="siblingGapClass"
       >
         <!-- Row 1: entity + metric + actions -->
