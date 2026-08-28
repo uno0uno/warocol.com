@@ -1,0 +1,27 @@
+issue: 2492
+repo: uno0uno/warocol.com
+cwd: front_nuxt
+branch: wr-2492-align-pos-toolbar-heights
+stack: nuxt
+
+paths:
+  - pages/pos/index.vue
+  - components/pos/CartPanel.vue
+  - composables/usePosToolbarControl.ts
+  - components/ui/search/SearchBar.vue
+  - i18n/locales/en/common.json
+  - i18n/locales/es/common.json
+
+ac:
+  - Catalog search + category chips are the height reference (min-h-10, text-sm)
+  - Mesa banner actions and session fields match that height
+  - Cart panel actions use the same min-h-10 scale
+  - Search bar has clear (X) when query is non-empty
+  - Touch targets stay ~40px; no layout break on sm/lg
+
+hints:
+  - Shared classes via usePosToolbarControl
+  - CartPanel min-h-[44px] → min-h-10
+  - SearchBar clearable default true + common.clearSearch i18n
+
+tests: []
