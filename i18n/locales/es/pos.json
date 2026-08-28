@@ -545,6 +545,8 @@
       "noWaiterAssigned": "Sin mesero asignado",
       "changeWaiterAria": "Cambiar mesero de la sesión activa",
       "assigningWaiter": "Asignando mesero...",
+      "savingCovers": "Guardando comensales...",
+      "savingAlias": "Guardando alias...",
       "syncing": "Sincronizando...",
       "applyingChanges": "Aplicando cambios...",
       "waiterUpdated": "Mesero: {name}",
