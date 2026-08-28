@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-shell-header-bg px-3 py-2 md:px-5 xl:px-6 flex-shrink-0">
+  <header class="bg-shell-header-bg px-4 py-2 sm:px-6 md:px-8 flex-shrink-0">
     <div class="flex min-w-0 items-center justify-between gap-2">
       <div class="flex min-w-0 items-center gap-2">
         <NuxtLink

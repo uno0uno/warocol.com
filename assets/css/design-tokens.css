@@ -273,8 +273,12 @@
   --shell-header-bg: var(--surface);
   --shell-header-border: var(--border);
   /* Buzz-like dashboard canvas (very soft WARO wash) */
-  --shell-canvas-top: 250 20% 93%; /* whisper crocus → #ebe9f0-ish */
-  --shell-canvas-bottom: 214 18% 89%; /* whisper cool → #dbe2ea-ish */
+  --shell-canvas-base: 250 18% 94%; /* soft lavender wash */
+  --shell-canvas-glow-a: 251 40% 90%; /* muted crocus */
+  --shell-canvas-glow-b: 262 28% 91%; /* muted lavender */
+  --shell-canvas-glow-c: 250 22% 92%; /* cool whisper violet */
+  --shell-canvas-top: 250 20% 93%; /* legacy / fallback */
+  --shell-canvas-bottom: 262 18% 90%; /* muted lavender (was cool blue) */
   --shell-inset-radius: 0.875rem; /* 14px */
   --shell-sidebar-width-default: 14rem;
   --shell-sidebar-width-min: 11.25rem; /* 180px */

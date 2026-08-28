@@ -286,8 +286,8 @@ const handleLogout = async () => {
   padding: 0.5rem 0.75rem;
   border-radius: 0.4375rem;
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 500;
   width: 100%;
   text-decoration: none;
@@ -356,12 +356,11 @@ const handleLogout = async () => {
 /* ── Section label ── */
 .nav-section-label {
   padding: 0.5rem 0.625rem 0.1875rem;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  font-size: 0.75rem; /* ~12px */
+  letter-spacing: 0.02em;
+  font-weight: 500;
   white-space: nowrap;
-  color: hsl(var(--nav-section-label) / 0.48);
+  color: hsl(var(--nav-section-label) / 0.55);
 }
 
 /* ── Dividers ── */
@@ -385,7 +384,7 @@ const handleLogout = async () => {
   .nav-item {
     min-height: 2.125rem;
     padding-block: 0.25rem;
-    font-size: 0.90625rem;
+    font-size: 0.8125rem;
     line-height: 1.125rem;
   }
 
@@ -401,7 +400,7 @@ const handleLogout = async () => {
   .nav-section-label {
     padding-top: 0.3125rem;
     padding-bottom: 0.125rem;
-    font-size: 10.5px;
+    font-size: 0.6875rem;
   }
 }
 
@@ -409,7 +408,7 @@ const handleLogout = async () => {
   .nav-item {
     min-height: 1.75rem;
     padding-block: 0.125rem;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     line-height: 1.0625rem;
   }
 
@@ -425,7 +424,7 @@ const handleLogout = async () => {
   .nav-section-label {
     padding-top: 0.25rem;
     padding-bottom: 0.0625rem;
-    font-size: 10px;
+    font-size: 0.6875rem;
   }
 }
 
