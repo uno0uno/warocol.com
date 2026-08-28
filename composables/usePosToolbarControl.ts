@@ -1,6 +1,6 @@
-/** Shared POS catalog-toolbar control sizing (~40px / min-h-10). */
+/** Shared POS control sizing — matches DashboardShellHeader (`h-9` / 36px). */
 export function usePosToolbarControl() {
-  const controlHeightClass = 'min-h-10'
+  const controlHeightClass = 'h-9'
   const controlRadiusClass = 'rounded-lg'
   const controlTextClass = 'text-sm'
 
@@ -22,7 +22,7 @@ export function usePosToolbarControl() {
 
   const categoryChipClass = [
     controlHeightClass,
-    'inline-flex items-center px-4 rounded-xl',
+    'inline-flex items-center px-3 rounded-lg',
     controlTextClass,
     'font-medium whitespace-nowrap theme-transition',
   ].join(' ')

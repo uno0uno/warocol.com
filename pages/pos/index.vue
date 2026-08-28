@@ -1957,15 +1957,15 @@ onUnmounted(() => {
             <div class="h-2.5 w-44 max-w-full bg-surface-secondary rounded" />
           </div>
           <div class="flex flex-shrink-0 gap-1">
-            <div class="h-10 w-14 bg-surface-secondary rounded-lg hidden sm:block" />
-            <div class="h-10 w-10 bg-surface-secondary rounded-lg" />
-            <div class="h-10 w-10 bg-surface-secondary rounded-lg" />
+            <div class="h-9 w-14 bg-surface-secondary rounded-lg hidden sm:block" />
+            <div class="h-9 w-9 bg-surface-secondary rounded-lg" />
+            <div class="h-9 w-9 bg-surface-secondary rounded-lg" />
           </div>
         </div>
         <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-          <div class="h-10 bg-surface-secondary rounded-lg" />
-          <div class="h-10 bg-surface-secondary rounded-lg" />
-          <div class="h-10 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
+          <div class="h-9 bg-surface-secondary rounded-lg" />
+          <div class="h-9 bg-surface-secondary rounded-lg" />
+          <div class="h-9 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
         </div>
       </div>
 
@@ -2137,7 +2137,7 @@ onUnmounted(() => {
                 :value="bannerEffectiveWaiterId || ''"
                 :disabled="isBannerSessionFieldsSaving"
                 :aria-label="t('pos.banner.changeWaiterAria')"
-                class="h-10 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-sm font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                class="h-9 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-sm font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -2262,7 +2262,7 @@ onUnmounted(() => {
             <UiSearchBar
               v-model="searchQuery"
               :placeholder="t('pos.catalog.searchPlaceholder')"
-              class="min-h-10 px-3.5"
+              class="h-9 px-3"
             />
 
             <div class="flex gap-2.5 sm:gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5">

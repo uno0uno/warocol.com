@@ -45,7 +45,7 @@ const resolvedClearAriaLabel = computed(
 <template>
   <div
     :class="cn(
-      'relative flex items-center min-h-10 bg-transparent border border-border rounded-lg px-3 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border',
+      'relative flex items-center h-9 bg-transparent border border-border rounded-lg px-3 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border',
       clearable && modelValue ? 'pe-9' : '',
       props.class,
     )"
