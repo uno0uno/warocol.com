@@ -11,16 +11,6 @@
 
     <!-- Main inset (Buzz SidebarInset): opaque rounded panel over canvas -->
     <main class="dashboard-shell-inset flex-1 flex flex-col min-w-0 min-h-0 h-screen md:h-auto">
-      <DashboardShellHeader
-        :status="dynamicStatus"
-        :header-action="dynamicHeaderAction"
-        :is-refreshing="isRefreshing"
-        :is-progressive-loading="isProgressiveLoading"
-        :hide-logo="isSidebarExpanded"
-        @refresh="handleRefresh"
-        @navigate-pos="navigateToPOS"
-      />
-
       <!-- Subscription Banner: warning/read_only take priority over starter via access level -->
       <SubscriptionBanner
         v-if="showSubscriptionBanner && subscriptionBannerLevel"
@@ -30,9 +20,20 @@
         :grace-days-remaining="accessStatus?.grace_days_remaining"
       />
 
-      <!-- Content Area with Overflow -->
+      <!-- Content Area with Overflow — header shares page padding with body -->
       <div :class="['flex-1 min-h-0 overflow-y-auto', mobileContentBottomPadding]">
         <div class="p-4 sm:p-6 md:p-8">
+          <DashboardShellHeader
+            :status="dynamicStatus"
+            :header-action="dynamicHeaderAction"
+            :is-refreshing="isRefreshing"
+            :is-progressive-loading="isProgressiveLoading"
+            hide-logo
+            class="mb-4 sm:mb-6"
+            @refresh="handleRefresh"
+            @navigate-pos="navigateToPOS"
+          />
+
           <!-- Breadcrumb (if provided) -->
           <nav v-if="showBreadcrumb" class="flex mb-6" :aria-label="t('shell.breadcrumb')">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -265,22 +266,22 @@ useHead({
   background-image:
     radial-gradient(
       ellipse 85% 65% at 8% 12%,
-      hsl(var(--shell-canvas-glow-a) / 0.85),
+      hsl(var(--shell-canvas-glow-a) / 0.32),
       transparent 58%
     ),
     radial-gradient(
       ellipse 70% 55% at 92% 18%,
-      hsl(var(--shell-canvas-glow-b) / 0.7),
+      hsl(var(--shell-canvas-glow-b) / 0.26),
       transparent 52%
     ),
     radial-gradient(
       ellipse 65% 50% at 72% 88%,
-      hsl(var(--shell-canvas-glow-c) / 0.75),
+      hsl(var(--shell-canvas-glow-c) / 0.28),
       transparent 55%
     ),
     radial-gradient(
       ellipse 55% 45% at 18% 82%,
-      hsl(var(--shell-canvas-bottom) / 0.65),
+      hsl(var(--shell-canvas-bottom) / 0.22),
       transparent 50%
     );
 }
