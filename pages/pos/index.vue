@@ -225,20 +225,28 @@ const persistSessionGuests = async (
   const savingRef = field === 'covers' ? isSavingSessionCovers : isSavingSessionAlias
   if (savingRef.value) return
   if (!posStore.activeTableSession || posStore.activeTableSession.isBar) return
+  const previousSession = posStore.activeTableSession
   savingRef.value = true
+  // Optimistic — keep banner fields visible while GET /current completes
+  posStore.setTableSession({
+    ...previousSession,
+    ...(field === 'covers' && body.covers != null ? { covers: body.covers } : {}),
+    ...(field === 'alias' ? { customLabel: body.custom_label ?? null } : {}),
+  })
   await nextTick()
   const startedAt = Date.now()
   try {
-    await $fetch(`/api/pos/tables/${posStore.activeTableSession.tableId}/session-guests`, {
+    await $fetch(`/api/pos/tables/${previousSession.tableId}/session-guests`, {
       method: 'PATCH',
       body,
     })
     const sessionData = await $fetch<{ success: boolean; data: any }>(
-      `/api/tables/${posStore.activeTableSession.tableId}/current`,
+      `/api/tables/${previousSession.tableId}/current`,
     )
     applyTableSessionFromApi(sessionData?.data, tableSessionFetchGen)
     toast.success(okMessage, { title: t('pos.banner.updated') })
   } catch (error: any) {
+    posStore.setTableSession(previousSession)
     toast.error(error?.data?.detail || t('pos.banner.guestsChangeError'), { title: t('pos.banner.error') })
   } finally {
     await holdBannerSessionSkeleton(startedAt)
@@ -444,7 +452,7 @@ const showOpenSaleInPanel = computed(
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const showMesaBannerSkeleton = computed(
-  () => isLoadingTabItems.value || isAddingToTab.value || isBannerSessionFieldsSaving.value,
+  () => isLoadingTabItems.value,
 )
 const isClearingTab = ref(false)
 const tabError = ref<string | null>(null)
@@ -759,6 +767,25 @@ const mapMinimumConsumptionFromApi = (raw: any) => {
   }
 }
 
+const mergeSessionGuestFieldsFromApi = (
+  apiSession: { covers?: number | null; capacity_snapshot?: number | null; custom_label?: string | null },
+  prev: typeof posStore.activeTableSession,
+) => {
+  const apiCovers = apiSession.covers ?? null
+  const apiCapacitySnapshot = apiSession.capacity_snapshot ?? null
+  const apiCustomLabel = apiSession.custom_label ?? null
+
+  return {
+    covers: isSavingSessionCovers.value
+      ? (prev?.covers ?? apiCovers)
+      : (apiCovers ?? prev?.covers ?? null),
+    capacitySnapshot: apiCapacitySnapshot ?? prev?.capacitySnapshot ?? null,
+    customLabel: isSavingSessionAlias.value
+      ? (prev?.customLabel ?? apiCustomLabel)
+      : (apiCustomLabel ?? prev?.customLabel ?? null),
+  }
+}
+
 const applyTableSessionFromApi = (
   data: { session?: any; tab_items?: any[] } | undefined,
   fetchGen: number,
@@ -768,20 +795,20 @@ const applyTableSessionFromApi = (
   const tableId = tableCtx?.tableId ?? posStore.activeTableSession?.tableId
   if (!tableId) return
   const s = data.session
+  const prev = posStore.activeTableSession
+  const guestFields = mergeSessionGuestFieldsFromApi(s, prev)
   posStore.setTableSession({
     tableId,
     sessionId: s.id,
-    tableName: tableCtx?.tableName ?? posStore.activeTableSession?.tableName ?? '',
+    tableName: tableCtx?.tableName ?? prev?.tableName ?? '',
     runningTotal: s.running_total,
     openedAt: s.opened_at,
-    isBar: tableCtx?.isBar ?? posStore.activeTableSession?.isBar ?? false,
+    isBar: tableCtx?.isBar ?? prev?.isBar ?? false,
     attendedByMemberId: s.attended_by_member_id ?? null,
     attendedByMemberName: s.attended_by_member_name ?? null,
     effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
     effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
-    covers: s.covers ?? null,
-    capacitySnapshot: s.capacity_snapshot ?? null,
-    customLabel: s.custom_label ?? null,
+    ...guestFields,
     minimumConsumption: mapMinimumConsumptionFromApi(s.minimum_consumption),
   })
   posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
@@ -1908,7 +1935,7 @@ onUnmounted(() => {
         </p>
       </div>
 
-      <!-- Mesa Banner skeleton (tab load or session field save) -->
+      <!-- Mesa Banner skeleton (initial tab load only) -->
       <div
         v-if="showMesaBannerSkeleton"
         class="bg-surface border border-border rounded-xl px-2.5 py-2 shadow-sm animate-pulse"
@@ -2049,11 +2076,15 @@ onUnmounted(() => {
         <!-- Row 2: session fields — fixed grid (no free wrap) -->
         <div
           v-if="!posStore.activeTableSession.isBar || waiterAttributionEnabled"
-          class="mt-1.5 grid gap-1.5"
-          :class="!posStore.activeTableSession.isBar && waiterAttributionEnabled
-            ? 'grid-cols-2 sm:grid-cols-3'
-            : 'grid-cols-2'"
+          class="relative mt-1.5"
         >
+          <div
+            class="grid gap-1.5"
+            :class="!posStore.activeTableSession.isBar && waiterAttributionEnabled
+              ? 'grid-cols-2 sm:grid-cols-3'
+              : 'grid-cols-2'"
+            :aria-busy="isBannerSessionFieldsSaving ? 'true' : undefined"
+          >
           <template v-if="!posStore.activeTableSession.isBar">
             <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
@@ -2063,6 +2094,7 @@ onUnmounted(() => {
                 type="number"
                 min="1"
                 :value="bannerSessionCoversValue"
+                :disabled="isSavingSessionCovers"
                 :aria-label="t('pos.banner.coversAria')"
                 class="banner-covers-input h-7 w-11 min-w-0 flex-shrink-0 bg-transparent text-center text-sm font-semibold tabular-nums text-text-primary border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none accent-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 @blur="handleBlurSessionCovers"
@@ -2076,6 +2108,7 @@ onUnmounted(() => {
                 type="text"
                 maxlength="80"
                 :value="posStore.activeTableSession.customLabel || ''"
+                :disabled="isSavingSessionAlias"
                 :placeholder="t('pos.banner.customLabelPlaceholder')"
                 :aria-label="t('pos.banner.customLabelAria')"
                 class="h-7 min-w-0 flex-1 bg-transparent border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-xs font-medium text-text-primary placeholder:text-text-tertiary/80"
@@ -2093,6 +2126,7 @@ onUnmounted(() => {
               </span>
               <select
                 :value="bannerEffectiveWaiterId || ''"
+                :disabled="isBannerSessionFieldsSaving"
                 :aria-label="t('pos.banner.changeWaiterAria')"
                 class="h-8 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-xs font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
@@ -2116,6 +2150,12 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
             </div>
+          </div>
+          <div
+            v-if="isBannerSessionFieldsSaving"
+            class="absolute inset-0 z-[2] rounded-lg bg-surface/35"
+            aria-hidden="true"
+          />
         </div>
 
         <p v-if="tabError" class="mt-1.5 text-xs text-destructive bg-destructive/10 rounded-lg px-2.5 py-1">
