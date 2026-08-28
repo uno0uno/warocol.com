@@ -217,14 +217,43 @@ const handleChangeSessionWaiter = async (event: Event) => {
     isChangingSessionWaiter.value = false
   }
 }
-const isSavingSessionGuests = ref(false)
+const isSavingSessionCovers = ref(false)
+const isSavingSessionAlias = ref(false)
+const {
+  currentPhrase: coversLoadingPhrase,
+  start: startCoversLoadingPhrases,
+  stop: stopCoversLoadingPhrases,
+} = useLoadingPhrases([
+  t('pos.banner.savingCovers'),
+  t('pos.banner.syncing'),
+  t('pos.banner.applyingChanges'),
+])
+const {
+  currentPhrase: aliasLoadingPhrase,
+  start: startAliasLoadingPhrases,
+  stop: stopAliasLoadingPhrases,
+} = useLoadingPhrases([
+  t('pos.banner.savingAlias'),
+  t('pos.banner.syncing'),
+  t('pos.banner.applyingChanges'),
+])
+watch(isSavingSessionCovers, (loading) => {
+  if (loading) startCoversLoadingPhrases()
+  else stopCoversLoadingPhrases()
+})
+watch(isSavingSessionAlias, (loading) => {
+  if (loading) startAliasLoadingPhrases()
+  else stopAliasLoadingPhrases()
+})
 const persistSessionGuests = async (
+  field: 'covers' | 'alias',
   body: { covers?: number; custom_label?: string | null },
   okMessage: string,
 ) => {
-  if (isSavingSessionGuests.value) return
+  const savingRef = field === 'covers' ? isSavingSessionCovers : isSavingSessionAlias
+  if (savingRef.value) return
   if (!posStore.activeTableSession || posStore.activeTableSession.isBar) return
-  isSavingSessionGuests.value = true
+  savingRef.value = true
   try {
     await $fetch(`/api/pos/tables/${posStore.activeTableSession.tableId}/session-guests`, {
       method: 'PATCH',
@@ -238,7 +267,7 @@ const persistSessionGuests = async (
   } catch (error: any) {
     toast.error(error?.data?.detail || t('pos.banner.guestsChangeError'), { title: t('pos.banner.error') })
   } finally {
-    isSavingSessionGuests.value = false
+    savingRef.value = false
   }
 }
 const handleChangeSessionCovers = async (event: Event) => {
@@ -248,14 +277,14 @@ const handleChangeSessionCovers = async (event: Event) => {
     target.value = String(bannerSessionCoversValue.value)
     return
   }
-  await persistSessionGuests({ covers }, t('pos.banner.coversUpdated'))
+  await persistSessionGuests('covers', { covers }, t('pos.banner.coversUpdated'))
 }
 const handleBlurSessionLabel = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const next = target.value.trim()
   const current = (posStore.activeTableSession?.customLabel || '').trim()
   if (next === current) return
-  await persistSessionGuests({ custom_label: next || null }, t('pos.banner.labelUpdated'))
+  await persistSessionGuests('alias', { custom_label: next || null }, t('pos.banner.labelUpdated'))
 }
 
 /** Catalog capacity for active table (from prefetched /api/tables). */
@@ -1949,14 +1978,24 @@ onUnmounted(() => {
         <div class="flex items-start sm:items-center gap-2 min-w-0">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span class="inline-flex items-center gap-1.5 min-w-0">
-                <span class="text-sm font-semibold text-text-primary truncate">{{ activeSessionDisplayName }}</span>
-                <span
-                  v-if="activeSessionShowsCatalogName"
-                  class="text-[11px] font-normal text-text-tertiary truncate"
-                >
-                  {{ posStore.activeTableSession.tableName }}
-                </span>
+              <span
+                class="inline-flex items-center gap-1.5 min-w-0"
+                :aria-busy="isSavingSessionAlias"
+                aria-live="polite"
+              >
+                <template v-if="isSavingSessionAlias">
+                  <UiLoadingDots size="7px" color="currentColor" />
+                  <span class="text-sm font-medium text-text-secondary truncate">{{ aliasLoadingPhrase }}</span>
+                </template>
+                <template v-else>
+                  <span class="text-sm font-semibold text-text-primary truncate">{{ activeSessionDisplayName }}</span>
+                  <span
+                    v-if="activeSessionShowsCatalogName"
+                    class="text-[11px] font-normal text-text-tertiary truncate"
+                  >
+                    {{ posStore.activeTableSession.tableName }}
+                  </span>
+                </template>
                 <span class="text-[11px] font-medium text-status-success-text/80 flex-shrink-0">{{ t('pos.banner.active', { table: tableSingular }) }}</span>
               </span>
               <span
@@ -2031,29 +2070,51 @@ onUnmounted(() => {
             : 'grid-cols-2'"
         >
           <template v-if="!posStore.activeTableSession.isBar">
-            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+            <label
+              class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
+              :aria-busy="isSavingSessionCovers"
+              aria-live="polite"
+            >
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.coversLabel') }}:
               </span>
+              <div
+                v-if="isSavingSessionCovers"
+                class="flex min-w-0 flex-1 items-center gap-1.5"
+              >
+                <UiLoadingDots size="7px" color="currentColor" />
+                <span class="truncate text-xs font-medium text-text-secondary">{{ coversLoadingPhrase }}</span>
+              </div>
               <input
+                v-else
                 type="number"
                 min="1"
                 :value="bannerSessionCoversValue"
-                :disabled="isSavingSessionGuests"
                 :aria-label="t('pos.banner.coversAria')"
                 class="banner-covers-input h-7 w-11 min-w-0 flex-shrink-0 bg-transparent text-center text-sm font-semibold tabular-nums text-text-primary border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none accent-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 @change="handleChangeSessionCovers"
               >
             </label>
-            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+            <label
+              class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
+              :aria-busy="isSavingSessionAlias"
+              aria-live="polite"
+            >
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.customLabelLabel') }}:
               </span>
+              <div
+                v-if="isSavingSessionAlias"
+                class="flex min-w-0 flex-1 items-center gap-1.5"
+              >
+                <UiLoadingDots size="7px" color="currentColor" />
+                <span class="truncate text-xs font-medium text-text-secondary">{{ aliasLoadingPhrase }}</span>
+              </div>
               <input
+                v-else
                 type="text"
                 maxlength="80"
                 :value="posStore.activeTableSession.customLabel || ''"
-                :disabled="isSavingSessionGuests"
                 :placeholder="t('pos.banner.customLabelPlaceholder')"
                 :aria-label="t('pos.banner.customLabelAria')"
                 class="h-7 min-w-0 flex-1 bg-transparent border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-xs font-medium text-text-primary placeholder:text-text-tertiary/80"

@@ -545,6 +545,8 @@
       "noWaiterAssigned": "No waiter assigned",
       "changeWaiterAria": "Change waiter for the active session",
       "assigningWaiter": "Assigning waiter...",
+      "savingCovers": "Saving covers...",
+      "savingAlias": "Saving alias...",
       "syncing": "Syncing...",
       "applyingChanges": "Applying changes...",
       "waiterUpdated": "Waiter: {name}",
