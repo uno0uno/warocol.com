@@ -22,6 +22,12 @@ import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 import { buildCustomerIdentityPresentation } from '~/utils/customerIdentityPresentation'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 
+const {
+  bannerActionButtonClass,
+  bannerSessionFieldClass,
+  categoryChipClass,
+} = usePosToolbarControl()
+
 definePageMeta({
   layout: 'dashboard',
   module: 'pos',
@@ -1924,15 +1930,15 @@ onUnmounted(() => {
             <div class="h-2.5 w-44 max-w-full bg-surface-secondary rounded" />
           </div>
           <div class="flex flex-shrink-0 gap-1">
-            <div class="h-8 w-14 bg-surface-secondary rounded-md hidden sm:block" />
-            <div class="h-8 w-8 bg-surface-secondary rounded-md" />
-            <div class="h-8 w-8 bg-surface-secondary rounded-md" />
+            <div class="h-10 w-14 bg-surface-secondary rounded-lg hidden sm:block" />
+            <div class="h-10 w-10 bg-surface-secondary rounded-lg" />
+            <div class="h-10 w-10 bg-surface-secondary rounded-lg" />
           </div>
         </div>
         <div class="mt-1.5 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-          <div class="h-8 bg-surface-secondary rounded-lg" />
-          <div class="h-8 bg-surface-secondary rounded-lg" />
-          <div class="h-8 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
+          <div class="h-10 bg-surface-secondary rounded-lg" />
+          <div class="h-10 bg-surface-secondary rounded-lg" />
+          <div class="h-10 bg-surface-secondary rounded-lg col-span-2 sm:col-span-1" />
         </div>
       </div>
 
@@ -2007,7 +2013,7 @@ onUnmounted(() => {
               v-if="canPayTableAdvance"
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-badge-primary-text bg-badge-primary-bg border border-badge-primary-border hover:bg-badge-primary-hover-bg px-2.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="[bannerActionButtonClass, 'text-badge-primary-text bg-badge-primary-bg border border-badge-primary-border hover:bg-badge-primary-hover-bg focus-visible:ring-primary/35']"
               :aria-label="t('pos.banner.payAdvanceAria', { table: tableSingularLower })"
               @click="showTableAdvancePanel = true"
             >
@@ -2019,7 +2025,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary px-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="[bannerActionButtonClass, 'text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary px-2 focus-visible:ring-ring/35']"
               :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
               @click="leaveActiveTableSession"
             >
@@ -2031,7 +2037,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center justify-center gap-1 text-xs font-medium text-status-error-text border border-status-error-text/25 hover:bg-status-error-bg px-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="[bannerActionButtonClass, 'text-status-error-text border border-status-error-text/25 hover:bg-status-error-bg px-2 focus-visible:ring-status-error-text']"
               :aria-label="t('pos.banner.releaseAria', { table: tableSingularLower })"
               @click="handleReleaseMesa"
             >
@@ -2055,7 +2061,7 @@ onUnmounted(() => {
             : 'grid-cols-2'"
         >
           <template v-if="!posStore.activeTableSession.isBar">
-            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+            <label :class="bannerSessionFieldClass">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.coversLabel') }}:
               </span>
@@ -2068,7 +2074,7 @@ onUnmounted(() => {
                 @blur="handleBlurSessionCovers"
               >
             </label>
-            <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">
+            <label :class="bannerSessionFieldClass">
               <span class="text-[11px] font-normal text-text-tertiary whitespace-nowrap flex-shrink-0">
                 {{ t('pos.banner.customLabelLabel') }}:
               </span>
@@ -2078,15 +2084,18 @@ onUnmounted(() => {
                 :value="posStore.activeTableSession.customLabel || ''"
                 :placeholder="t('pos.banner.customLabelPlaceholder')"
                 :aria-label="t('pos.banner.customLabelAria')"
-                class="h-7 min-w-0 flex-1 bg-transparent border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-xs font-medium text-text-primary placeholder:text-text-tertiary/80"
+                class="h-8 min-w-0 flex-1 bg-transparent border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-sm font-medium text-text-primary placeholder:text-text-tertiary/80"
                 @blur="handleBlurSessionLabel"
               >
             </label>
           </template>
             <div
               v-if="waiterAttributionEnabled"
-              class="banner-session-field relative min-w-0 rounded-lg border border-border bg-surface transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border"
-              :class="!posStore.activeTableSession.isBar ? '' : 'col-span-2'"
+              :class="[
+                bannerSessionFieldClass,
+                'relative',
+                !posStore.activeTableSession.isBar ? '' : 'col-span-2',
+              ]"
             >
               <span class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-[11px] font-normal text-text-tertiary z-[1]">
                 {{ t('pos.banner.waiterLabel') }}:
@@ -2094,7 +2103,7 @@ onUnmounted(() => {
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 :aria-label="t('pos.banner.changeWaiterAria')"
-                class="h-8 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-xs font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                class="h-10 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-sm font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
                 :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
@@ -2220,10 +2229,12 @@ onUnmounted(() => {
               <button
                 v-for="cat in categories"
                 :key="cat"
-                class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
-                :class="selectedCategory === cat
-                  ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
-                  : 'bg-surface-secondary/50 border border-border/70 text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
+                :class="[
+                  categoryChipClass,
+                  selectedCategory === cat
+                    ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
+                    : 'bg-surface-secondary/50 border border-border/70 text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary',
+                ]"
                 @click="selectedCategory = cat"
               >
                 {{ cat === 'all' ? t('pos.catalog.all') : cat }}
