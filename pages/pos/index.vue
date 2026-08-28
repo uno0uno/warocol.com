@@ -26,6 +26,9 @@ const {
   bannerActionButtonClass,
   bannerSessionFieldClass,
   categoryChipClass,
+  siblingGapClass,
+  sectionGapClass,
+  sectionStackClass,
 } = usePosToolbarControl()
 
 definePageMeta({
@@ -1921,10 +1924,10 @@ onUnmounted(() => {
     <!-- POS Content (shown always after loading) -->
     <div v-else>
       <!-- Main POS Container -->
-      <div class="grid w-full grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <div :class="['grid w-full grid-cols-1 items-start lg:grid-cols-[minmax(0,1fr)_24rem]', sectionGapClass]">
         <!-- Products Panel (Left) -->
-        <div class="min-w-0 flex flex-col space-y-5">
-          <div class="lg:sticky lg:top-0 lg:z-20 flex flex-col gap-4 bg-background pt-1 pb-4 lg:pb-5">
+        <div :class="['min-w-0 flex flex-col', sectionStackClass]">
+          <div :class="['lg:sticky lg:top-0 lg:z-20 flex flex-col bg-background pt-1 pb-4', sectionGapClass]">
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
@@ -2035,7 +2038,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="flex flex-shrink-0 flex-wrap items-center justify-end gap-1">
+          <div class="flex flex-shrink-0 flex-wrap items-center justify-end" :class="siblingGapClass">
             <button
               v-if="canPayTableAdvance"
               type="button"
@@ -2085,10 +2088,13 @@ onUnmounted(() => {
           class="relative mt-1.5"
         >
           <div
-            class="grid gap-1.5"
-            :class="!posStore.activeTableSession.isBar && waiterAttributionEnabled
-              ? 'grid-cols-2 sm:grid-cols-3'
-              : 'grid-cols-2'"
+            class="grid"
+            :class="[
+              siblingGapClass,
+              !posStore.activeTableSession.isBar && waiterAttributionEnabled
+                ? 'grid-cols-2 sm:grid-cols-3'
+                : 'grid-cols-2',
+            ]"
             :aria-busy="isBannerSessionFieldsSaving ? 'true' : undefined"
           >
           <template v-if="!posStore.activeTableSession.isBar">
@@ -2258,14 +2264,17 @@ onUnmounted(() => {
       </div>
 
           <!-- Catalog controls: search + category filters -->
-          <div class="flex flex-col gap-3.5 sm:gap-4">
+          <div :class="['flex flex-col', sectionGapClass]">
             <UiSearchBar
               v-model="searchQuery"
               :placeholder="t('pos.catalog.searchPlaceholder')"
               class="h-9 px-3"
             />
 
-            <div class="flex gap-2.5 sm:gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5">
+            <div
+              class="flex overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5"
+              :class="siblingGapClass"
+            >
               <button
                 v-for="cat in categories"
                 :key="cat"
@@ -2295,7 +2304,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4 pb-4">
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4" :class="siblingGapClass">
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"

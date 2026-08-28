@@ -1,8 +1,20 @@
-/** Shared POS control sizing — matches DashboardShellHeader (`h-9` / 36px). */
+/**
+ * Shared POS control + spacing tokens.
+ * Heights match DashboardShellHeader (`h-9`).
+ * Gaps follow 8px scale (Atlassian / Mesh): tighter inside clusters, larger between sections.
+ */
 export function usePosToolbarControl() {
   const controlHeightClass = 'h-9'
   const controlRadiusClass = 'rounded-lg'
   const controlTextClass = 'text-sm'
+
+  /** Sibling controls / chips / action grids / product tiles — 12px */
+  const siblingGapClass = 'gap-3'
+  /** Vertical stack of sibling actions (Cuenta / Limpiar / Enviar) — 12px */
+  const siblingStackClass = 'space-y-3'
+  /** Parent blocks (banner ↔ catalog ↔ cart column) — 16px */
+  const sectionGapClass = 'gap-4'
+  const sectionStackClass = 'space-y-4'
 
   const bannerActionButtonClass = [
     controlHeightClass,
@@ -31,6 +43,10 @@ export function usePosToolbarControl() {
     controlHeightClass,
     controlRadiusClass,
     controlTextClass,
+    siblingGapClass,
+    siblingStackClass,
+    sectionGapClass,
+    sectionStackClass,
     bannerActionButtonClass,
     bannerSessionFieldClass,
     categoryChipClass,

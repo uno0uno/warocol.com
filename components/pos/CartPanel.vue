@@ -59,7 +59,7 @@
     </div>
 
     <!-- Cart summary/actions: sticky at the top of the order panel -->
-    <div class="flex-shrink-0 px-3.5 py-3 border-b border-border space-y-2.5 bg-surface-secondary/40">
+    <div class="flex-shrink-0 px-3.5 py-3 border-b border-border space-y-3 bg-surface-secondary/40">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"
@@ -87,7 +87,7 @@
       </div>
 
       <!-- Actions — Mostrador / barra sin comandas -->
-      <div v-if="!mesaMode" class="space-y-2">
+      <div v-if="!mesaMode" class="space-y-3">
         <template v-if="openSalePrimaryIdle && showOpenSale">
           <button
             type="button"
@@ -149,7 +149,7 @@
       </div>
 
       <!-- Actions — Mesa / barra con comandas -->
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-3">
         <template v-if="openSalePrimaryIdle && showOpenSale">
           <button
             type="button"
@@ -193,7 +193,7 @@
           {{ t('pos.cart.processOrder') }}
         </button>
         <!-- 2-col grid: secondary actions (Liberar moved to the active-mesa banner) -->
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-3">
           <!-- Pedir cuenta -->
           <button
             type="button"
@@ -226,7 +226,7 @@
 
 
         <!-- #753 / #812 — Kitchen ticket reprint actions stay compact; history lives in a panel. -->
-        <div v-if="showComandaPrintActions" class="grid grid-cols-2 gap-2">
+        <div v-if="showComandaPrintActions" class="grid grid-cols-2 gap-3">
           <button
             type="button"
             :disabled="!canPrintLatestComanda"
@@ -281,7 +281,7 @@
     </div>
 
     <!-- Items list: tab items (committed) + current cart items -->
-    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3 space-y-2">
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3 space-y-3">
 
       <!-- Skeleton while loading tab items, adding to tab, or clearing -->
       <template v-if="isLoadingTabItems || isAddingToTab || isClearingTab">
