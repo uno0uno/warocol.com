@@ -400,6 +400,10 @@
       "barAlwaysOpenAria": "Barra — siempre abierta",
       "remaining": "{amount} faltante",
       "accumulated": "{amount} acumulado",
+      "capacityOnly": "Cap. {count}",
+      "coversOfCapacity": "{covers}/{capacity}",
+      "tableAriaWithCapacity": "{name} — {capacity} — {status}",
+      "tableAriaWithAliasCapacity": "{alias} — {name} — {capacity} — {status}",
       "tableAriaWithAlias": "{alias} — {name} — {status}"
     },
     "delivery": {
