@@ -159,7 +159,11 @@ const handleChangeSessionWaiter = async (event: Event) => {
   if (!posStore.activeTableSession) return
   const target = event.target as HTMLSelectElement
   const newMemberId = target.value || null
+  const currentMemberId = bannerEffectiveWaiterId.value || null
+  if (newMemberId === currentMemberId) return
   isChangingSessionWaiter.value = true
+  await nextTick()
+  const startedAt = Date.now()
   try {
     const result = await $fetch<{ success: boolean; data: { attended_by_member_id: string | null; attended_by_member_name: string | null } }>(
       `/api/pos/tables/${posStore.activeTableSession.tableId}/session-waiter`,
@@ -198,6 +202,7 @@ const handleChangeSessionWaiter = async (event: Event) => {
     // Reset the select to current value to avoid showing stale selection
     target.value = posStore.activeTableSession?.effectiveWaiterMemberId ?? ''
   } finally {
+    await holdBannerSessionSkeleton(startedAt)
     isChangingSessionWaiter.value = false
   }
 }
@@ -206,6 +211,12 @@ const isSavingSessionAlias = ref(false)
 const isBannerSessionFieldsSaving = computed(
   () => isSavingSessionCovers.value || isSavingSessionAlias.value || isChangingSessionWaiter.value,
 )
+/** Keep skeleton visible long enough to paint (alias blur feels slower; covers/mesero PATCH can be instant). */
+const MIN_BANNER_SKELETON_MS = 180
+const holdBannerSessionSkeleton = async (startedAt: number) => {
+  const remaining = MIN_BANNER_SKELETON_MS - (Date.now() - startedAt)
+  if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining))
+}
 const persistSessionGuests = async (
   field: 'covers' | 'alias',
   body: { covers?: number; custom_label?: string | null },
@@ -215,6 +226,8 @@ const persistSessionGuests = async (
   if (savingRef.value) return
   if (!posStore.activeTableSession || posStore.activeTableSession.isBar) return
   savingRef.value = true
+  await nextTick()
+  const startedAt = Date.now()
   try {
     await $fetch(`/api/pos/tables/${posStore.activeTableSession.tableId}/session-guests`, {
       method: 'PATCH',
@@ -228,16 +241,19 @@ const persistSessionGuests = async (
   } catch (error: any) {
     toast.error(error?.data?.detail || t('pos.banner.guestsChangeError'), { title: t('pos.banner.error') })
   } finally {
+    await holdBannerSessionSkeleton(startedAt)
     savingRef.value = false
   }
 }
-const handleChangeSessionCovers = async (event: Event) => {
+const handleBlurSessionCovers = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const covers = Number.parseInt(target.value, 10)
   if (!Number.isFinite(covers) || covers < 1) {
     target.value = String(bannerSessionCoversValue.value)
     return
   }
+  const current = posStore.activeTableSession?.covers ?? bannerSessionCoversValue.value
+  if (covers === current) return
   await persistSessionGuests('covers', { covers }, t('pos.banner.coversUpdated'))
 }
 const handleBlurSessionLabel = async (event: Event) => {
@@ -2049,7 +2065,7 @@ onUnmounted(() => {
                 :value="bannerSessionCoversValue"
                 :aria-label="t('pos.banner.coversAria')"
                 class="banner-covers-input h-7 w-11 min-w-0 flex-shrink-0 bg-transparent text-center text-sm font-semibold tabular-nums text-text-primary border-none outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none accent-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                @change="handleChangeSessionCovers"
+                @blur="handleBlurSessionCovers"
               >
             </label>
             <label class="banner-session-field h-8 min-w-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-form-control-focus-ring focus-within:border-form-control-focus-border">

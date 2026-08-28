@@ -258,32 +258,31 @@ const tableCardAriaLabel = (table: { name: string; status: string; capacity?: nu
     : `${display} — ${status}`
 }
 
-const tableCatalogCapacity = (table: { capacity?: number | null }) => {
-  const cap = table.capacity
-  return typeof cap === 'number' && cap >= 1 ? cap : null
+const parsePositiveInt = (value: unknown): number | null => {
+  if (value == null || value === '') return null
+  const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10)
+  return Number.isFinite(n) && n >= 1 ? n : null
 }
 
+const tableCatalogCapacity = (table: { capacity?: unknown }) => parsePositiveInt(table.capacity)
+
 const tableEffectiveCapacity = (table: {
-  capacity?: number | null
-  session?: { capacity_snapshot?: number | null } | null
-}) => {
-  const snap = table.session?.capacity_snapshot
-  if (typeof snap === 'number' && snap >= 1) return snap
-  return tableCatalogCapacity(table)
-}
+  capacity?: unknown
+  session?: { capacity_snapshot?: unknown } | null
+}) => parsePositiveInt(table.session?.capacity_snapshot) ?? tableCatalogCapacity(table)
 
 const tableCardCapacityLabel = (table: {
   status: string
-  capacity?: number | null
-  session?: { covers?: number | null; capacity_snapshot?: number | null } | null
+  capacity?: unknown
+  session?: { covers?: unknown; capacity_snapshot?: unknown } | null
 }): string | null => {
   const capacity = tableEffectiveCapacity(table)
   if (!capacity) return null
   if (table.status === 'free') {
     return t('pos.floor.capacityOnly', { count: capacity })
   }
-  const covers = table.session?.covers
-  if (typeof covers === 'number' && covers >= 1) {
+  const covers = parsePositiveInt(table.session?.covers)
+  if (covers != null) {
     return t('pos.floor.coversOfCapacity', { covers, capacity })
   }
   return t('pos.floor.capacityOnly', { count: capacity })
@@ -402,7 +401,8 @@ onUnmounted(() => {
                 </span>
                 <span
                   v-if="tableCardCapacityLabel(table)"
-                  class="text-[10px] font-semibold text-center tabular-nums leading-snug text-text-tertiary"
+                  class="text-[10px] font-semibold text-center tabular-nums leading-snug"
+                  :class="tableNameClass(table.status)"
                 >
                   {{ tableCardCapacityLabel(table) }}
                 </span>
@@ -420,10 +420,13 @@ onUnmounted(() => {
             <template v-if="table.status !== 'free'">
               <div class="flex items-center justify-around px-1 min-h-11 border-t" :class="stripClass(table.status)">
                 <!-- Cell 1: dot + time + unfired indicator -->
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 min-w-0">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
-                  <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
+                  <span class="text-xs font-semibold tabular-nums whitespace-nowrap" :class="stripTextClass(table.status)">
                     {{ formatDuration(table.session.opened_at) }}
+                    <template v-if="tableCardCapacityLabel(table)">
+                      <span class="opacity-70" aria-hidden="true"> · </span>{{ tableCardCapacityLabel(table) }}
+                    </template>
                   </span>
                   <!-- Pulsing red dot when there are unfired items (KDS enabled) -->
                   <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
