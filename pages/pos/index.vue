@@ -1826,28 +1826,29 @@ onUnmounted(() => {
   </div>
 
   <!-- Floor plan ↔ catalog transition (#2483) -->
-  <Transition v-else name="pos-view" mode="out-in">
-    <div v-if="showFloorPlan" key="pos-floor">
-    <PosMesasFloorPlan
-      :comandas-enabled="comandasEnabled"
-      :waiter-attribution-enabled="waiterAttributionEnabled"
-      @enter-table="handleEnterTable"
-      @no-tables="noTablesConfigured = true"
-      @move-table="handleMoveTable"
-    />
-    <!-- Modal uses Teleport to="body" internally — safe to nest here -->
-    <PosMoveTableModal
-      v-if="showMoveModal && moveTableSource"
-      :show="showMoveModal"
-      :source-table="moveTableSource"
-      :tables="tablesForModal"
-      @close="showMoveModal = false; moveTableSource = null"
-      @moved="handleMoveDone"
-    />
-    </div>
+  <template v-else>
+    <Transition name="pos-view" mode="out-in">
+      <div v-if="showFloorPlan" key="pos-floor">
+        <PosMesasFloorPlan
+          :comandas-enabled="comandasEnabled"
+          :waiter-attribution-enabled="waiterAttributionEnabled"
+          @enter-table="handleEnterTable"
+          @no-tables="noTablesConfigured = true"
+          @move-table="handleMoveTable"
+        />
+        <!-- Modal uses Teleport to="body" internally — safe to nest here -->
+        <PosMoveTableModal
+          v-if="showMoveModal && moveTableSource"
+          :show="showMoveModal"
+          :source-table="moveTableSource"
+          :tables="tablesForModal"
+          @close="showMoveModal = false; moveTableSource = null"
+          @moved="handleMoveDone"
+        />
+      </div>
 
-    <!-- POS sales view -->
-    <div v-else key="pos-catalog">
+      <!-- POS sales view -->
+      <div v-else key="pos-catalog">
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -2278,8 +2279,9 @@ onUnmounted(() => {
       />
       </div>
     </div>
-    </div>
-  </Transition>
+      </div>
+    </Transition>
+  </template>
 
   <!-- Issue #956 — destructive POS actions (motivo required) -->
   <PosDestructiveReasonModal
