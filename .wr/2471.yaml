@@ -1,0 +1,38 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines.
+issue: 2471
+title: "feat(home): apply Lello-style Google Fonts trio on public home"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2471-home-lello-fonts
+risk: low
+
+paths:
+  - nuxt.config.ts
+  - tailwind.config.js
+  - layouts/home.vue
+  - pages/index.vue
+  - components/public/HomeHero.vue
+  - .wr/2471.yaml
+
+ac:
+  - Public home loads Fraunces (H1), Newsreader (subtitle), Outfit (buttons + home chrome)
+  - Hero H1 uses font-display; subtitle font-reading; CTA font-ui
+  - Home layout shell uses font-ui so header/footer/nav inherit Outfit on `/` only
+  - ".index-page no longer forces system UI font-family"
+  - Tailwind tokens font-display / font-reading / font-ui exist; Lato + Quantico stay for product
+  - Dashboard, POS, checkout, print stacks unchanged
+
+out_of_scope:
+  - POS, print tickets, docs, blog, dashboard internals
+  - Copying Lello / Lionesa licensed fonts
+  - API
+
+hints:
+  entry: "layouts/home.vue font-ui on LayoutPublicShell root-class — chrome inherits on `/` only"
+  pattern: "nuxt.config.ts @nuxtjs/google-fonts families; tailwind fontFamily display/reading/ui"
+  tests: "none — visual home fonts; no bun build"
+
+skip:
+  audits: [ux, color]

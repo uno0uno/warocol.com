@@ -34,9 +34,6 @@ watch(
   },
   { immediate: true },
 )
-  acceptLanguage: requestHeaders['accept-language'],
-  cfIpCountry: requestHeaders['cf-ipcountry'],
-}))
 
 const canonicalUrl = computed(() => {
   const baseUrl = config.siteUrl || 'https://warocol.com'
@@ -71,7 +68,6 @@ useHead({
   height: 100%;
   max-height: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: transparent;
   color: hsl(250, 30%, 16%);
 }

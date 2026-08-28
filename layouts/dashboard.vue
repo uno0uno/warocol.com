@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col md:flex-row overflow-hidden">
+  <div class="dashboard-shell h-screen flex flex-col md:flex-row overflow-hidden">
     <!-- Dashboard Sidebar - Tablet/Desktop -->
     <DashboardSidebar
       :active-page="activePage"
@@ -9,8 +9,8 @@
       @expanded-change="isSidebarExpanded = $event"
     />
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen md:h-auto">
+    <!-- Main inset (Buzz SidebarInset): opaque rounded panel over canvas -->
+    <main class="dashboard-shell-inset flex-1 flex flex-col min-w-0 min-h-0 h-screen md:h-auto">
       <DashboardShellHeader
         :status="dynamicStatus"
         :header-action="dynamicHeaderAction"
@@ -260,6 +260,31 @@ useHead({
 </script>
 
 <style scoped>
+.dashboard-shell {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--shell-canvas-top)) 0%,
+    hsl(var(--shell-canvas-bottom)) 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .dashboard-shell {
+    padding: 0.625rem 0.625rem 0.625rem 0;
+    gap: 0;
+  }
+
+  .dashboard-shell-inset {
+    margin: 0.125rem 0.125rem 0.125rem 0;
+    border-radius: var(--shell-inset-radius);
+    background: hsl(var(--surface));
+    box-shadow:
+      0 1px 2px hsl(var(--ebony-900) / 0.05),
+      0 8px 28px hsl(var(--ebony-900) / 0.08);
+    overflow: hidden;
+  }
+}
+
 /* Smooth sidebar navigation animation */
 .sidebar-nav {
   transition: all 0.2s ease-in-out;
@@ -286,20 +311,20 @@ useHead({
 
 <style scoped>
 /* Custom scrollbar for main content */
-main::-webkit-scrollbar {
+.dashboard-shell-inset::-webkit-scrollbar {
   width: 8px;
 }
 
-main::-webkit-scrollbar-track {
+.dashboard-shell-inset::-webkit-scrollbar-track {
   background: hsl(var(--surface-secondary));
 }
 
-main::-webkit-scrollbar-thumb {
+.dashboard-shell-inset::-webkit-scrollbar-thumb {
   background: hsl(var(--surface-tertiary));
   border-radius: 4px;
 }
 
-main::-webkit-scrollbar-thumb:hover {
+.dashboard-shell-inset::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--border));
 }
 </style>
