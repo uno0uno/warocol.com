@@ -269,8 +269,15 @@ export default defineNuxtConfig({
   modules: [
     ['@nuxtjs/google-fonts', {
       families: {
-        Lato: [400, 700, 900]
-      }
+        Lato: [400, 700, 900],
+        Fraunces: [400, 600, 700],
+        Newsreader: {
+          wght: [400, 500],
+          ital: [400]
+        },
+        Outfit: [400, 500, 700]
+      },
+      display: 'swap'
     }],
     '@nuxtjs/robots',
     '@pinia/nuxt',

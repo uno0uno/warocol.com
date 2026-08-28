@@ -7,15 +7,15 @@ const openLeadModal = () => leadModal.open('habla_con_nosotros')
 
 <template>
   <section :key="locale" class="hero">
-    <h1 class="font-quantico">{{ t('home.title') }}</h1>
-    <p class="subtitle">
+    <h1 class="font-display">{{ t('home.title') }}</h1>
+    <p class="subtitle font-reading">
       {{ t('home.subtitle') }}
       <em>{{ t('home.emphasis') }}</em>
     </p>
 
     <div class="cta-buttons">
       <button
-        class="btn btn-primary"
+        class="btn btn-primary font-ui"
         type="button"
         aria-haspopup="dialog"
         @click="openLeadModal"
@@ -43,9 +43,9 @@ const openLeadModal = () => leadModal.open('habla_con_nosotros')
 
 h1 {
   font-size: clamp(2rem, 4.5vw + 1vh, 4.5rem);
-  font-weight: 900;
+  font-weight: 400;
   color: hsl(250, 30%, 16%);
-  letter-spacing: -2px;
+  letter-spacing: 0.04em;
   margin-bottom: clamp(0.75rem, 2vh, 1.5rem);
   text-transform: uppercase;
   line-height: 0.95;

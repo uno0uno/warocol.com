@@ -1,6 +1,6 @@
 <template>
   <LayoutPublicShell
-    root-class="home-shell h-dvh max-h-dvh flex flex-col overflow-hidden"
+    root-class="home-shell font-ui h-dvh max-h-dvh flex flex-col overflow-hidden"
     content-class="home-page-shell"
     footer-class="home-footer hidden md:block shrink-0"
   >
