@@ -1,0 +1,22 @@
+issue: 2490
+repo: uno0uno/warocol.com
+cwd: front_nuxt
+branch: wr-2490-preserve-session-banner-fields
+stack: nuxt
+
+paths:
+  - pages/pos/index.vue
+
+ac:
+  - Covers and alias stay visible during session field save and tab refresh
+  - Optimistic store update before PATCH; rollback on error
+  - applyTableSessionFromApi merges guest fields instead of wiping with null
+  - Banner skeleton only on initial tab load; field save uses overlay not unmount
+  - Waiter flow unchanged
+
+hints:
+  - mergeSessionGuestFieldsFromApi guards covers/alias during isSaving* flags
+  - showMesaBannerSkeleton = isLoadingTabItems only (not isAddingToTab or field save)
+  - persistSessionGuests already optimistic from prior local work
+
+tests: []
