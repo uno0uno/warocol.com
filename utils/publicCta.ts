@@ -147,15 +147,12 @@ export function resolveTrialPriceAnchor(options: {
   const country = String(options.countryCode || '').toUpperCase()
   const currency = String(options.currencyCode || '').toUpperCase()
 
-  const copLine = () => trialPriceCopy(isEn, PUBLIC_OFFER.monthlyEquivalent, 'under COP 8,000/month')
   const usd9 = () => trialPriceCopy(isEn, 'menos de USD $9/mes', 'under USD $9/month')
   const usd30 = () => trialPriceCopy(isEn, 'menos de USD $30/mes', 'under USD $30/month')
   const eur30 = () => trialPriceCopy(isEn, 'menos de EUR €30/mes', 'under EUR €30/month')
 
   // No COP fallback while country/currency are still loading (warocol.com#2302).
   if (!country && !currency) return null
-  // Marketing exception: CO stays COP even though Paddle charges usd_9.
-  if (country === 'CO' || (!country && currency === 'COP')) return copLine()
 
   if (country) {
     if (EUR_30_COUNTRIES.has(country)) return eur30()
