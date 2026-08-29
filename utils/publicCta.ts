@@ -88,6 +88,15 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
     || '',
   ).toLowerCase().startsWith('en')
 
+  // LATAM region: monthly usd_9 only (no annual packaging).
+  if (market.market === 'LATAM' || rawCountry === 'LATAM') {
+    return {
+      annualPrice: isEn ? 'USD $9/month' : 'USD $9/mes',
+      monthlyEquivalent: isEn ? 'under USD $9/month' : 'menos de USD $9/mes',
+      activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
+    }
+  }
+
   // Country / currency segmentation (ISO-2, names, or resolved ArticleMarket.market)
   if (rawCountry || rawCurrency) {
     const isCo = rawCountry === 'CO' || rawCountry === 'COL' || rawCountry.includes('COLOMBIA') || rawCurrency === 'COP'

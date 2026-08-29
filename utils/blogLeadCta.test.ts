@@ -48,6 +48,18 @@ test('shows EN CTA with USD $30/month for US English market', () => {
   assert.equal(price.button, 'See my options')
 })
 
+test('LATAM articles show monthly USD $9, not COP annual', () => {
+  const LATAM_ES = { lang: 'es', country: 'LATAM', country_code: null }
+  const price = getBlogLeadCta('cursor-precio-latam', 'price', LATAM_ES)
+  assert.match(price.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(price.headline, /95\.900|anual/i)
+  assert.match(price.microcopy, /Sin tarjeta/)
+
+  const finalCta = getBlogLeadCta('cursor-precio-latam', 'final', LATAM_ES)
+  assert.match(finalCta.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(finalCta.headline, /COP/)
+})
+
 test('defaults omitted market to Colombia ES behavior', () => {
   const omitted = getBlogLeadCta('software-pos-restaurantes', 'final')
   const explicit = getBlogLeadCta('software-pos-restaurantes', 'final', CO_ES)

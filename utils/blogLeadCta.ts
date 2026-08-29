@@ -26,8 +26,12 @@ function commercialPriceEs(annualPriceLabel: string) {
       button: 'Ver mis opciones',
     }
   }
+  // Monthly-only markets (e.g. LATAM usd_9): no "anual".
+  const isMonthly = /\/mes$|\/month$/i.test(annualPriceLabel)
   return {
-    headline: `Plan Pro anual desde ${annualPriceLabel.replace(/\/año$/, '')}.`,
+    headline: isMonthly
+      ? `Plan Pro desde ${annualPriceLabel}.`
+      : `Plan Pro anual desde ${annualPriceLabel.replace(/\/año$/, '')}.`,
     body: 'POS, inventario, costos por plato y escaneo inteligente de facturas. Sin permanencia.',
     button: 'Ver mis opciones',
   }
@@ -78,9 +82,14 @@ function copyForSlugEs(
   }
 
   if (/software|pos|pdv|tpv|sistema-pos|contable/.test(s)) {
+    const fromPrice = annualPriceLabel === 'COP 95.900/año'
+      ? 'COP 95.900 al año'
+      : annualPriceLabel
     return {
-      headline: 'POS para restaurantes desde COP 95.900 al año.',
-      body: 'Vende, controla mesas, inventario, costos y facturas de proveedores con IA. Hecho en Colombia para restaurantes colombianos.',
+      headline: `POS para restaurantes desde ${fromPrice}.`,
+      body: annualPriceLabel === 'COP 95.900/año'
+        ? 'Vende, controla mesas, inventario, costos y facturas de proveedores con IA. Hecho en Colombia para restaurantes colombianos.'
+        : 'Vende, controla mesas, inventario, costos y facturas de proveedores con IA.',
       button: 'Ver demostración',
     }
   }
@@ -93,9 +102,12 @@ function copyForSlugEs(
     }
   }
 
+  const defaultFrom = annualPriceLabel === 'COP 95.900/año'
+    ? 'COP 95.900 al año'
+    : annualPriceLabel
   return {
     headline: 'Controla tu restaurante con WARO.',
-    body: 'POS, inventario, costos por plato y escaneo inteligente de facturas desde COP 95.900 al año.',
+    body: `POS, inventario, costos por plato y escaneo inteligente de facturas desde ${defaultFrom}.`,
     button: 'Comenzar gratis',
   }
 }

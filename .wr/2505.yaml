@@ -1,0 +1,45 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2505
+title: "fix(blog): LATAM article CTAs use USD $9, not Colombia COP fallback"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2505-latam-cta-usd9
+
+paths:
+  - utils/articleMarket.ts
+  - utils/blogLeadCta.ts
+  - utils/publicCta.ts
+  - utils/articleMarket.test.ts
+  - utils/blogLeadCta.test.ts
+  - utils/publicCta.test.ts
+  - .wr/2505.yaml
+
+ac:
+  - LATAM/latam country (null country_code) → CTA USD $9/mes monthly only, not COP 95.900
+  - Colombia ES still COP 95.900 where commercial
+  - US EN still USD $30/month
+  - Do not invent ISO for LATAM in DB
+  - Unit tests cover LATAM / CO / US EN including resolvePublicOffer
+
+out_of_scope:
+  - Paddle catalog prices
+  - In-app Starter trial banner
+  - API migration inventing LATAM ISO
+  - Annual packaging for LATAM (product: monthly only)
+
+hints:
+  entry: "resolveArticleMarket → getBlogLeadCta / resolvePublicOffer"
+  pattern: "utils/articleMarket.ts:LATAM_LABELS; blogLeadCta commercialPriceEs CO special-case"
+  tests: "node --experimental-strip-types --test utils/articleMarket.test.ts utils/blogLeadCta.test.ts utils/publicCta.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"

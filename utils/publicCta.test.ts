@@ -10,6 +10,7 @@ import {
   getPublicCta,
   readPublicCtaAttribution,
   resolveBlogCtaIntent,
+  resolvePublicOffer,
   resolveTrialPriceAnchor,
   writeVerifiedPublicCtaAttribution,
 } from './publicCta.ts'
@@ -162,6 +163,20 @@ test('Spain public CTAs stay Spanish and use EUR not COP', () => {
   assert.match(spain.body, /EUR €360\/año/)
   assert.doesNotMatch(spain.body, /COP/i)
   assert.equal(spain.button, 'Crear cuenta y elegir plan')
+})
+
+test('LATAM public offer is monthly USD $9 only (no annual, no COP)', () => {
+  const offer = resolvePublicOffer({ lang: 'es', country: 'LATAM' })
+  assert.equal(offer.annualPrice, 'USD $9/mes')
+  assert.match(offer.monthlyEquivalent, /USD \$9\/mes/)
+  assert.doesNotMatch(offer.annualPrice, /108|año|COP/i)
+
+  const en = resolvePublicOffer({ lang: 'en', country: 'latam' })
+  assert.equal(en.annualPrice, 'USD $9/month')
+
+  const cta = getPublicCta('pricing', 'price', { lang: 'es', country: 'LATAM' })
+  assert.match(cta.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(cta.body, /COP|108/i)
 })
 
 test('omitted market keeps Colombia ES COP public CTAs', () => {
