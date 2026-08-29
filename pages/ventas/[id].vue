@@ -1725,86 +1725,86 @@ onUnmounted(() => {
     <!-- Order Details -->
     <div v-else class="space-y-6">
       <div class="bg-white border border-border rounded-xl overflow-hidden">
-        <div class="px-4 py-3.5 flex items-center justify-between gap-3">
+        <div class="px-3.5 py-2.5 flex items-baseline justify-between gap-4">
           <div class="min-w-0">
-            <h2 class="text-lg font-bold text-text-primary tabular-nums leading-snug">
+            <h2 class="text-base font-bold text-text-primary tabular-nums leading-tight">
               #{{ order.order_number }}
             </h2>
-            <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.detail.number') }}</p>
+            <p class="text-[11px] leading-tight text-text-secondary mt-0.5">{{ t('ventas.detail.number') }}</p>
           </div>
           <div class="text-end flex-shrink-0">
-            <p class="text-lg font-bold text-text-primary tabular-nums leading-snug">
+            <p class="text-sm font-semibold text-text-primary tabular-nums leading-tight">
               {{ saleReceiptSoldAt || '—' }}
             </p>
-            <p class="text-xs text-text-secondary leading-snug">{{ t('ventas.common.fecha') }}</p>
+            <p class="text-[11px] leading-tight text-text-secondary mt-0.5">{{ t('ventas.common.fecha') }}</p>
           </div>
         </div>
 
         <dl class="sale-meta-grid grid grid-cols-2 md:grid-cols-4 border-t border-border">
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.saleCustomer') }}</dt>
-            <dd class="m-0 min-w-0">
-              <div class="flex items-center justify-between gap-2 min-w-0">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.detail.saleCustomer') }}</dt>
+            <dd class="sale-meta-value m-0 min-w-0">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
                 <NuxtLink
                   v-if="saleCustomerCrmId && saleCustomerCardLabel"
                   :to="`/crm/clientes/${saleCustomerCrmId}`"
-                  class="text-sm font-semibold text-primary hover:underline truncate focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+                  class="sale-meta-link truncate"
                 >
                   {{ saleCustomerCardLabel }}
                 </NuxtLink>
-                <p v-else-if="saleCustomerCardLabel" class="text-sm font-semibold text-text-primary truncate">
+                <p v-else-if="saleCustomerCardLabel" class="truncate">
                   {{ saleCustomerCardLabel }}
                 </p>
                 <span v-else :class="emptyFieldChipClass">
                   {{ t('ventas.common.sinNombre') }}
                 </span>
+                <button
+                  v-if="canAssociateOrderCustomer"
+                  type="button"
+                  :disabled="isAssociatingCustomer"
+                  class="shrink-0 text-[11px] font-medium text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm py-0.5"
+                  @click="openCustomerModal"
+                >
+                  {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
+                </button>
               </div>
-              <button
-                v-if="canAssociateOrderCustomer"
-                type="button"
-                :disabled="isAssociatingCustomer"
-                class="mt-1 min-h-[44px] text-xs font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
-                @click="openCustomerModal"
-              >
-                {{ isAssociatingCustomer ? t('ventas.common.guardando') : customerAssociationLabel }}
-              </button>
             </dd>
-            <p v-if="customerAssociationError" class="text-xs text-destructive mt-1">
+            <p v-if="customerAssociationError" class="text-xs text-destructive mt-0.5">
               {{ customerAssociationError }}
             </p>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.telefono') }}</dt>
-            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums truncate">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.common.telefono') }}</dt>
+            <dd class="sale-meta-value m-0 tabular-nums truncate">
               <a
                 v-if="saleCustomerPhone"
                 :href="`tel:${saleCustomerPhone}`"
-                class="hover:underline focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+                class="sale-meta-link"
               >{{ saleCustomerPhone }}</a>
               <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinTelefono') }}</span>
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.clientes.email') }}</dt>
-            <dd class="m-0 text-sm font-semibold text-text-primary truncate">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('analitica.clientes.email') }}</dt>
+            <dd class="sale-meta-value m-0 truncate">
               <a
                 v-if="saleCustomerEmail"
                 :href="`mailto:${saleCustomerEmail}`"
-                class="hover:underline focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+                class="sale-meta-link"
               >{{ saleCustomerEmail }}</a>
               <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinCorreo') }}</span>
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.mesero') }}</dt>
-            <dd class="m-0">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.common.mesero') }}</dt>
+            <dd class="sale-meta-value m-0">
               <NuxtLink
                 v-if="order.served_by_member_id"
                 :to="`/equipo/miembros/${order.served_by_member_id}`"
-                class="text-sm font-semibold text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+                class="sale-meta-link"
               >
                 {{ order.served_by_member_name || t('ventas.detail.assigned') }}
               </NuxtLink>
@@ -1814,9 +1814,9 @@ onUnmounted(() => {
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.metodoPago') }}</dt>
-            <dd class="m-0">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.common.metodoPago') }}</dt>
+            <dd class="sale-meta-value m-0">
               <button
                 v-if="order.split_payments?.length"
                 type="button"
@@ -1824,34 +1824,34 @@ onUnmounted(() => {
                 :aria-label="t('ventas.detail.viewSplitDetail')"
                 @click="showSplitPaymentsPanel = true"
               >
-                <span class="text-sm font-semibold text-primary hover:underline">
+                <span class="text-sm font-medium text-primary hover:underline">
                   {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
                 </span>
               </button>
-              <p v-else-if="order.payment_method" class="text-sm font-semibold text-text-primary leading-snug break-words">
+              <p v-else-if="order.payment_method" class="leading-snug break-words">
                 {{ resolveLabel(order.payment_method, order.payment_method_id) }}
               </p>
               <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinRegistrar') }}</span>
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.ordenes.colSource') }}</dt>
-            <dd class="m-0 text-sm font-semibold text-text-primary">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.ordenes.colSource') }}</dt>
+            <dd class="sale-meta-value m-0">
               {{ saleReceiptLocationLabel || t('ventas.common.pos') }}
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.tableLabel') }}</dt>
-            <dd class="m-0 text-sm font-semibold text-text-primary">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.detail.tableLabel') }}</dt>
+            <dd class="sale-meta-value m-0">
               {{ order.table_custom_label || order.table_name || '—' }}
             </dd>
           </div>
 
-          <div class="sale-meta-cell px-4 py-3 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.covers') }}</dt>
-            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
+          <div class="sale-meta-cell px-3.5 py-2 min-w-0">
+            <dt class="sale-meta-label">{{ t('ventas.detail.covers') }}</dt>
+            <dd class="sale-meta-value m-0 tabular-nums">
               <template v-if="order.table_covers">
                 {{ order.table_covers }}<template v-if="order.table_capacity_snapshot"> / {{ order.table_capacity_snapshot }}</template>
               </template>
@@ -3331,7 +3331,38 @@ onUnmounted(() => {
   }
 }
 
-/* Sale meta: 2×4 mobile / 4×2 desktop — even cells */
+/* Sale meta: dense label/value + even 2×4 / 4×2 cells */
+.sale-meta-label {
+  margin: 0 0 0.125rem;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  color: hsl(var(--text-secondary));
+}
+
+.sale-meta-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: hsl(var(--text-primary));
+}
+
+.sale-meta-link {
+  color: hsl(var(--text-primary));
+  font-weight: 500;
+  border-radius: 0.125rem;
+  text-decoration: none;
+}
+
+.sale-meta-link:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.sale-meta-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3);
+}
+
 .sale-meta-grid > .sale-meta-cell {
   border-bottom: 1px solid hsl(var(--border));
   border-inline-end: 1px solid hsl(var(--border));
