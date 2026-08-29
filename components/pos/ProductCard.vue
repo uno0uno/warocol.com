@@ -2,7 +2,7 @@
   <button
     type="button"
     :style="cardStyle"
-    class="group relative flex flex-col items-center p-2 md:p-4 border-2 rounded-2xl theme-transition cursor-pointer active:scale-[0.97]"
+    class="group relative flex h-full w-full flex-col items-center p-2 md:p-4 border-2 rounded-2xl theme-transition cursor-pointer active:scale-[0.97]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @click="$emit('select', product)"
@@ -29,21 +29,27 @@
       />
       <span v-else class="text-3xl md:text-5xl">{{ product.image }}</span>
     </div>
-    <span
-      v-else-if="promoBadge"
-      class="mb-1.5 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
-      :title="promoBadge.title || promoBadge.label"
+    <!-- Keep height stable when images are off (promo present or not) -->
+    <div
+      v-else
+      class="mb-1.5 flex min-h-[1.25rem] w-full flex-shrink-0 items-center justify-center"
     >
-      {{ promoBadge.label }}
-    </span>
+      <span
+        v-if="promoBadge"
+        class="max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+        :title="promoBadge.title || promoBadge.label"
+      >
+        {{ promoBadge.label }}
+      </span>
+    </div>
 
-    <!-- Name -->
-    <p class="text-xs md:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] flex items-center justify-center px-0.5">
+    <!-- Name — fixed 2-line slot so every card matches -->
+    <p class="text-xs md:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] flex flex-1 items-center justify-center px-0.5">
       {{ product.name }}
     </p>
 
-    <!-- Price -->
-    <div class="w-full mt-1.5 md:mt-2.5 pt-1.5 md:pt-2.5 border-t border-border/60">
+    <!-- Price — pinned to bottom for equal card bottoms -->
+    <div class="mt-auto w-full pt-1.5 md:pt-2.5 border-t border-border/60">
       <p class="text-[10px] md:text-sm font-bold text-primary text-center">
         {{ formatCurrency(product.price) }}
       </p>

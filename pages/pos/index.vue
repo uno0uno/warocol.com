@@ -2548,10 +2548,11 @@ onUnmounted(() => {
               <div
                 v-for="(product, index) in filteredProducts"
                 :key="product.id"
-                class="pos-catalog-item min-w-0"
+                class="pos-catalog-item flex min-h-0 min-w-0 h-full"
                 :style="catalogItemStaggerStyle(index)"
               >
                 <PosProductCard
+                  class="h-full w-full"
                   :product="product"
                   :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
                   :show-image="posShowProductImage"
