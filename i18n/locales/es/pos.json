@@ -627,7 +627,7 @@
       "layoutAria": "Vista del catálogo",
       "layoutGrid": "Cuadrícula",
       "layoutList": "Listado",
-      "layoutDefault": "Default",
+      "layoutDefault": "Por defecto",
       "layoutDefaultHelp": "Usar la vista configurada en Operaciones → POS",
       "layoutSaveError": "No se pudo guardar tu vista del catálogo"
     },
