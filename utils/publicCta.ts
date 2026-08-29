@@ -248,13 +248,16 @@ const BENEFIT_COPY_EN: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'bod
 }
 
 function finalCopyEs(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  const monthly = /\/mes$|\/month$/i.test(offer.annualPrice)
   return {
     pos: {
       headline: 'Activa un POS creado para restaurantes colombianos.',
       body: `Vende, controla inventario y conoce tus costos con el Plan Pro por ${offer.annualPrice}.`,
     },
     pricing: {
-      headline: 'Activa WARO con un plan anual claro.',
+      headline: monthly
+        ? 'Activa WARO con un precio mensual claro.'
+        : 'Activa WARO con un plan anual claro.',
       body: `Plan Pro por ${offer.annualPrice}, equivalente a ${offer.monthlyEquivalent}.`,
     },
     costs: {
@@ -273,13 +276,16 @@ function finalCopyEs(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta
 }
 
 function finalCopyEn(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  const monthly = /\/mes$|\/month$/i.test(offer.annualPrice)
   return {
     pos: {
       headline: 'Activate a POS built for restaurant operators.',
       body: `Sell, control inventory, and know your costs with Plan Pro for ${offer.annualPrice}.`,
     },
     pricing: {
-      headline: 'Activate WARO with a clear annual plan.',
+      headline: monthly
+        ? 'Activate WARO with clear monthly pricing.'
+        : 'Activate WARO with a clear annual plan.',
       body: `Plan Pro for ${offer.annualPrice}, equivalent to ${offer.monthlyEquivalent}.`,
     },
     costs: {

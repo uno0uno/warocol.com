@@ -187,6 +187,11 @@ test('omitted market keeps Colombia ES usd_9 public CTAs', () => {
   assert.match(omitted.body, /USD \$9\/mes/)
   assert.doesNotMatch(omitted.body, /COP/i)
   assert.equal(omitted.button, 'Crear cuenta y elegir plan')
+
+  const pricing = getPublicCta('pricing', 'final', { lang: 'es', country: 'Colombia' })
+  assert.match(pricing.headline, /mensual/i)
+  assert.doesNotMatch(pricing.headline, /anual/i)
+  assert.match(pricing.body, /USD \$9\/mes/)
 })
 
 test('trial banner price anchor uses USD $30 for usd_30 catalog tenants', () => {
