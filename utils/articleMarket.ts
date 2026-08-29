@@ -106,6 +106,40 @@ const US_MARKET: ArticleMarket = Object.freeze({
   areaServedName: 'United States',
 })
 
+/** Region label LATAM — usd_9 monthly only (no annual offer). Not an ISO country. */
+const LATAM_MARKET_ES: ArticleMarket = Object.freeze({
+  market: 'LATAM',
+  localeTag: 'es',
+  ogLocale: 'es',
+  inLanguage: 'es',
+  currency: 'USD',
+  annualPrice: '',
+  monthlyPrice: '9',
+  annualPriceLabel: 'USD $9/mes',
+  monthlyOfferDescription: 'Plan mensual USD $9',
+  isUsEn: false,
+  areaServedName: 'Latin America',
+})
+
+const LATAM_MARKET_EN: ArticleMarket = Object.freeze({
+  market: 'LATAM',
+  localeTag: 'en',
+  ogLocale: 'en',
+  inLanguage: 'en',
+  currency: 'USD',
+  annualPrice: '',
+  monthlyPrice: '9',
+  annualPriceLabel: 'USD $9/month',
+  monthlyOfferDescription: 'USD $9 monthly plan',
+  isUsEn: false,
+  areaServedName: 'Latin America',
+})
+
+export function isLatamRegionLabel(value?: string | null): boolean {
+  const folded = String(value || '').trim().toLowerCase()
+  return Boolean(folded) && LATAM_LABELS.has(folded)
+}
+
 /** ISO-2 from article.country / country_code. LATAM and unknown → null. */
 export function normalizeArticleCountryCode(country?: string | null): string | null {
   const raw = String(country || '').trim()
@@ -164,14 +198,17 @@ function marketFor(countryCode: string, lang?: string | null): ArticleMarket {
 /**
  * Article page: country_code + lang of the article (option A).
  * USD/EN freeze only when language is English and country is US.
+ * LATAM region → usd_9 monthly (no Colombia COP fallback).
  */
 export function resolveArticleMarket(input: ArticleMarketInput = {}): ArticleMarket {
   const lang = String(input.lang || '').trim().toLowerCase()
   const isEn = lang === 'en' || lang.startsWith('en-') || lang.startsWith('en_')
+  const isLatam = isLatamRegionLabel(input.country_code) || isLatamRegionLabel(input.country)
   const countryCode = normalizeArticleCountryCode(input.country_code)
     ?? normalizeArticleCountryCode(input.country)
 
   if (isEn && countryCode === 'US') return US_MARKET
+  if (isLatam) return isEn ? LATAM_MARKET_EN : LATAM_MARKET_ES
   if (!countryCode) return CO_MARKET
   if (countryCode === 'CO' && !isEn) return CO_MARKET
   return marketFor(countryCode, input.lang)

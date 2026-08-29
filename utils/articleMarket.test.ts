@@ -62,10 +62,19 @@ test('Spain article uses EUR and es-ES tags', () => {
   assert.equal(market.market, 'ES')
 })
 
-test('LATAM article falls back to COP / es-CO', () => {
+test('LATAM article uses usd_9 monthly market, not Colombia COP', () => {
   const market = resolveArticleMarket({ lang: 'es', country: 'LATAM' })
-  assert.equal(market.currency, 'COP')
-  assert.equal(market.market, 'CO')
+  assert.equal(market.currency, 'USD')
+  assert.equal(market.market, 'LATAM')
+  assert.equal(market.annualPriceLabel, 'USD $9/mes')
+  assert.equal(market.monthlyPrice, '9')
+  assert.equal(market.annualPrice, '')
+
+  const latamLower = resolveArticleMarket({ lang: 'es', country: 'latam', country_code: null })
+  assert.equal(latamLower.annualPriceLabel, 'USD $9/mes')
+
+  const latamEn = resolveArticleMarket({ lang: 'en', country: 'LATAM' })
+  assert.equal(latamEn.annualPriceLabel, 'USD $9/month')
 })
 
 test('anonymous reader uses cf-ipcountry and Accept-Language', () => {
