@@ -1,0 +1,39 @@
+issue: 2503
+title: "chore(operaciones): tighten POS settings copy to match Comandas density"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2503-pos-settings-copy
+
+paths:
+  - pages/operaciones/pos.vue
+  - i18n/locales/es/operaciones.json
+  - i18n/locales/en/operaciones.json
+  - i18n/locales/pt/operaciones.json
+
+ac:
+  - POS settings rows use short labels like Comandas (one primary line; help removed or ≤1 short clause)
+  - Layout / images / search controls remain usable and still save
+  - i18n updated for es, en, pt
+  - No API or POS runtime behavior changes
+
+out_of_scope:
+  - DB defaults
+  - /operaciones/comandas redesign
+  - API
+
+hints:
+  entry: "pages/operaciones/pos.vue layout/images/search cards"
+  pattern: "operaciones/comandas.vue toggle rows — label only, no help paragraph"
+  tests: "manual: /operaciones/pos toggles + layout save"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "gh issue comment + ready-for-review; wr-review"
