@@ -2802,13 +2802,13 @@ onUnmounted(() => {
 
   .pos-catalog-layout-enter-from {
     opacity: 0;
-    transform: translateY(6px) scale(0.985);
+    transform: translateY(-10px) scale(0.985);
     filter: blur(2px);
   }
 
   .pos-catalog-layout-leave-to {
     opacity: 0;
-    transform: translateY(-4px) scale(0.99);
+    transform: translateY(6px) scale(0.99);
     filter: blur(1px);
   }
 
