@@ -129,9 +129,6 @@ const toggleShowSearch = async () => {
         <p class="text-sm font-semibold leading-snug text-text-primary">
           {{ t('operaciones.pos.layoutTitle') }}
         </p>
-        <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-          {{ t('operaciones.pos.layoutHelp') }}
-        </p>
         <div class="mt-3 flex flex-wrap gap-2" :class="isSavingLayout ? 'opacity-50 pointer-events-none' : ''">
           <button
             type="button"
@@ -158,13 +155,10 @@ const toggleShowSearch = async () => {
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
+      <div class="flex min-h-[64px] items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
-            {{ showProductImage ? t('operaciones.pos.imagesEnabled') : t('operaciones.pos.imagesDisabled') }}
-          </p>
-          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            {{ t('operaciones.pos.imagesHelp') }}
+            {{ t('operaciones.pos.showImages') }}
           </p>
         </div>
         <label
@@ -183,13 +177,10 @@ const toggleShowSearch = async () => {
         </label>
       </div>
 
-      <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
+      <div class="flex min-h-[64px] items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
-            {{ showSearch ? t('operaciones.pos.searchEnabled') : t('operaciones.pos.searchDisabled') }}
-          </p>
-          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            {{ t('operaciones.pos.searchHelp') }}
+            {{ t('operaciones.pos.showSearch') }}
           </p>
         </div>
         <label
