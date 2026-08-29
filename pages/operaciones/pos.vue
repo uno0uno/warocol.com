@@ -125,17 +125,25 @@ const toggleShowSearch = async () => {
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <div v-else-if="businessProfile" class="flex flex-col gap-3 md:gap-4">
-      <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
-        <p class="text-sm font-semibold leading-snug text-text-primary">
-          {{ t('operaciones.pos.layoutTitle') }}
-        </p>
-        <div class="mt-3 flex flex-wrap gap-2" :class="isSavingLayout ? 'opacity-50 pointer-events-none' : ''">
+      <div class="flex min-h-[64px] items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-snug text-text-primary">
+            {{ t('operaciones.pos.layoutTitle') }}
+          </p>
+        </div>
+        <div
+          class="inline-flex flex-shrink-0 overflow-hidden rounded-lg border border-border"
+          role="group"
+          :aria-label="t('operaciones.pos.layoutTitle')"
+          :class="isSavingLayout ? 'opacity-50 pointer-events-none' : ''"
+        >
           <button
             type="button"
-            class="min-h-9 rounded-lg border px-3 text-sm font-semibold transition-colors"
+            class="min-h-9 px-3 text-sm font-semibold transition-colors border-e border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             :class="catalogLayout === 'grid'
-              ? 'border-action-primary-border bg-action-primary-bg text-action-primary-text'
-              : 'border-border bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+              ? 'bg-action-primary-bg text-action-primary-text'
+              : 'bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+            :aria-pressed="catalogLayout === 'grid'"
             :disabled="isSavingLayout"
             @click="setCatalogLayout('grid')"
           >
@@ -143,10 +151,11 @@ const toggleShowSearch = async () => {
           </button>
           <button
             type="button"
-            class="min-h-9 rounded-lg border px-3 text-sm font-semibold transition-colors"
+            class="min-h-9 px-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             :class="catalogLayout === 'list'
-              ? 'border-action-primary-border bg-action-primary-bg text-action-primary-text'
-              : 'border-border bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+              ? 'bg-action-primary-bg text-action-primary-text'
+              : 'bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary'"
+            :aria-pressed="catalogLayout === 'list'"
             :disabled="isSavingLayout"
             @click="setCatalogLayout('list')"
           >
