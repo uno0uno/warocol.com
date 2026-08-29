@@ -456,7 +456,12 @@
       "nameMaxError": "O nome não pode ter mais de 100 caracteres",
       "creatingLabel": "Criando",
       "creatingCategoryAria": "Criando categoria",
-      "createError": "Erro ao criar a categoria"
+      "createError": "Erro ao criar a categoria",
+      "posColor": "Cor no POS",
+      "posColorHelp": "Tingem os cartões dos produtos desta categoria no caixa. Vazio = cor automática por palavras-chave.",
+      "posColorClear": "Limpar",
+      "posColorPickerAria": "Seletor de cor da categoria para o POS",
+      "posColorHexAria": "Cor hexadecimal da categoria para o POS"
     },
     "filters": {
       "searchPlaceholder": "Buscar produtos...",

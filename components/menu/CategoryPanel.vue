@@ -100,6 +100,56 @@
             />
           </div>
 
+          <!-- Color POS (#2509) -->
+          <div class="flex flex-col gap-1.5">
+            <label :for="colorId" class="text-sm font-medium text-text-primary">
+              {{ t('menu.categorias.posColor') }}
+              <span class="text-xs text-text-secondary font-normal">{{ t('menu.categorias.optional') }}</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                :id="colorId"
+                v-model="colorPickerValue"
+                type="color"
+                :aria-label="t('menu.categorias.posColorPickerAria')"
+                :disabled="saving"
+                class="w-11 h-11 rounded-lg cursor-pointer border border-border p-0 overflow-hidden disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <input
+                v-model="form.color"
+                type="text"
+                maxlength="7"
+                placeholder="#22C55E"
+                :aria-label="t('menu.categorias.posColorHexAria')"
+                :disabled="saving"
+                class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono uppercase text-text-primary bg-surface"
+                @input="onColorTextInput"
+              />
+              <button
+                type="button"
+                :disabled="saving || !form.color"
+                class="px-3 py-2 text-xs font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg disabled:opacity-40"
+                @click="clearColor"
+              >
+                {{ t('menu.categorias.posColorClear') }}
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              <button
+                v-for="preset in colorPresets"
+                :key="preset"
+                type="button"
+                :aria-label="preset"
+                :disabled="saving"
+                class="w-7 h-7 rounded-full border-2 border-border hover:scale-105 transition-transform disabled:opacity-50"
+                :style="{ backgroundColor: preset }"
+                :class="form.color?.toUpperCase() === preset ? 'ring-2 ring-primary ring-offset-1' : ''"
+                @click="form.color = preset"
+              />
+            </div>
+            <p class="text-xs text-text-tertiary">{{ t('menu.categorias.posColorHelp') }}</p>
+          </div>
+
           <!-- General error -->
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
         </div>
@@ -133,6 +183,10 @@
 
 <script setup lang="ts">
 import { TagIcon } from '@heroicons/vue/24/outline'
+import {
+  CATEGORY_COLOR_PRESETS,
+  normalizePosHexColor,
+} from '~/utils/posCategoryColor'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -140,6 +194,7 @@ interface Category {
   id: string
   name: string
   description: string | null
+  color?: string | null
   tenant_id: string | null
 }
 
@@ -163,18 +218,37 @@ const isEdit = computed(() => !!props.category)
 const uid = useId()
 const nameId = `cat-panel-name-${uid}`
 const descId = `cat-panel-desc-${uid}`
+const colorId = `cat-panel-color-${uid}`
+const colorPresets = CATEGORY_COLOR_PRESETS
 
 const inputClass = 'input-base w-full px-4 py-2'
 
-const form = ref<{ name: string; description: string }>({
+const form = ref<{ name: string; description: string; color: string }>({
   name: '',
   description: '',
+  color: '',
 })
 
 const saving = ref(false)
 const errors = ref<Record<string, string>>({})
 
 const nameInput = ref<HTMLInputElement | null>(null)
+
+const colorPickerValue = computed({
+  get: () => normalizePosHexColor(form.value.color) || '#94A3B8',
+  set: (v: string) => {
+    form.value.color = normalizePosHexColor(v) || ''
+  },
+})
+
+const onColorTextInput = () => {
+  const normalized = normalizePosHexColor(form.value.color)
+  if (normalized) form.value.color = normalized
+}
+
+const clearColor = () => {
+  form.value.color = ''
+}
 
 const clearError = (field: string) => {
   delete errors.value[field]
@@ -185,6 +259,7 @@ const resetForm = () => {
   form.value = {
     name: props.category?.name ?? '',
     description: props.category?.description ?? '',
+    color: normalizePosHexColor(props.category?.color) || '',
   }
   errors.value = {}
 }
@@ -222,8 +297,11 @@ const submit = async () => {
   errors.value = {}
   try {
     const description = form.value.description.trim() || null
+    const color = normalizePosHexColor(form.value.color)
     const payload: Record<string, unknown> = { name }
     if (description !== null || isEdit.value) payload.description = description
+    // Always send on edit so clear (null) persists; create only when set.
+    if (isEdit.value || color) payload.color = color
 
     const response = isEdit.value
       ? await $fetch<{ success: boolean; data: Category }>(

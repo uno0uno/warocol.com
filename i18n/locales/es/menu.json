@@ -583,7 +583,12 @@
       "nameMaxError": "El nombre no puede tener más de 100 caracteres",
       "creatingLabel": "Creando",
       "creatingCategoryAria": "Creando categoría",
-      "createError": "Error al crear la categoría"
+      "createError": "Error al crear la categoría",
+      "posColor": "Color en caja (POS)",
+      "posColorHelp": "Tiñe las tarjetas de productos de esta categoría en la caja. Si lo dejas vacío, WARO usa el color automático por palabras clave.",
+      "posColorClear": "Quitar",
+      "posColorPickerAria": "Selector de color de categoría para POS",
+      "posColorHexAria": "Color hexadecimal de categoría para POS"
     },
     "filters": {
       "searchPlaceholder": "Buscar productos...",

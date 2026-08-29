@@ -1535,6 +1535,7 @@ watch(() => productsData.value, (data) => {
       image_url: p.image_url || null,  // Issue #465 — real image when uploaded
       category: p.category_name || p.category?.name || t('pos.banner.noCategory'),
       category_id: p.category_id ?? null,
+      category_color: p.category_color ?? null,
       is_available: p.is_available,
       is_resale: p.is_resale || false,
       modifier_groups: p.modifier_groups || []
@@ -1555,6 +1556,7 @@ const products = computed(() => {
     price: p.price,
     category: p.category_name || p.category?.name || t('pos.banner.noCategory'),
     category_id: p.category_id ?? null,
+    category_color: p.category_color ?? null,
     image: '🍽️',
     image_url: p.image_url || null,
     available: p.is_available,

@@ -101,6 +101,55 @@
             />
           </div>
 
+          <div class="flex flex-col gap-1.5">
+            <label for="cat-color" class="text-sm font-medium text-text-primary">
+              {{ t('menu.categorias.posColor') }}
+              <span class="text-text-tertiary text-xs font-normal">{{ t('menu.categorias.optional') }}</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                id="cat-color"
+                v-model="colorPickerValue"
+                type="color"
+                :aria-label="t('menu.categorias.posColorPickerAria')"
+                :disabled="loading"
+                class="w-11 h-11 rounded-lg cursor-pointer border border-border p-0 overflow-hidden disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <input
+                v-model="color"
+                type="text"
+                maxlength="7"
+                placeholder="#22C55E"
+                :aria-label="t('menu.categorias.posColorHexAria')"
+                :disabled="loading"
+                class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono uppercase text-text-primary bg-surface"
+                @input="onColorTextInput"
+              />
+              <button
+                type="button"
+                :disabled="loading || !color"
+                class="px-3 py-2 text-xs font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg disabled:opacity-40"
+                @click="color = ''"
+              >
+                {{ t('menu.categorias.posColorClear') }}
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              <button
+                v-for="preset in colorPresets"
+                :key="preset"
+                type="button"
+                :aria-label="preset"
+                :disabled="loading"
+                class="w-7 h-7 rounded-full border-2 border-border hover:scale-105 transition-transform disabled:opacity-50"
+                :style="{ backgroundColor: preset }"
+                :class="color?.toUpperCase() === preset ? 'ring-2 ring-primary ring-offset-1' : ''"
+                @click="color = preset"
+              />
+            </div>
+            <p class="text-xs text-text-tertiary">{{ t('menu.categorias.posColorHelp') }}</p>
+          </div>
+
           <p
             v-if="errorMsg"
             role="alert"
@@ -144,10 +193,14 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '~/composables/useTenantReactive'
 import type { CategoryRow } from '~/composables/useCategorySearch'
+import {
+  CATEGORY_COLOR_PRESETS,
+  normalizePosHexColor,
+} from '~/utils/posCategoryColor'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -172,9 +225,23 @@ const { currentTenant } = useTenantReactive()
 
 const name = ref(props.initialName)
 const description = ref('')
+const color = ref('')
+const colorPresets = CATEGORY_COLOR_PRESETS
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 const nameInputRef = ref<HTMLInputElement | null>(null)
+
+const colorPickerValue = computed({
+  get: () => normalizePosHexColor(color.value) || '#94A3B8',
+  set: (v: string) => {
+    color.value = normalizePosHexColor(v) || ''
+  },
+})
+
+const onColorTextInput = () => {
+  const normalized = normalizePosHexColor(color.value)
+  if (normalized) color.value = normalized
+}
 
 // Reset state every time the panel opens; pre-fill name from parent.
 watch(
@@ -183,6 +250,7 @@ watch(
     if (open) {
       name.value = props.initialName
       description.value = ''
+      color.value = ''
       errorMsg.value = null
       loading.value = false
       await nextTick()
@@ -210,14 +278,18 @@ async function submit() {
   loading.value = true
   errorMsg.value = null
   try {
+    const body: Record<string, unknown> = {
+      name: trimmedName,
+      description: description.value.trim() || null,
+    }
+    const hex = normalizePosHexColor(color.value)
+    if (hex) body.color = hex
+
     const res = await $fetch<{ success: boolean; data: CategoryRow }>(
       '/api/menu/categories',
       {
         method: 'POST',
-        body: {
-          name: trimmedName,
-          description: description.value.trim() || null,
-        },
+        body,
       },
     )
     // Invalidate the listing cache so any other place that consumes it refreshes.

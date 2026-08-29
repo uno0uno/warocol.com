@@ -456,7 +456,12 @@
       "nameMaxError": "Le nom ne peut pas dépasser 100 caractères",
       "creatingLabel": "Création en cours",
       "creatingCategoryAria": "Création de la catégorie",
-      "createError": "Erreur lors de la création de la catégorie"
+      "createError": "Erreur lors de la création de la catégorie",
+      "posColor": "Couleur caisse (POS)",
+      "posColorHelp": "Teinte les cartes produits de cette catégorie en caisse. Vide = couleur automatique par mots-clés.",
+      "posColorClear": "Effacer",
+      "posColorPickerAria": "Sélecteur de couleur de catégorie pour le POS",
+      "posColorHexAria": "Couleur hexadécimale de catégorie pour le POS"
     },
     "filters": {
       "searchPlaceholder": "Rechercher des produits...",

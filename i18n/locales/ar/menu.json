@@ -456,7 +456,12 @@
       "nameMaxError": "لا يمكن أن يتجاوز الاسم 100 حرف",
       "creatingLabel": "جاري الإنشاء",
       "creatingCategoryAria": "جاري إنشاء التصنيف",
-      "createError": "حدث خطأ أثناء إنشاء التصنيف"
+      "createError": "حدث خطأ أثناء إنشاء التصنيف",
+      "posColor": "لون بطاقة نقاط البيع",
+      "posColorHelp": "يلون بطاقات منتجات هذه الفئة في الصندوق. اتركه فارغًا للون التلقائي.",
+      "posColorClear": "مسح",
+      "posColorPickerAria": "منتقي لون الفئة لنقاط البيع",
+      "posColorHexAria": "لون سداسي عشري للفئة في نقاط البيع"
     },
     "filters": {
       "searchPlaceholder": "البحث عن منتجات...",
