@@ -154,9 +154,6 @@ const resolvedCatalogLayout = computed<'grid' | 'list'>(() => {
   // #2496: personal override ?? tenant default from #2495
   return catalogLayoutOverride.value ?? tenantCatalogLayoutDefault.value
 })
-const catalogLayoutChoice = computed<'grid' | 'list' | 'default'>(() => {
-  return catalogLayoutOverride.value ?? 'default'
-})
 const isSavingCatalogLayout = ref(false)
 const showCatalogLayoutInBanner = computed(() => {
   // Mesa banner has Liberar — put toggle there. Bar/counter use catalog row.
@@ -164,17 +161,31 @@ const showCatalogLayoutInBanner = computed(() => {
 })
 const showCatalogLayoutInControls = computed(() => !showCatalogLayoutInBanner.value)
 
-const setCatalogLayoutPreference = async (choice: 'grid' | 'list' | 'default') => {
+/** Single control: when grid, offer list (and reverse). Always stores explicit override. */
+const catalogLayoutToggleTarget = computed<'grid' | 'list'>(() =>
+  resolvedCatalogLayout.value === 'grid' ? 'list' : 'grid',
+)
+const catalogLayoutToggleLabel = computed(() =>
+  catalogLayoutToggleTarget.value === 'list'
+    ? t('pos.catalog.layoutList')
+    : t('pos.catalog.layoutGrid'),
+)
+const catalogLayoutToggleAria = computed(() =>
+  catalogLayoutToggleTarget.value === 'list'
+    ? t('pos.catalog.layoutSwitchToList')
+    : t('pos.catalog.layoutSwitchToGrid'),
+)
+
+const setCatalogLayoutPreference = async (choice: 'grid' | 'list') => {
   if (isSavingCatalogLayout.value) return
-  const nextOverride = choice === 'default' ? null : choice
-  if (nextOverride === catalogLayoutOverride.value) return
+  if (choice === catalogLayoutOverride.value) return
   const previous = catalogLayoutOverride.value
   isSavingCatalogLayout.value = true
-  authStore.patchSessionUser({ pos_catalog_layout_override: nextOverride })
+  authStore.patchSessionUser({ pos_catalog_layout_override: choice })
   try {
     await $fetch('/api/auth/update-profile', {
       method: 'PUT',
-      body: { pos_catalog_layout_override: nextOverride },
+      body: { pos_catalog_layout_override: choice },
     })
   } catch (error: any) {
     authStore.patchSessionUser({ pos_catalog_layout_override: previous })
@@ -186,13 +197,22 @@ const setCatalogLayoutPreference = async (choice: 'grid' | 'list' | 'default') =
   }
 }
 
-const catalogLayoutButtonClass = (choice: 'grid' | 'list' | 'default') => [
-  'h-9 min-w-9 px-2 rounded-lg border text-[11px] font-semibold transition-colors',
-  catalogLayoutChoice.value === choice
-    ? 'border-action-primary-border bg-action-primary-bg text-action-primary-text'
-    : 'border-border bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary',
+const toggleCatalogLayout = () => {
+  void setCatalogLayoutPreference(catalogLayoutToggleTarget.value)
+}
+
+const catalogLayoutToggleButtonClass = computed(() => [
+  bannerActionButtonClass,
+  'relative w-9 px-0 overflow-hidden text-text-secondary border border-border',
+  'hover:text-text-primary hover:bg-surface-secondary focus-visible:ring-ring/35',
+  'active:scale-[0.94]',
   isSavingCatalogLayout.value ? 'opacity-50 pointer-events-none' : '',
-]
+])
+
+/** Soft filter stagger — few steps, calmer cascade. */
+const catalogItemStaggerStyle = (index: number) => ({
+  '--pos-stagger': `${Math.min(index, 8) * 40}ms`,
+})
 
 const posShowProductImage = computed(
   () => settingsData.value?.data?.pos_show_product_image !== false,
@@ -200,16 +220,12 @@ const posShowProductImage = computed(
 const posShowSearch = computed(
   () => settingsData.value?.data?.pos_show_search !== false,
 )
-const catalogListColumns = computed(() => {
-  const cols: Array<{ key: string; title: string; sortable?: boolean }> = []
-  if (posShowProductImage.value) {
-    cols.push({ key: 'image', title: '', sortable: false })
-  }
-  cols.push({ key: 'name', title: t('pos.catalog.product'), sortable: false })
-  cols.push({ key: 'promo', title: t('pos.catalog.promo'), sortable: false })
-  cols.push({ key: 'price', title: t('pos.catalog.price'), sortable: false })
-  return cols
-})
+/** List mode: no photos (#2499); dedicated promo chip column (#2501). */
+const catalogListColumns = computed(() => [
+  { key: 'name', title: t('pos.catalog.product'), sortable: false },
+  { key: 'promo', title: t('pos.catalog.promo'), sortable: false },
+  { key: 'price', title: t('pos.catalog.price'), sortable: false },
+])
 const isStarterPlan = computed(() =>
   isStarterPlanSlug(accessStore.planSlug) || isStarterAccessLevel(accessStatus.value?.level),
 )
@@ -2155,42 +2171,46 @@ onUnmounted(() => {
                 <span class="hidden sm:inline">{{ t('pos.banner.release') }}</span>
               </template>
             </button>
-            <div
+            <button
               v-if="showCatalogLayoutInBanner"
-              class="flex flex-shrink-0 items-center"
-              :class="siblingGapClass"
-              role="group"
-              :aria-label="t('pos.catalog.layoutAria')"
+              type="button"
+              :class="catalogLayoutToggleButtonClass"
+              :disabled="isSavingCatalogLayout"
+              :aria-label="catalogLayoutToggleAria"
+              :title="catalogLayoutToggleLabel"
+              @click="toggleCatalogLayout"
             >
-              <button
-                type="button"
-                :class="catalogLayoutButtonClass('grid')"
-                :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'grid'"
-                @click="setCatalogLayoutPreference('grid')"
-              >
-                {{ t('pos.catalog.layoutGrid') }}
-              </button>
-              <button
-                type="button"
-                :class="catalogLayoutButtonClass('list')"
-                :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'list'"
-                @click="setCatalogLayoutPreference('list')"
-              >
-                {{ t('pos.catalog.layoutList') }}
-              </button>
-              <button
-                type="button"
-                :class="catalogLayoutButtonClass('default')"
-                :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'default'"
-                :title="t('pos.catalog.layoutDefaultHelp')"
-                @click="setCatalogLayoutPreference('default')"
-              >
-                {{ t('pos.catalog.layoutDefault') }}
-              </button>
-            </div>
+              <span class="inline-flex h-4 w-4 items-center justify-center">
+                <Transition name="pos-layout-icon" mode="out-in">
+                  <svg
+                    v-if="catalogLayoutToggleTarget === 'list'"
+                    key="icon-list"
+                    class="h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                  <svg
+                    v-else
+                    key="icon-grid"
+                    class="h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+                  </svg>
+                </Transition>
+              </span>
+            </button>
           </div>
         </div>
 
@@ -2378,47 +2398,56 @@ onUnmounted(() => {
           <!-- Catalog controls: search + category filters -->
           <div :class="['flex flex-col', sectionGapClass]">
             <div
-              v-if="showCatalogLayoutInControls"
-              class="flex flex-wrap items-center"
+              class="flex items-center"
               :class="siblingGapClass"
-              role="group"
-              :aria-label="t('pos.catalog.layoutAria')"
             >
               <button
+                v-if="showCatalogLayoutInControls"
                 type="button"
-                :class="catalogLayoutButtonClass('grid')"
+                :class="catalogLayoutToggleButtonClass"
                 :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'grid'"
-                @click="setCatalogLayoutPreference('grid')"
+                :aria-label="catalogLayoutToggleAria"
+                :title="catalogLayoutToggleLabel"
+                @click="toggleCatalogLayout"
               >
-                {{ t('pos.catalog.layoutGrid') }}
+                <span class="inline-flex h-4 w-4 items-center justify-center">
+                  <Transition name="pos-layout-icon" mode="out-in">
+                    <svg
+                      v-if="catalogLayoutToggleTarget === 'list'"
+                      key="icon-list"
+                      class="h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    <svg
+                      v-else
+                      key="icon-grid"
+                      class="h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+                    </svg>
+                  </Transition>
+                </span>
               </button>
-              <button
-                type="button"
-                :class="catalogLayoutButtonClass('list')"
-                :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'list'"
-                @click="setCatalogLayoutPreference('list')"
-              >
-                {{ t('pos.catalog.layoutList') }}
-              </button>
-              <button
-                type="button"
-                :class="catalogLayoutButtonClass('default')"
-                :disabled="isSavingCatalogLayout"
-                :aria-pressed="catalogLayoutChoice === 'default'"
-                :title="t('pos.catalog.layoutDefaultHelp')"
-                @click="setCatalogLayoutPreference('default')"
-              >
-                {{ t('pos.catalog.layoutDefault') }}
-              </button>
+              <UiSearchBar
+                v-if="posShowSearch"
+                v-model="searchQuery"
+                :placeholder="t('pos.catalog.searchPlaceholder')"
+                class="h-9 min-w-0 flex-1 px-3"
+              />
             </div>
-            <UiSearchBar
-              v-if="posShowSearch"
-              v-model="searchQuery"
-              :placeholder="t('pos.catalog.searchPlaceholder')"
-              class="h-9 px-3"
-            />
 
             <div
               class="flex overflow-x-auto scrollbar-hide pb-1 -mx-0.5 px-0.5"
@@ -2441,10 +2470,13 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Products Grid — page scroll on mobile; inner scroll on desktop (#1032) -->
-        <div>
+        <!-- Products catalog — no layout swap animation; soft filter stagger on grid -->
+        <div class="relative min-h-[8rem]">
           <!-- Empty State -->
-          <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center h-64 text-text-secondary">
+          <div
+            v-if="filteredProducts.length === 0"
+            class="flex flex-col items-center justify-center h-64 text-text-secondary"
+          >
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
@@ -2452,35 +2484,25 @@ onUnmounted(() => {
             <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
           </div>
 
-          <!-- Products list (tenant default / future user override) -->
-          <UiResponsiveDataView
+          <!-- Products list — compact rows (#2499); promo chip column (#2501) -->
+          <div
             v-else-if="resolvedCatalogLayout === 'list'"
-            :columns="catalogListColumns"
-            :data="filteredProducts"
-            item-key="id"
-            :empty-message="t('pos.banner.noProducts')"
-            @row-click="selectProduct"
+            class="pos-catalog-surface"
           >
-            <template #card="{ item }">
-              <button
-                type="button"
-                class="w-full rounded-xl border-2 border-border bg-surface p-3 text-left transition-colors hover:border-border hover:bg-surface-secondary"
-                @click="selectProduct(item)"
-              >
-                <div class="flex items-center gap-3">
-                  <div
-                    v-if="posShowProductImage"
-                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/40 bg-surface-secondary"
-                  >
-                    <img
-                      v-if="item.image_url && item.image_url.startsWith('http')"
-                      :src="item.image_url"
-                      :alt="item.name"
-                      loading="lazy"
-                      class="h-full w-full object-cover"
-                    >
-                    <span v-else class="text-xl">{{ item.image }}</span>
-                  </div>
+            <UiResponsiveDataView
+              :columns="catalogListColumns"
+              :data="filteredProducts"
+              item-key="id"
+              :empty-message="t('pos.banner.noProducts')"
+              row-size="sm"
+              @row-click="selectProduct"
+            >
+              <template #card="{ item }">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-data-table-row-hover-bg"
+                  @click="selectProduct(item)"
+                >
                   <p class="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
                   <span
                     v-if="promoBadgesByProductId.get(item.id)"
@@ -2495,62 +2517,58 @@ onUnmounted(() => {
                   >
                     {{ t('pos.catalog.noPromo') }}
                   </span>
-                  <p class="flex-shrink-0 text-sm font-bold text-primary">
+                  <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
                     {{ formatCurrency(item.price) }}
                   </p>
-                </div>
-              </button>
-            </template>
-            <template v-if="posShowProductImage" #cell-image="{ item }">
-              <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border/40 bg-surface-secondary">
-                <img
-                  v-if="item.image_url && item.image_url.startsWith('http')"
-                  :src="item.image_url"
-                  :alt="item.name"
-                  loading="lazy"
-                  class="h-full w-full object-cover"
+                </button>
+              </template>
+              <template #cell-name="{ item }">
+                <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+              </template>
+              <template #cell-promo="{ item }">
+                <span
+                  v-if="promoBadgesByProductId.get(item.id)"
+                  class="inline-flex max-w-full truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
+                  :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
                 >
-                <span v-else class="text-lg">{{ item.image }}</span>
-              </div>
-            </template>
-            <template #cell-name="{ item }">
-              <p class="truncate font-semibold text-text-primary">{{ item.name }}</p>
-            </template>
-            <template #cell-promo="{ item }">
-              <span
-                v-if="promoBadgesByProductId.get(item.id)"
-                class="inline-flex max-w-full truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
-                :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
-              >
-                {{ promoBadgesByProductId.get(item.id)?.label }}
-              </span>
-              <span
-                v-else
-                class="inline-flex max-w-full truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
-              >
-                {{ t('pos.catalog.noPromo') }}
-              </span>
-            </template>
-            <template #cell-price="{ item }">
-              <span class="font-bold text-primary">{{ formatCurrency(item.price) }}</span>
-            </template>
-          </UiResponsiveDataView>
+                  {{ promoBadgesByProductId.get(item.id)?.label }}
+                </span>
+                <span
+                  v-else
+                  class="inline-flex max-w-full truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
+                >
+                  {{ t('pos.catalog.noPromo') }}
+                </span>
+              </template>
+              <template #cell-price="{ item }">
+                <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
+              </template>
+            </UiResponsiveDataView>
+          </div>
 
-          <!-- Products Grid -->
-          <div
+          <!-- Products Grid — calm filter morph on search/category -->
+          <TransitionGroup
             v-else
+            tag="div"
+            name="pos-catalog-item"
             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
             :class="siblingGapClass"
           >
-            <PosProductCard
-              v-for="product in filteredProducts"
+            <div
+              v-for="(product, index) in filteredProducts"
               :key="product.id"
-              :product="product"
-              :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
-              :show-image="posShowProductImage"
-              @select="selectProduct"
-            />
-          </div>
+              class="pos-catalog-item flex min-h-0 min-w-0 h-full"
+              :style="catalogItemStaggerStyle(index)"
+            >
+              <PosProductCard
+                class="h-full w-full"
+                :product="product"
+                :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
+                :show-image="posShowProductImage"
+                @select="selectProduct"
+              />
+            </div>
+          </TransitionGroup>
         </div>
       </div>
 
@@ -2774,6 +2792,59 @@ onUnmounted(() => {
   .pos-view-leave-to {
     opacity: 0;
     transform: translateY(8px);
+  }
+
+  /* Search / category: slower, opacity-first — less visual noise */
+  .pos-catalog-item-move {
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pos-catalog-item-enter-active {
+    transition:
+      opacity 0.42s ease,
+      transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--pos-stagger, 0ms);
+  }
+
+  .pos-catalog-item-leave-active {
+    transition: opacity 0.28s ease;
+  }
+
+  .pos-catalog-item-enter-from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  .pos-catalog-item-leave-to {
+    opacity: 0;
+  }
+
+  /* Toggle glyph morph */
+  .pos-layout-icon-enter-active,
+  .pos-layout-icon-leave-active {
+    transition:
+      opacity 0.15s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pos-layout-icon-enter-from {
+    opacity: 0;
+    transform: rotate(-42deg) scale(0.72);
+  }
+
+  .pos-layout-icon-leave-to {
+    opacity: 0;
+    transform: rotate(42deg) scale(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-catalog-item-enter-active,
+  .pos-catalog-item-leave-active,
+  .pos-catalog-item-move,
+  .pos-layout-icon-enter-active,
+  .pos-layout-icon-leave-active {
+    transition: none !important;
   }
 }
 </style>

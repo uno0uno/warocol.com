@@ -1,0 +1,38 @@
+# Machine contract for wr-fast #2499 — keep ≤80 lines.
+issue: 2499
+title: "fix(pos): icon layout toggle, compact list rows, header chip spacing"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2499-pos-layout-header
+risk: low
+
+paths:
+  - pages/pos/index.vue
+  - components/dashboard/DashboardShellHeader.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - i18n/locales/pt/pos.json
+  - .wr/2499.yaml
+
+ac:
+  - One icon control on /pos: grid shows switch-to-list icon (and reverse); no Cuadrícula/Listado/Por defecto trio
+  - Remove Por defecto from POS (tenant default in Operaciones stays)
+  - List view has no product photos
+  - List rows compact like /ventas/ordenes (row-size sm + dense cards)
+  - Header chips match Pagar anticipo density (gap-1, icon-first truncating labels)
+  - Layout preference still persists via pos_catalog_layout_override
+
+out_of_scope:
+  - Operaciones POS tenant default UI
+  - API / thermal driver / KDS
+  - app database
+
+hints:
+  entry: "pages/pos/index.vue catalogLayout* + DashboardShellHeader chips"
+  pattern: "bannerActionButtonClass h-9; ventas/ordenes row-size=sm + py-3 cards"
+  tests: "none — UI-only; no front unit test harness for this page"
+
+skip:
+  audits: [ux, color, typography]
