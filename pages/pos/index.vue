@@ -203,9 +203,16 @@ const toggleCatalogLayout = () => {
 
 const catalogLayoutToggleButtonClass = computed(() => [
   bannerActionButtonClass,
-  'w-9 px-0 text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary focus-visible:ring-ring/35',
+  'relative w-9 px-0 overflow-hidden text-text-secondary border border-border',
+  'hover:text-text-primary hover:bg-surface-secondary focus-visible:ring-ring/35',
+  'active:scale-[0.94]',
   isSavingCatalogLayout.value ? 'opacity-50 pointer-events-none' : '',
 ])
+
+/** Cap stagger so large catalogs stay snappy (modern filter-grid pattern). */
+const catalogItemStaggerStyle = (index: number) => ({
+  '--pos-stagger': `${Math.min(index, 14) * 18}ms`,
+})
 
 const posShowProductImage = computed(
   () => settingsData.value?.data?.pos_show_product_image !== false,
@@ -2397,30 +2404,36 @@ onUnmounted(() => {
                 :title="catalogLayoutToggleLabel"
                 @click="toggleCatalogLayout"
               >
-                <svg
-                  v-if="catalogLayoutToggleTarget === 'list'"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                <svg
-                  v-else
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                </svg>
+                <span class="inline-flex h-4 w-4 items-center justify-center">
+                  <Transition name="pos-layout-icon" mode="out-in">
+                    <svg
+                      v-if="catalogLayoutToggleTarget === 'list'"
+                      key="icon-list"
+                      class="h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    <svg
+                      v-else
+                      key="icon-grid"
+                      class="h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+                    </svg>
+                  </Transition>
+                </span>
               </button>
               <UiSearchBar
                 v-if="posShowSearch"
@@ -2451,78 +2464,97 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Products Grid — page scroll on mobile; inner scroll on desktop (#1032) -->
-        <div>
-          <!-- Empty State -->
-          <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center h-64 text-text-secondary">
-            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <p class="text-lg font-medium">{{ t('pos.banner.noProducts') }}</p>
-            <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
-          </div>
+        <!-- Products catalog — layout crossfade + filter stagger (#2499) -->
+        <div class="relative min-h-[8rem]">
+          <Transition name="pos-catalog-layout" mode="out-in">
+            <!-- Empty State -->
+            <div
+              v-if="filteredProducts.length === 0"
+              key="empty"
+              class="flex flex-col items-center justify-center h-64 text-text-secondary"
+            >
+              <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              <p class="text-lg font-medium">{{ t('pos.banner.noProducts') }}</p>
+              <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
+            </div>
 
-          <!-- Products list — compact rows like /ventas/ordenes (#2499); no photos -->
-          <UiResponsiveDataView
-            v-else-if="resolvedCatalogLayout === 'list'"
-            :columns="catalogListColumns"
-            :data="filteredProducts"
-            item-key="id"
-            :empty-message="t('pos.banner.noProducts')"
-            row-size="sm"
-            @row-click="selectProduct"
-          >
-            <template #card="{ item }">
-              <button
-                type="button"
-                class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-data-table-row-hover-bg"
-                @click="selectProduct(item)"
+            <!-- Products list — compact rows like /ventas/ordenes (#2499); no photos -->
+            <div
+              v-else-if="resolvedCatalogLayout === 'list'"
+              key="list"
+              class="pos-catalog-surface"
+            >
+              <UiResponsiveDataView
+                :columns="catalogListColumns"
+                :data="filteredProducts"
+                item-key="id"
+                :empty-message="t('pos.banner.noProducts')"
+                row-size="sm"
+                @row-click="selectProduct"
               >
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
-                  <p
-                    v-if="promoBadgesByProductId.get(item.id)"
-                    class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
+                <template #card="{ item }">
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-data-table-row-hover-bg"
+                    @click="selectProduct(item)"
                   >
-                    {{ promoBadgesByProductId.get(item.id)?.label }}
-                  </p>
-                </div>
-                <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
-                  {{ formatCurrency(item.price) }}
-                </p>
-              </button>
-            </template>
-            <template #cell-name="{ item }">
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
-                <p
-                  v-if="promoBadgesByProductId.get(item.id)"
-                  class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
-                >
-                  {{ promoBadgesByProductId.get(item.id)?.label }}
-                </p>
-              </div>
-            </template>
-            <template #cell-price="{ item }">
-              <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
-            </template>
-          </UiResponsiveDataView>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+                      <p
+                        v-if="promoBadgesByProductId.get(item.id)"
+                        class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
+                      >
+                        {{ promoBadgesByProductId.get(item.id)?.label }}
+                      </p>
+                    </div>
+                    <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
+                      {{ formatCurrency(item.price) }}
+                    </p>
+                  </button>
+                </template>
+                <template #cell-name="{ item }">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+                    <p
+                      v-if="promoBadgesByProductId.get(item.id)"
+                      class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
+                    >
+                      {{ promoBadgesByProductId.get(item.id)?.label }}
+                    </p>
+                  </div>
+                </template>
+                <template #cell-price="{ item }">
+                  <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
+                </template>
+              </UiResponsiveDataView>
+            </div>
 
-          <!-- Products Grid -->
-          <div
-            v-else
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
-            :class="siblingGapClass"
-          >
-            <PosProductCard
-              v-for="product in filteredProducts"
-              :key="product.id"
-              :product="product"
-              :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
-              :show-image="posShowProductImage"
-              @select="selectProduct"
-            />
-          </div>
+            <!-- Products Grid — TransitionGroup for search/category filter morph -->
+            <TransitionGroup
+              v-else
+              key="grid"
+              tag="div"
+              name="pos-catalog-item"
+              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
+              :class="siblingGapClass"
+            >
+              <div
+                v-for="(product, index) in filteredProducts"
+                :key="product.id"
+                class="pos-catalog-item min-w-0"
+                :style="catalogItemStaggerStyle(index)"
+              >
+                <PosProductCard
+                  :product="product"
+                  :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
+                  :show-image="posShowProductImage"
+                  @select="selectProduct"
+                />
+              </div>
+            </TransitionGroup>
+          </Transition>
         </div>
       </div>
 
@@ -2746,6 +2778,89 @@ onUnmounted(() => {
   .pos-view-leave-to {
     opacity: 0;
     transform: translateY(8px);
+  }
+
+  /* Grid ↔ list surface: soft out-in (Linear/Apple-style ease) */
+  .pos-catalog-layout-enter-active {
+    transition:
+      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.28s ease;
+  }
+
+  .pos-catalog-layout-leave-active {
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease,
+      filter 0.18s ease;
+  }
+
+  .pos-catalog-layout-enter-from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+    filter: blur(2px);
+  }
+
+  .pos-catalog-layout-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+    filter: blur(1px);
+  }
+
+  /* Search / category filter: stagger + settle */
+  .pos-catalog-item-move {
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pos-catalog-item-enter-active {
+    transition:
+      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--pos-stagger, 0ms);
+  }
+
+  .pos-catalog-item-leave-active {
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+
+  .pos-catalog-item-enter-from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+
+  .pos-catalog-item-leave-to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  /* Toggle glyph morph */
+  .pos-layout-icon-enter-active,
+  .pos-layout-icon-leave-active {
+    transition:
+      opacity 0.15s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pos-layout-icon-enter-from {
+    opacity: 0;
+    transform: rotate(-42deg) scale(0.72);
+  }
+
+  .pos-layout-icon-leave-to {
+    opacity: 0;
+    transform: rotate(42deg) scale(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-catalog-layout-enter-active,
+  .pos-catalog-layout-leave-active,
+  .pos-catalog-item-enter-active,
+  .pos-catalog-item-leave-active,
+  .pos-catalog-item-move,
+  .pos-layout-icon-enter-active,
+  .pos-layout-icon-leave-active {
+    transition: none !important;
   }
 }
 </style>
