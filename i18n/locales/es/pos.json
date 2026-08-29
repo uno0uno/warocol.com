@@ -624,6 +624,7 @@
       "all": "Todos",
       "product": "Producto",
       "promo": "Promo",
+      "noPromo": "Sin promo",
       "price": "Precio",
       "layoutAria": "Vista del catálogo",
       "layoutGrid": "Cuadrícula",

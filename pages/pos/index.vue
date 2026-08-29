@@ -2489,6 +2489,12 @@ onUnmounted(() => {
                   >
                     {{ promoBadgesByProductId.get(item.id)?.label }}
                   </span>
+                  <span
+                    v-else
+                    class="inline-flex flex-shrink-0 truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
+                  >
+                    {{ t('pos.catalog.noPromo') }}
+                  </span>
                   <p class="flex-shrink-0 text-sm font-bold text-primary">
                     {{ formatCurrency(item.price) }}
                   </p>
@@ -2517,6 +2523,12 @@ onUnmounted(() => {
                 :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
               >
                 {{ promoBadgesByProductId.get(item.id)?.label }}
+              </span>
+              <span
+                v-else
+                class="inline-flex max-w-full truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
+              >
+                {{ t('pos.catalog.noPromo') }}
               </span>
             </template>
             <template #cell-price="{ item }">
