@@ -7,7 +7,8 @@
       "bitacora": "Bitácora",
       "turnos": "Turnos",
       "personalizar": "Personalizar",
-      "propinas": "Propinas"
+      "propinas": "Propinas",
+      "pos": "POS"
     },
     "head": {
       "module": "Operaciones | WARO",
@@ -16,7 +17,8 @@
       "propinas": "Propinas | Ventas",
       "personalizar": "Personalizar | Operaciones",
       "comandas": "Comandas & Cocina | Operaciones",
-      "impresoras": "Impresoras | Operaciones"
+      "impresoras": "Impresoras | Operaciones",
+      "pos": "POS | Operaciones"
     },
     "impresoras": {
       "title": "Impresoras",
@@ -288,6 +290,29 @@
       ,"needTwoTables": "Necesitas al menos 2 {tables} activas"
       ,"dragToOrder": "Arrastra para ordenar {tables} en POS"
       ,"billRequested": "Pidiendo cuenta"
+    },
+    "pos": {
+      "layoutTitle": "Vista del catálogo",
+      "layoutHelp": "Define cómo se muestran los productos en el POS por defecto. Cada usuario podrá cambiar a cuadrícula o listado solo para sí en una fase posterior.",
+      "layoutGrid": "Cuadrícula",
+      "layoutList": "Listado",
+      "layoutGridSaved": "El catálogo del POS usará cuadrícula por defecto",
+      "layoutListSaved": "El catálogo del POS usará listado por defecto",
+      "imagesEnabled": "Mostrar imágenes de productos",
+      "imagesDisabled": "Ocultar imágenes de productos",
+      "imagesHelp": "Si está desactivado, el POS no muestra fotos ni emojis en el catálogo.",
+      "imagesOn": "Las imágenes del catálogo están visibles en el POS",
+      "imagesOff": "Las imágenes del catálogo están ocultas en el POS",
+      "enableImages": "Mostrar imágenes",
+      "disableImages": "Ocultar imágenes",
+      "searchEnabled": "Mostrar buscador",
+      "searchDisabled": "Ocultar buscador",
+      "searchHelp": "Si está desactivado, el POS oculta la barra de búsqueda del catálogo.",
+      "searchOn": "El buscador del catálogo está visible en el POS",
+      "searchOff": "El buscador del catálogo está oculto en el POS",
+      "enableSearch": "Mostrar buscador",
+      "disableSearch": "Ocultar buscador",
+      "saveError": "No se pudo guardar la preferencia del POS"
     },
     "propinas": {
       "taxedDefaultOn": "Por defecto las propinas se cobrarán gravadas (con impuesto)",

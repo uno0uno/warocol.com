@@ -19,6 +19,7 @@ const navigationItems = computed(() => [
   { to: '/operaciones/comandas', label: t('operaciones.nav.comandasCocina') },
   { to: '/operaciones/impresoras', label: t('operaciones.nav.impresoras') },
   { to: '/operaciones/mesas', label: plural.value },
+  { to: '/operaciones/pos', label: t('operaciones.nav.pos') },
   { to: '/operaciones/promociones', label: t('operaciones.nav.promociones') },
   { to: '/operaciones/bitacora', label: t('operaciones.nav.bitacora') },
   { to: '/operaciones/turnos', label: t('operaciones.nav.turnos') },

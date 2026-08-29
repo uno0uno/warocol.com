@@ -621,7 +621,9 @@
     },
     "catalog": {
       "searchPlaceholder": "Search products...",
-      "all": "All"
+      "all": "All",
+      "product": "Product",
+      "price": "Price"
     },
     "reprint": {
       "title": "Reprint tickets",

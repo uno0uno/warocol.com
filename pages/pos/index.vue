@@ -141,6 +141,26 @@ const isResolvingSettings = computed(() => {
 
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+const resolvedCatalogLayout = computed<'grid' | 'list'>(() => {
+  // Batch #2495: tenant default only. #2496 adds user override ?? tenant.
+  const value = settingsData.value?.data?.pos_catalog_layout_default
+  return value === 'list' ? 'list' : 'grid'
+})
+const posShowProductImage = computed(
+  () => settingsData.value?.data?.pos_show_product_image !== false,
+)
+const posShowSearch = computed(
+  () => settingsData.value?.data?.pos_show_search !== false,
+)
+const catalogListColumns = computed(() => {
+  const cols: Array<{ key: string; title: string; sortable?: boolean }> = []
+  if (posShowProductImage.value) {
+    cols.push({ key: 'image', title: '', sortable: false })
+  }
+  cols.push({ key: 'name', title: t('pos.catalog.product'), sortable: false })
+  cols.push({ key: 'price', title: t('pos.catalog.price'), sortable: false })
+  return cols
+})
 const isStarterPlan = computed(() =>
   isStarterPlanSlug(accessStore.planSlug) || isStarterAccessLevel(accessStatus.value?.level),
 )
@@ -1495,7 +1515,9 @@ const categories = computed(() => {
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesSearch = !posShowSearch.value
+      || !searchQuery.value.trim()
+      || product.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesCategory = selectedCategory.value === 'all' || product.category === selectedCategory.value
     return matchesSearch && matchesCategory
   })
@@ -2271,6 +2293,7 @@ onUnmounted(() => {
           <!-- Catalog controls: search + category filters -->
           <div :class="['flex flex-col', sectionGapClass]">
             <UiSearchBar
+              v-if="posShowSearch"
               v-model="searchQuery"
               :placeholder="t('pos.catalog.searchPlaceholder')"
               class="h-9 px-3"
@@ -2308,13 +2331,90 @@ onUnmounted(() => {
             <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
           </div>
 
+          <!-- Products list (tenant default / future user override) -->
+          <UiResponsiveDataView
+            v-else-if="resolvedCatalogLayout === 'list'"
+            :columns="catalogListColumns"
+            :data="filteredProducts"
+            item-key="id"
+            :empty-message="t('pos.banner.noProducts')"
+            @row-click="selectProduct"
+          >
+            <template #card="{ item }">
+              <button
+                type="button"
+                class="w-full rounded-xl border-2 border-border bg-surface p-3 text-left transition-colors hover:border-border hover:bg-surface-secondary"
+                @click="selectProduct(item)"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    v-if="posShowProductImage"
+                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/40 bg-surface-secondary"
+                  >
+                    <img
+                      v-if="item.image_url && item.image_url.startsWith('http')"
+                      :src="item.image_url"
+                      :alt="item.name"
+                      loading="lazy"
+                      class="h-full w-full object-cover"
+                    >
+                    <span v-else class="text-xl">{{ item.image }}</span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+                    <p
+                      v-if="promoBadgesByProductId.get(item.id)"
+                      class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
+                    >
+                      {{ promoBadgesByProductId.get(item.id)?.label }}
+                    </p>
+                  </div>
+                  <p class="flex-shrink-0 text-sm font-bold text-primary">
+                    {{ formatCurrency(item.price) }}
+                  </p>
+                </div>
+              </button>
+            </template>
+            <template v-if="posShowProductImage" #cell-image="{ item }">
+              <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border/40 bg-surface-secondary">
+                <img
+                  v-if="item.image_url && item.image_url.startsWith('http')"
+                  :src="item.image_url"
+                  :alt="item.name"
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                >
+                <span v-else class="text-lg">{{ item.image }}</span>
+              </div>
+            </template>
+            <template #cell-name="{ item }">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-text-primary">{{ item.name }}</p>
+                <p
+                  v-if="promoBadgesByProductId.get(item.id)"
+                  class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
+                >
+                  {{ promoBadgesByProductId.get(item.id)?.label }}
+                </p>
+              </div>
+            </template>
+            <template #cell-price="{ item }">
+              <span class="font-bold text-primary">{{ formatCurrency(item.price) }}</span>
+            </template>
+          </UiResponsiveDataView>
+
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4" :class="siblingGapClass">
+          <div
+            v-else
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
+            :class="siblingGapClass"
+          >
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"
               :product="product"
               :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
+              :show-image="posShowProductImage"
               @select="selectProduct"
             />
           </div>
