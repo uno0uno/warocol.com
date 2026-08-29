@@ -456,7 +456,12 @@
       "nameMaxError": "名称不能超过100个字符",
       "creatingLabel": "正在创建",
       "creatingCategoryAria": "正在创建类别",
-      "createError": "创建类别失败"
+      "createError": "创建类别失败",
+      "posColor": "收银卡片颜色",
+      "posColorHelp": "为该分类在收银处的产品卡片着色。留空则使用关键词自动颜色。",
+      "posColorClear": "清除",
+      "posColorPickerAria": "POS 分类颜色选择器",
+      "posColorHexAria": "POS 分类十六进制颜色"
     },
     "filters": {
       "searchPlaceholder": "搜索商品...",

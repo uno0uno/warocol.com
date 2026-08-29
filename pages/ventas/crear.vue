@@ -152,6 +152,7 @@ const products = computed(() => {
       price: Number(p.price) || 0,
       category: p.category_name || p.category?.name || p.category || t('ventas.common.sinCategoria'),
       category_id: p.category_id ?? null,
+      category_color: p.category_color ?? null,
       image: p.image || '🍽️',
       image_url: p.image_url || null,
       available: p.is_available !== false,

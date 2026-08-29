@@ -121,6 +121,7 @@ export interface CachedProduct {
     image_url?: string | null  // Issue #465: real image when uploaded; emoji fallback otherwise
     category: string
     category_id?: string | null
+    category_color?: string | null
     is_available: boolean
     is_resale: boolean
     modifier_groups: any[] // Grupos de modificadores con todas sus opciones
@@ -530,6 +531,7 @@ export const usePOSStore = defineStore('pos', () => {
             image_url: (p.image_url as string | null | undefined) ?? null,
             category: String(p.category_name ?? categoryObj?.name ?? ''),
             category_id: (p.category_id as string | null | undefined) ?? null,
+            category_color: (p.category_color as string | null | undefined) ?? null,
             is_available: p.is_available !== false,
             is_resale: Boolean(p.is_resale),
             modifier_groups: Array.isArray(p.modifier_groups) ? p.modifier_groups : [],

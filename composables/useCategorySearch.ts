@@ -17,6 +17,7 @@ export interface CategoryRow {
   id: string
   name: string
   description: string | null
+  color?: string | null
   tenant_id: string | null
   created_at: string
   updated_at: string

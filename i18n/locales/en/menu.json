@@ -583,7 +583,12 @@
       "nameMaxError": "Name cannot exceed 100 characters",
       "creatingLabel": "Creating",
       "creatingCategoryAria": "Creating category",
-      "createError": "Error creating the category"
+      "createError": "Error creating the category",
+      "posColor": "POS card color",
+      "posColorHelp": "Tints product cards for this category in the register. Leave empty to keep the automatic keyword color.",
+      "posColorClear": "Clear",
+      "posColorPickerAria": "Category color picker for POS",
+      "posColorHexAria": "Category hex color for POS"
     },
     "filters": {
       "searchPlaceholder": "Search products...",

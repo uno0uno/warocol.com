@@ -456,7 +456,12 @@
       "nameMaxError": "नाम 100 अक्षरों से अधिक नहीं हो सकता",
       "creatingLabel": "बनाया जा रहा है",
       "creatingCategoryAria": "श्रेणी बनाई जा रही है",
-      "createError": "श्रेणी बनाने में त्रुटि"
+      "createError": "श्रेणी बनाने में त्रुटि",
+      "posColor": "POS कार्ड रंग",
+      "posColorHelp": "कैशियर में इस श्रेणी के उत्पाद कार्ड को रंग देता है। खाली = स्वचालित कीवर्ड रंग।",
+      "posColorClear": "हटाएँ",
+      "posColorPickerAria": "POS के लिए श्रेणी रंग चयनकर्ता",
+      "posColorHexAria": "POS के लिए श्रेणी हेक्स रंग"
     },
     "filters": {
       "searchPlaceholder": "उत्पाद खोजें...",

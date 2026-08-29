@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { resolvePosProductCardColors } from '~/utils/posCategoryColor'
 
 const { formatCurrency } = useFormatters()
 
@@ -67,6 +68,7 @@ interface Product {
   name: string
   price: number
   category: string
+  category_color?: string | null
   image: string
   image_url?: string | null
   available: boolean
@@ -94,89 +96,16 @@ defineEmits<Emits>()
 
 const isHovered = ref(false)
 
-interface ColorEntry {
-  keywords: string[]
-  bg: string
-  hoverBg: string
-  border: string
-  slotBg: string  // Icon slot uses a -300 tint of the same hue so the slot stands out from the card surface (-200) without competing with the -500 border.
-}
-
-// Similarity-based: score by how many keywords appear in the text.
-// Fondos más bajos (-50/-100), bordes suaves (-300/-400) — menos saturación en POS
-const colorEntries: ColorEntry[] = [
-  {
-    keywords: ['veg', 'viggi', 'saludab', 'ensalad', 'orella', 'bowl', 'organico', 'orgánico'],
-    bg: '#F0FDF4', hoverBg: '#DCFCE7', border: '#86EFAC', slotBg: '#DCFCE7'   // 🟢 verde suave
-  },
-  {
-    keywords: ['bebida', 'jugo', 'agua', 'cafe', 'café', 'limon', 'cerveza', 'coctel', 'fresco', 'smoothie', 'soda', 'refresc', 'gaseosa', 'drink'],
-    bg: '#F0F9FF', hoverBg: '#E0F2FE', border: '#7DD3FC', slotBg: '#E0F2FE'   // 🔵 cielo suave
-  },
-  {
-    keywords: ['postre', 'torta', 'helado', 'dulce', 'brownie', 'galleta', 'donut', 'cake', 'tarta', 'flan', 'mousse', 'crepe', 'pastel'],
-    bg: '#FDF2F8', hoverBg: '#FCE7F3', border: '#F9A8D4', slotBg: '#FCE7F3'   // 🩷 rosa suave
-  },
-  {
-    keywords: ['hamburgues', 'burg', 'hot dog', 'hotdog', 'chorizo', 'chori', 'pollo', 'res', 'carne', 'chicken', 'beef', 'costilla', 'cerdo', 'lomo', 'filete', 'asado', 'bestial', 'sencill'],
-    bg: '#FFF7ED', hoverBg: '#FFEDD5', border: '#FDBA74', slotBg: '#FFEDD5'   // 🟠 naranja suave
-  },
-  {
-    keywords: ['pizza', 'calzone'],
-    bg: '#FFF1F2', hoverBg: '#FFE4E6', border: '#FDA4AF', slotBg: '#FFE4E6'   // 🔴 coral suave
-  },
-  {
-    keywords: ['pasta', 'sopa', 'crema', 'arroz', 'fideo', 'lasaña', 'espagueti'],
-    bg: '#FEFCE8', hoverBg: '#FEF9C3', border: '#FDE047', slotBg: '#FEF9C3'   // 🟡 amarillo suave
-  },
-  {
-    keywords: ['papa', 'frit', 'empanada', 'snack', 'alita', 'croqueta', 'entrada'],
-    bg: '#F0FDFA', hoverBg: '#CCFBF1', border: '#5EEAD4', slotBg: '#CCFBF1'   // 🩵 teal suave
-  },
-  {
-    keywords: ['pescado', 'marisco', 'salmon', 'salmón', 'atun', 'atún', 'camaron', 'camarón', 'langosta', 'pulpo', 'seafood'],
-    bg: '#EEF2FF', hoverBg: '#E0E7FF', border: '#A5B4FC', slotBg: '#E0E7FF'   // 🔷 índigo suave
-  },
-  {
-    keywords: ['desayuno', 'huevo', 'tostada', 'pancake', 'waffle', 'arepa', 'tamal', 'breakfast'],
-    bg: '#FFFBEB', hoverBg: '#FEF3C7', border: '#FCD34D', slotBg: '#FEF3C7'   // 🟤 ámbar suave
-  },
-  {
-    keywords: ['caja', 'llevar', 'empaque', 'bolsa', 'envase'],
-    bg: '#F5F3FF', hoverBg: '#EDE9FE', border: '#C4B5FD', slotBg: '#EDE9FE'   // 🟣 violeta suave
-  },
-  {
-    keywords: ['sandwich', 'wrap', 'panini', 'taco', 'burrito', 'quesadilla'],
-    bg: '#FDF4FF', hoverBg: '#FAE8FF', border: '#E879F9', slotBg: '#FAE8FF'   // 💜 fucsia suave
-  },
-]
-
-// Score each entry by counting keyword matches in the combined text.
-// Returns the color with highest score, or the surface fallback.
-const getColorForProduct = (category: string, name: string) => {
-  const text = `${category} ${name}`.toLowerCase()
-
-  let bestEntry: ColorEntry | null = null
-  let bestScore = 0
-
-  for (const entry of colorEntries) {
-    const score = entry.keywords.filter(kw => text.includes(kw)).length
-    if (score > bestScore) {
-      bestScore = score
-      bestEntry = entry
-    }
-  }
-
-  return bestEntry ?? {
-    bg: 'hsl(var(--surface))',
-    hoverBg: 'hsl(var(--surface-secondary))',
-    border: 'hsl(var(--border))',
-    slotBg: 'hsl(var(--surface-secondary))'
-  }
-}
+const palette = computed(() =>
+  resolvePosProductCardColors({
+    categoryColor: props.product.category_color,
+    category: props.product.category,
+    name: props.product.name,
+  }),
+)
 
 const cardStyle = computed(() => {
-  const colors = getColorForProduct(props.product.category, props.product.name)
+  const colors = palette.value
   return {
     backgroundColor: isHovered.value ? colors.hoverBg : colors.bg,
     borderColor: colors.border,
@@ -184,8 +113,7 @@ const cardStyle = computed(() => {
   }
 })
 
-const iconSlotStyle = computed(() => {
-  const colors = getColorForProduct(props.product.category, props.product.name)
-  return { backgroundColor: colors.slotBg }
-})
+const iconSlotStyle = computed(() => ({
+  backgroundColor: palette.value.slotBg,
+}))
 </script>
