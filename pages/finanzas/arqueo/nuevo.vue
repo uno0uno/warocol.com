@@ -284,7 +284,7 @@
             </div>
           </div>
 
-          <!-- Mesas abiertas: bloquear o continuar -->
+          <!-- Mesas abiertas: aviso (no bloquea — cadena de turnos #2511) -->
           <div v-if="xPreviewData.openTablesCount > 0" class="bg-surface border-2 border-state-warning-border rounded-lg p-4 flex items-start gap-3">
             <div class="w-10 h-10 rounded-lg bg-state-warning-bg border border-state-warning-border flex items-center justify-center flex-shrink-0">
               <svg class="w-5 h-5 text-state-warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -313,7 +313,7 @@
             {{ t('finanzas.arqueo.openShiftBeforeCloseInline') }}
             <NuxtLink :to="aperturaLink" class="font-semibold underline ms-1">{{ t('finanzas.arqueo.openShift') }}</NuxtLink>
           </div>
-          <div v-if="xPreviewData.openTablesCount === 0" class="flex gap-3">
+          <div class="flex gap-3">
             <button
               @click="currentStep = 2"
               class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
