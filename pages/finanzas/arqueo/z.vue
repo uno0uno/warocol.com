@@ -403,7 +403,7 @@
 
       <!-- ── Step content ─────────────────────────────────────────────────── -->
 
-      <!-- Step 1: Cuentas abiertas (bloqueador — solo visible si hay mesas abiertas) -->
+      <!-- Step 1: Cuentas abiertas (aviso — no bloquea #2511) -->
       <div v-if="currentStep === 1" class="bg-surface border-2 border-state-warning-border rounded-lg p-3 sm:p-4">
         <div v-if="previewLoading" class="flex justify-center py-6">
           <CommonsTheCustomLoader size="large" />
@@ -418,7 +418,7 @@
             <p class="text-sm font-semibold text-state-warning-text">
               {{ previewData.openTablesCount }} {{ previewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta
             </p>
-            <p class="text-xs text-state-warning-text/90 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
+            <p class="text-xs text-state-warning-text/90 mt-0.5">{{ t('finanzas.arqueo.closeOpenTables', { tables: tablePlural.toLowerCase() }) }}</p>
             <div class="flex flex-wrap gap-2 mt-3">
               <NuxtLink
                 to="/pos"
@@ -428,7 +428,7 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                Ir al POS
+                {{ t('finanzas.arqueo.goToPos') }}
               </NuxtLink>
               <button
                 @click="refetchPreview()"
@@ -437,7 +437,14 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Verificar de nuevo
+                {{ t('finanzas.arqueo.verifyAgain') }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                @click="currentStep = 2"
+              >
+                {{ t('finanzas.arqueo.continueWithOpenTables') }}
               </button>
             </div>
           </div>
