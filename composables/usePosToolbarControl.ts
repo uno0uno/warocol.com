@@ -10,6 +10,8 @@ export function usePosToolbarControl() {
 
   /** Inset padding for POS surface panels (mesa banner, cart blocks) — 12px */
   const panelPaddingClass = 'p-3'
+  /** Sibling controls / chips / action grids / product tiles — 12px */
+  const siblingGapClass = 'gap-3'
   /** Vertical stack of sibling actions (Cuenta / Limpiar / Enviar) — 12px */
   const siblingStackClass = 'space-y-3'
   /** Parent blocks (banner ↔ catalog ↔ cart column) — 16px */
