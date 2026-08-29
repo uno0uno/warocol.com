@@ -206,6 +206,7 @@ const catalogListColumns = computed(() => {
     cols.push({ key: 'image', title: '', sortable: false })
   }
   cols.push({ key: 'name', title: t('pos.catalog.product'), sortable: false })
+  cols.push({ key: 'promo', title: t('pos.catalog.promo'), sortable: false })
   cols.push({ key: 'price', title: t('pos.catalog.price'), sortable: false })
   return cols
 })
@@ -2480,15 +2481,14 @@ onUnmounted(() => {
                     >
                     <span v-else class="text-xl">{{ item.image }}</span>
                   </div>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
-                    <p
-                      v-if="promoBadgesByProductId.get(item.id)"
-                      class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
-                    >
-                      {{ promoBadgesByProductId.get(item.id)?.label }}
-                    </p>
-                  </div>
+                  <p class="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+                  <span
+                    v-if="promoBadgesByProductId.get(item.id)"
+                    class="inline-flex max-w-[40%] flex-shrink-0 truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
+                    :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
+                  >
+                    {{ promoBadgesByProductId.get(item.id)?.label }}
+                  </span>
                   <p class="flex-shrink-0 text-sm font-bold text-primary">
                     {{ formatCurrency(item.price) }}
                   </p>
@@ -2508,15 +2508,16 @@ onUnmounted(() => {
               </div>
             </template>
             <template #cell-name="{ item }">
-              <div class="min-w-0">
-                <p class="truncate font-semibold text-text-primary">{{ item.name }}</p>
-                <p
-                  v-if="promoBadgesByProductId.get(item.id)"
-                  class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
-                >
-                  {{ promoBadgesByProductId.get(item.id)?.label }}
-                </p>
-              </div>
+              <p class="truncate font-semibold text-text-primary">{{ item.name }}</p>
+            </template>
+            <template #cell-promo="{ item }">
+              <span
+                v-if="promoBadgesByProductId.get(item.id)"
+                class="inline-flex max-w-full truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
+                :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
+              >
+                {{ promoBadgesByProductId.get(item.id)?.label }}
+              </span>
             </template>
             <template #cell-price="{ item }">
               <span class="font-bold text-primary">{{ formatCurrency(item.price) }}</span>
