@@ -26,7 +26,8 @@ test('maps blog slugs to the five commercial intents', () => {
 test('keeps self-service registration copy centralized', () => {
   const posFinal = getPublicCta('pos', 'final')
   assert.match(`${posFinal.eyebrow} ${posFinal.headline}`, /POS/)
-  assert.match(posFinal.body, /COP 95\.900\/año/)
+  assert.match(posFinal.body, /USD \$9\/mes/)
+  assert.doesNotMatch(posFinal.body, /COP/i)
   assert.match(posFinal.microcopy, /activa después del pago/)
   assert.equal(posFinal.button, 'Crear cuenta y elegir plan')
   assert.equal(PUBLIC_CTA_COMPARISON, null)
@@ -179,11 +180,12 @@ test('LATAM public offer is monthly USD $9 only (no annual, no COP)', () => {
   assert.doesNotMatch(cta.body, /COP|108/i)
 })
 
-test('omitted market keeps Colombia ES COP public CTAs', () => {
+test('omitted market keeps Colombia ES usd_9 public CTAs', () => {
   const omitted = getPublicCta('pos', 'final')
   const co = getPublicCta('pos', 'final', { lang: 'es', country: 'Colombia' })
   assert.equal(omitted.body, co.body)
-  assert.match(omitted.body, /COP 95\.900\/año/)
+  assert.match(omitted.body, /USD \$9\/mes/)
+  assert.doesNotMatch(omitted.body, /COP/i)
   assert.equal(omitted.button, 'Crear cuenta y elegir plan')
 })
 

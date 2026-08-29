@@ -18,15 +18,7 @@ const LEAD_MICROCOPY_ES = '2 minutos. Sin tarjeta. Un asesor te contacta.'
 const LEAD_MICROCOPY_EN = '2 minutes. No card required. An advisor will contact you.'
 
 function commercialPriceEs(annualPriceLabel: string) {
-  // Keep historical Colombia copy when label is the CO default.
-  if (annualPriceLabel === 'COP 95.900/año') {
-    return {
-      headline: 'Plan Pro anual desde COP 95.900.',
-      body: 'POS, inventario, costos por plato y escaneo inteligente de facturas. Sin permanencia.',
-      button: 'Ver mis opciones',
-    }
-  }
-  // Monthly-only markets (e.g. LATAM usd_9): no "anual".
+  // Monthly-only markets (CO / LATAM usd_9): no "anual".
   const isMonthly = /\/mes$|\/month$/i.test(annualPriceLabel)
   return {
     headline: isMonthly
@@ -53,6 +45,7 @@ function isCommercialSlug(slug: string): boolean {
 function copyForSlugEs(
   slug: string,
   annualPriceLabel: string,
+  marketCode?: string,
 ): Pick<BlogLeadCtaContent, 'headline' | 'body' | 'button'> {
   const s = slug.toLocaleLowerCase()
   const commercial = commercialPriceEs(annualPriceLabel)
@@ -82,12 +75,9 @@ function copyForSlugEs(
   }
 
   if (/software|pos|pdv|tpv|sistema-pos|contable/.test(s)) {
-    const fromPrice = annualPriceLabel === 'COP 95.900/año'
-      ? 'COP 95.900 al año'
-      : annualPriceLabel
     return {
-      headline: `POS para restaurantes desde ${fromPrice}.`,
-      body: annualPriceLabel === 'COP 95.900/año'
+      headline: `POS para restaurantes desde ${annualPriceLabel}.`,
+      body: marketCode === 'CO'
         ? 'Vende, controla mesas, inventario, costos y facturas de proveedores con IA. Hecho en Colombia para restaurantes colombianos.'
         : 'Vende, controla mesas, inventario, costos y facturas de proveedores con IA.',
       button: 'Ver demostración',
@@ -102,12 +92,9 @@ function copyForSlugEs(
     }
   }
 
-  const defaultFrom = annualPriceLabel === 'COP 95.900/año'
-    ? 'COP 95.900 al año'
-    : annualPriceLabel
   return {
     headline: 'Controla tu restaurante con WARO.',
-    body: `POS, inventario, costos por plato y escaneo inteligente de facturas desde ${defaultFrom}.`,
+    body: `POS, inventario, costos por plato y escaneo inteligente de facturas desde ${annualPriceLabel}.`,
     button: 'Comenzar gratis',
   }
 }
@@ -177,7 +164,7 @@ export function getBlogLeadCta(
 
   const base = market.isUsEn
     ? copyForSlugEn(slug, market.annualPriceLabel)
-    : copyForSlugEs(slug, market.annualPriceLabel)
+    : copyForSlugEs(slug, market.annualPriceLabel, market.market)
 
   const microcopy = market.isUsEn ? LEAD_MICROCOPY_EN : LEAD_MICROCOPY_ES
   const commercial = market.isUsEn

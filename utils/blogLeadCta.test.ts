@@ -21,20 +21,23 @@ test('maps blog slugs to pain-first lead copy', () => {
 
 test('shows price placement only on commercial slugs', () => {
   const commercial = getBlogLeadCta('software-para-restaurantes-precio', 'price')
-  assert.match(commercial.headline, /95\.900/)
+  assert.match(commercial.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(commercial.headline, /95\.900|anual/i)
 
   const informational = getBlogLeadCta('inventario-restaurante', 'price')
   assert.doesNotMatch(informational.headline, /activa después del pago/)
   assert.equal(informational.button, 'Quiero ver cómo funciona')
 })
 
-test('keeps Colombia ES COP copy when market is CO', () => {
+test('keeps Colombia ES monthly USD $9 copy when market is CO', () => {
   const pos = getBlogLeadCta('software-pos-restaurantes', 'final', CO_ES)
-  assert.match(pos.headline, /COP 95\.900/)
+  assert.match(pos.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(pos.headline, /COP|anual/i)
   assert.match(pos.microcopy, /Sin tarjeta/)
 
   const price = getBlogLeadCta('precio-sistema-pos', 'price', CO_ES)
-  assert.match(price.headline, /COP 95\.900/)
+  assert.match(price.headline, /USD \$9\/mes/)
+  assert.doesNotMatch(price.headline, /95\.900/)
 })
 
 test('shows EN CTA with USD $30/month for US English market', () => {

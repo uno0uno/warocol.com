@@ -24,15 +24,16 @@ test('accepts US country aliases', () => {
   assert.equal(normalizeArticleCountry('united states of america'), 'US')
 })
 
-test('keeps Colombia ES offer and locales', () => {
+test('keeps Colombia ES locales with usd_9 monthly offer', () => {
   const market = resolveArticleMarket({ lang: 'es', country: 'Colombia' })
   assert.equal(market.isUsEn, false)
   assert.equal(market.ogLocale, 'es_CO')
   assert.equal(market.inLanguage, 'es-CO')
   assert.equal(market.localeTag, 'es-CO')
-  assert.equal(market.currency, 'COP')
-  assert.equal(market.annualPrice, '95900')
-  assert.equal(market.monthlyPrice, '7992')
+  assert.equal(market.currency, 'USD')
+  assert.equal(market.annualPrice, '')
+  assert.equal(market.monthlyPrice, '9')
+  assert.equal(market.annualPriceLabel, 'USD $9/mes')
   assert.equal(market.areaServedName, 'Colombia')
 })
 
@@ -52,7 +53,8 @@ test('requires both English lang and US country for USD market', () => {
   assert.equal(resolveArticleMarket({ lang: 'en', country: 'Colombia' }).isUsEn, false)
   assert.equal(resolveArticleMarket({ lang: 'es', country: 'US' }).isUsEn, false)
   assert.equal(resolveArticleMarket({ lang: 'en-US', country: 'USA' }).isUsEn, true)
-  assert.equal(resolveArticleMarket({}).currency, 'COP')
+  assert.equal(resolveArticleMarket({}).currency, 'USD')
+  assert.equal(resolveArticleMarket({}).annualPriceLabel, 'USD $9/mes')
 })
 
 test('Spain article uses EUR and es-ES tags', () => {
@@ -93,6 +95,7 @@ test('anonymous reader uses cf-ipcountry and Accept-Language', () => {
   assert.equal(usd.isUsEn, true)
 
   const fallback = resolveAnonymousReaderMarket({})
-  assert.equal(fallback.currency, 'COP')
+  assert.equal(fallback.currency, 'USD')
   assert.equal(fallback.market, 'CO')
+  assert.equal(fallback.annualPriceLabel, 'USD $9/mes')
 })
