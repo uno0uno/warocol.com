@@ -623,6 +623,8 @@
       "searchPlaceholder": "Search products...",
       "all": "All",
       "product": "Product",
+      "promo": "Promo",
+      "noPromo": "No promo",
       "price": "Price",
       "layoutAria": "Catalog layout",
       "layoutGrid": "Grid",

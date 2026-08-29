@@ -209,9 +209,9 @@ const catalogLayoutToggleButtonClass = computed(() => [
   isSavingCatalogLayout.value ? 'opacity-50 pointer-events-none' : '',
 ])
 
-/** Cap stagger so large catalogs stay snappy (modern filter-grid pattern). */
+/** Soft filter stagger — few steps, calmer cascade. */
 const catalogItemStaggerStyle = (index: number) => ({
-  '--pos-stagger': `${Math.min(index, 14) * 18}ms`,
+  '--pos-stagger': `${Math.min(index, 8) * 40}ms`,
 })
 
 const posShowProductImage = computed(
@@ -220,9 +220,10 @@ const posShowProductImage = computed(
 const posShowSearch = computed(
   () => settingsData.value?.data?.pos_show_search !== false,
 )
-/** List mode never shows photos (#2499) — denser like ventas/ordenes. */
+/** List mode: no photos (#2499); dedicated promo chip column (#2501). */
 const catalogListColumns = computed(() => [
   { key: 'name', title: t('pos.catalog.product'), sortable: false },
+  { key: 'promo', title: t('pos.catalog.promo'), sortable: false },
   { key: 'price', title: t('pos.catalog.price'), sortable: false },
 ])
 const isStarterPlan = computed(() =>
@@ -2469,98 +2470,105 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Products catalog — layout crossfade + filter stagger (#2499) -->
+        <!-- Products catalog — no layout swap animation; soft filter stagger on grid -->
         <div class="relative min-h-[8rem]">
-          <Transition name="pos-catalog-layout" mode="out-in">
-            <!-- Empty State -->
-            <div
-              v-if="filteredProducts.length === 0"
-              key="empty"
-              class="flex flex-col items-center justify-center h-64 text-text-secondary"
-            >
-              <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-              <p class="text-lg font-medium">{{ t('pos.banner.noProducts') }}</p>
-              <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
-            </div>
+          <!-- Empty State -->
+          <div
+            v-if="filteredProducts.length === 0"
+            class="flex flex-col items-center justify-center h-64 text-text-secondary"
+          >
+            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p class="text-lg font-medium">{{ t('pos.banner.noProducts') }}</p>
+            <p class="text-sm mt-1">{{ t('pos.banner.addFromMenu') }}</p>
+          </div>
 
-            <!-- Products list — compact rows like /ventas/ordenes (#2499); no photos -->
-            <div
-              v-else-if="resolvedCatalogLayout === 'list'"
-              key="list"
-              class="pos-catalog-surface"
+          <!-- Products list — compact rows (#2499); promo chip column (#2501) -->
+          <div
+            v-else-if="resolvedCatalogLayout === 'list'"
+            class="pos-catalog-surface"
+          >
+            <UiResponsiveDataView
+              :columns="catalogListColumns"
+              :data="filteredProducts"
+              item-key="id"
+              :empty-message="t('pos.banner.noProducts')"
+              row-size="sm"
+              @row-click="selectProduct"
             >
-              <UiResponsiveDataView
-                :columns="catalogListColumns"
-                :data="filteredProducts"
-                item-key="id"
-                :empty-message="t('pos.banner.noProducts')"
-                row-size="sm"
-                @row-click="selectProduct"
-              >
-                <template #card="{ item }">
-                  <button
-                    type="button"
-                    class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-data-table-row-hover-bg"
-                    @click="selectProduct(item)"
+              <template #card="{ item }">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-data-table-row-hover-bg"
+                  @click="selectProduct(item)"
+                >
+                  <p class="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+                  <span
+                    v-if="promoBadgesByProductId.get(item.id)"
+                    class="inline-flex max-w-[40%] flex-shrink-0 truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
+                    :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
                   >
-                    <div class="min-w-0 flex-1">
-                      <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
-                      <p
-                        v-if="promoBadgesByProductId.get(item.id)"
-                        class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
-                      >
-                        {{ promoBadgesByProductId.get(item.id)?.label }}
-                      </p>
-                    </div>
-                    <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
-                      {{ formatCurrency(item.price) }}
-                    </p>
-                  </button>
-                </template>
-                <template #cell-name="{ item }">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
-                    <p
-                      v-if="promoBadgesByProductId.get(item.id)"
-                      class="mt-0.5 truncate text-[10px] font-semibold text-badge-success-text"
-                    >
-                      {{ promoBadgesByProductId.get(item.id)?.label }}
-                    </p>
-                  </div>
-                </template>
-                <template #cell-price="{ item }">
-                  <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
-                </template>
-              </UiResponsiveDataView>
-            </div>
+                    {{ promoBadgesByProductId.get(item.id)?.label }}
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex flex-shrink-0 truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
+                  >
+                    {{ t('pos.catalog.noPromo') }}
+                  </span>
+                  <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
+                    {{ formatCurrency(item.price) }}
+                  </p>
+                </button>
+              </template>
+              <template #cell-name="{ item }">
+                <p class="truncate text-sm font-semibold text-text-primary">{{ item.name }}</p>
+              </template>
+              <template #cell-promo="{ item }">
+                <span
+                  v-if="promoBadgesByProductId.get(item.id)"
+                  class="inline-flex max-w-full truncate rounded-full bg-badge-success-bg px-2 py-0.5 text-[10px] font-semibold text-badge-success-text"
+                  :title="promoBadgesByProductId.get(item.id)?.title || promoBadgesByProductId.get(item.id)?.label"
+                >
+                  {{ promoBadgesByProductId.get(item.id)?.label }}
+                </span>
+                <span
+                  v-else
+                  class="inline-flex max-w-full truncate rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[10px] font-semibold text-badge-neutral-text"
+                >
+                  {{ t('pos.catalog.noPromo') }}
+                </span>
+              </template>
+              <template #cell-price="{ item }">
+                <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
+              </template>
+            </UiResponsiveDataView>
+          </div>
 
-            <!-- Products Grid — TransitionGroup for search/category filter morph -->
-            <TransitionGroup
-              v-else
-              key="grid"
-              tag="div"
-              name="pos-catalog-item"
-              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
-              :class="siblingGapClass"
+          <!-- Products Grid — calm filter morph on search/category -->
+          <TransitionGroup
+            v-else
+            tag="div"
+            name="pos-catalog-item"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 pb-4"
+            :class="siblingGapClass"
+          >
+            <div
+              v-for="(product, index) in filteredProducts"
+              :key="product.id"
+              class="pos-catalog-item flex min-h-0 min-w-0 h-full"
+              :style="catalogItemStaggerStyle(index)"
             >
-              <div
-                v-for="(product, index) in filteredProducts"
-                :key="product.id"
-                class="pos-catalog-item flex min-h-0 min-w-0 h-full"
-                :style="catalogItemStaggerStyle(index)"
-              >
-                <PosProductCard
-                  class="h-full w-full"
-                  :product="product"
-                  :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
-                  :show-image="posShowProductImage"
-                  @select="selectProduct"
-                />
-              </div>
-            </TransitionGroup>
-          </Transition>
+              <PosProductCard
+                class="h-full w-full"
+                :product="product"
+                :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
+                :show-image="posShowProductImage"
+                @select="selectProduct"
+              />
+            </div>
+          </TransitionGroup>
         </div>
       </div>
 
@@ -2786,57 +2794,29 @@ onUnmounted(() => {
     transform: translateY(8px);
   }
 
-  /* Grid ↔ list surface: soft out-in (Linear/Apple-style ease) */
-  .pos-catalog-layout-enter-active {
-    transition:
-      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-      filter 0.28s ease;
-  }
-
-  .pos-catalog-layout-leave-active {
-    transition:
-      opacity 0.18s ease,
-      transform 0.18s ease,
-      filter 0.18s ease;
-  }
-
-  .pos-catalog-layout-enter-from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.985);
-    filter: blur(2px);
-  }
-
-  .pos-catalog-layout-leave-to {
-    opacity: 0;
-    transform: translateY(6px) scale(0.99);
-    filter: blur(1px);
-  }
-
-  /* Search / category filter: stagger + settle */
+  /* Search / category: slower, opacity-first — less visual noise */
   .pos-catalog-item-move {
-    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pos-catalog-item-enter-active {
     transition:
-      opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      opacity 0.42s ease,
+      transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: var(--pos-stagger, 0ms);
   }
 
   .pos-catalog-item-leave-active {
-    transition: opacity 0.16s ease, transform 0.16s ease;
+    transition: opacity 0.28s ease;
   }
 
   .pos-catalog-item-enter-from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    transform: translateY(-6px);
   }
 
   .pos-catalog-item-leave-to {
     opacity: 0;
-    transform: scale(0.96);
   }
 
   /* Toggle glyph morph */
@@ -2859,8 +2839,6 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pos-catalog-layout-enter-active,
-  .pos-catalog-layout-leave-active,
   .pos-catalog-item-enter-active,
   .pos-catalog-item-leave-active,
   .pos-catalog-item-move,

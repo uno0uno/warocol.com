@@ -1,0 +1,41 @@
+issue: 2501
+title: "feat(pos): dedicated promo column as chip in catalog list view"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2501-pos-list-promo-column
+
+paths:
+  - pages/pos/index.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - i18n/locales/pt/pos.json
+
+ac:
+  - List/table has separate Promo column (not under product name)
+  - Promo renders as chip; empty when no promo
+  - Product name cell shows only product name
+  - Mobile card keeps name and promo separate
+  - Grid/ProductCard promo badge unchanged
+  - No API or promo-matching changes
+
+out_of_scope:
+  - Grid animations
+  - Cart / backend promo matching
+  - ProductCard redesign
+
+hints:
+  entry: "pages/pos/index.vue catalogListColumns + list slots"
+  pattern: "promoBadgesByProductId + ProductCard badge-success chip classes"
+  tests: "manual: /pos list layout with active promo"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "gh issue comment + ready-for-review; wr-review"

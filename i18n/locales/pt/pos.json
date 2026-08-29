@@ -595,6 +595,8 @@
       "searchPlaceholder": "Buscar produtos...",
       "all": "Todos",
       "product": "Produto",
+      "promo": "Promo",
+      "noPromo": "Sem promo",
       "price": "Preço",
       "layoutAria": "Layout do catálogo",
       "layoutGrid": "Grade",
