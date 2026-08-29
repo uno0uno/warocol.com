@@ -30,6 +30,8 @@
     "refreshPage": "Atualizar página",
     "viewNotifications": "Ver notificações",
     "openNavigation": "Abrir navegação",
+    "expandSidebar": "Abrir menu",
+    "collapseSidebar": "Fechar menu",
     "settings": "Configurações",
     "notifications": "Notificações",
     "alertSound": "Som de alertas",

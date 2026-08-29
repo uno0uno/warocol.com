@@ -5,7 +5,8 @@
       @click="openModal"
       :disabled="isUpdating"
       :aria-label="businessProfile.is_currently_open ? t('shell.businessOpenAria') : t('shell.businessClosedAria')"
-      class="flex items-center gap-1.5 h-9 px-2 rounded-lg border border-shell-action-border bg-shell-action-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed hover:bg-shell-action-hover-bg"
+      :title="businessProfile.is_currently_open ? t('shell.businessOpenAria') : t('shell.businessClosedAria')"
+      class="flex items-center gap-2 h-9 px-2.5 rounded-lg border border-shell-action-border bg-shell-action-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50 disabled:cursor-not-allowed hover:bg-shell-action-hover-bg"
       :class="businessProfile.is_currently_open
         ? 'text-status-success-text'
         : 'text-status-critical-text'"

@@ -33,6 +33,8 @@
     "printBrowserStickyBody": "Imprimiendo por el navegador hasta que vuelvas a la térmica.",
     "viewNotifications": "Ver notificaciones",
     "openNavigation": "Abrir navegación",
+    "expandSidebar": "Abrir menú",
+    "collapseSidebar": "Cerrar menú",
     "settings": "Configuración",
     "notifications": "Notificaciones",
     "alertSound": "Sonido de alertas",

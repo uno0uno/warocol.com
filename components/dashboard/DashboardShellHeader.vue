@@ -24,7 +24,7 @@
         <!-- Actions: print mode, alerts, quick entry — denser chips (#2499, match Pagar anticipo) -->
         <div
           key="group-actions"
-          class="flex items-center gap-1"
+          class="flex items-center gap-2"
         >
           <button
             v-if="!forceBrowserPrint"
@@ -47,7 +47,7 @@
 
           <NuxtLink
             to="/abastecimiento/compras-directas/crear"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 border border-shell-cta-bg bg-shell-cta-bg text-shell-cta-text px-2 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
+            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 border border-shell-cta-bg bg-shell-cta-bg text-shell-cta-text px-2.5 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
             :title="t('shell.uploadInvoiceAi')"
             :aria-label="t('shell.uploadInvoiceAi')"
           >
@@ -57,7 +57,7 @@
 
           <button
             type="button"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-action-bg border border-shell-action-border text-shell-action-text px-2 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-action-bg border border-shell-action-border text-shell-action-text px-2.5 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
             :title="t('nav.pos')"
             :aria-label="t('nav.pos')"
             @click="$emit('navigate-pos')"
@@ -66,13 +66,13 @@
             <span class="hidden xl:inline">{{ t('nav.pos') }}</span>
           </button>
 
-          <div id="dashboard-header-actions" class="flex items-center gap-1" />
+          <div id="dashboard-header-actions" class="flex items-center gap-2" />
         </div>
 
         <!-- Status -->
         <div
           key="group-status"
-          class="flex items-center gap-1 ps-2 ms-0.5 border-s border-border/70"
+          class="flex items-center gap-2 ps-3 ms-1 border-s border-border/70"
         >
           <button
             v-if="headerAction"

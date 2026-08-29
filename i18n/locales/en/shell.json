@@ -33,6 +33,8 @@
     "printBrowserStickyBody": "Printing with the browser until you switch back to the thermal printer.",
     "viewNotifications": "View notifications",
     "openNavigation": "Open navigation",
+    "expandSidebar": "Open menu",
+    "collapseSidebar": "Close menu",
     "settings": "Settings",
     "notifications": "Notifications",
     "alertSound": "Alert sound",
