@@ -627,6 +627,8 @@
       "layoutAria": "Catalog layout",
       "layoutGrid": "Grid",
       "layoutList": "List",
+      "layoutSwitchToList": "Switch to list",
+      "layoutSwitchToGrid": "Switch to grid",
       "layoutDefault": "Default",
       "layoutDefaultHelp": "Use the layout set in Operations → POS",
       "layoutSaveError": "Could not save your catalog layout"

@@ -599,6 +599,8 @@
       "layoutAria": "Layout do catálogo",
       "layoutGrid": "Grade",
       "layoutList": "Lista",
+      "layoutSwitchToList": "Mudar para lista",
+      "layoutSwitchToGrid": "Mudar para grade",
       "layoutDefault": "Padrão",
       "layoutDefaultHelp": "Usar o layout definido em Operações → POS",
       "layoutSaveError": "Não foi possível salvar seu layout do catálogo"

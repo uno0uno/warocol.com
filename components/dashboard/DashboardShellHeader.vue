@@ -19,9 +19,9 @@
       <TransitionGroup
         name="header-actions"
         tag="div"
-        class="dashboard-header-actions relative flex w-fit min-w-0 max-w-full flex-shrink-0 items-center justify-end gap-1.5 overflow-x-auto lg:overflow-visible"
+        class="dashboard-header-actions relative flex w-fit min-w-0 max-w-full flex-shrink-0 items-center justify-end gap-1 overflow-x-auto lg:overflow-visible"
       >
-        <!-- Actions: print mode, alerts, quick entry -->
+        <!-- Actions: print mode, alerts, quick entry — denser chips (#2499, match Pagar anticipo) -->
         <div
           key="group-actions"
           class="flex items-center gap-1"
@@ -29,20 +29,25 @@
           <button
             v-if="!forceBrowserPrint"
             type="button"
-            class="h-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border border-shell-action-border bg-shell-action-bg px-2 text-xs font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors truncate"
+            class="h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border border-shell-action-border bg-shell-action-bg text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
             title="Desactivar térmica — usar impresión del navegador"
             aria-label="Desactivar térmica"
             @click="enableForceBrowser"
           >
-            Desactivar térmica
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 9V3h12v6" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <path d="M6 14h12v7H6z" />
+              <path d="M3 3l18 18" />
+            </svg>
           </button>
           <PosCajaPrintThermalChip v-if="forceBrowserPrint" />
 
-          <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_button]:rounded-lg [&_button]:border [&_button]:border-shell-action-border [&_button]:bg-shell-action-bg [&_svg]:!w-5 [&_svg]:!h-5" />
+          <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_button]:rounded-lg [&_button]:border [&_button]:border-shell-action-border [&_button]:bg-shell-action-bg [&_svg]:!w-4 [&_svg]:!h-4" />
 
           <NuxtLink
             to="/abastecimiento/compras-directas/crear"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 border border-shell-cta-bg bg-shell-cta-bg text-shell-cta-text px-2 xl:px-2.5 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
+            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 border border-shell-cta-bg bg-shell-cta-bg text-shell-cta-text px-2 rounded-lg text-sm font-medium hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring transition-all"
             :title="t('shell.uploadInvoiceAi')"
             :aria-label="t('shell.uploadInvoiceAi')"
           >
@@ -52,7 +57,7 @@
 
           <button
             type="button"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-action-bg border border-shell-action-border text-shell-action-text px-2 xl:px-2.5 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-action-bg border border-shell-action-border text-shell-action-text px-2 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
             :title="t('nav.pos')"
             :aria-label="t('nav.pos')"
             @click="$emit('navigate-pos')"
@@ -61,7 +66,7 @@
             <span class="hidden xl:inline">{{ t('nav.pos') }}</span>
           </button>
 
-          <div id="dashboard-header-actions" class="flex items-center" />
+          <div id="dashboard-header-actions" class="flex items-center gap-1" />
         </div>
 
         <!-- Status -->
@@ -76,7 +81,7 @@
               'h-9 flex-shrink-0 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 transition-colors flex items-center justify-center gap-1.5',
               headerAction.iconOnly
                 ? 'bg-shell-action-bg border border-shell-action-border text-shell-icon-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring w-9 px-0'
-                : 'bg-shell-action-bg border border-shell-action-border text-shell-action-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring max-w-40 px-2 xl:px-2.5',
+                : 'bg-shell-action-bg border border-shell-action-border text-shell-action-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring max-w-40 px-2',
             ]"
             :aria-label="headerAction.ariaLabel || headerAction.label"
             :title="headerAction.ariaLabel || headerAction.label"
