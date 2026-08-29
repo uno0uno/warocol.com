@@ -623,7 +623,13 @@
       "searchPlaceholder": "Search products...",
       "all": "All",
       "product": "Product",
-      "price": "Price"
+      "price": "Price",
+      "layoutAria": "Catalog layout",
+      "layoutGrid": "Grid",
+      "layoutList": "List",
+      "layoutDefault": "Default",
+      "layoutDefaultHelp": "Use the layout set in Operations → POS",
+      "layoutSaveError": "Could not save your catalog layout"
     },
     "reprint": {
       "title": "Reprint tickets",

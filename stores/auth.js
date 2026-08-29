@@ -24,6 +24,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const sessionProfile = computed(() => session.value?.user || null)
   const preferredLocale = computed(() => sessionProfile.value?.preferred_locale ?? null)
+  const posCatalogLayoutOverride = computed(() => {
+    const value = sessionProfile.value?.pos_catalog_layout_override
+    return value === 'grid' || value === 'list' ? value : null
+  })
 
   const hasProfile = computed(() => {
     return !!profile.value
@@ -184,6 +188,7 @@ export const useAuthStore = defineStore('auth', () => {
     profile,
     sessionProfile,
     preferredLocale,
+    posCatalogLayoutOverride,
     roleSpecificData,
     hasProfile,
     profileTags,
