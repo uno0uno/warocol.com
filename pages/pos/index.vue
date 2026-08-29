@@ -2459,7 +2459,7 @@ onUnmounted(() => {
                 :class="[
                   categoryChipClass,
                   selectedCategory === cat
-                    ? 'bg-action-primary-bg text-action-primary-text shadow-sm'
+                    ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'bg-surface-secondary/50 border border-border/70 text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary',
                 ]"
                 @click="selectedCategory = cat"
@@ -2517,7 +2517,7 @@ onUnmounted(() => {
                   >
                     {{ t('pos.catalog.noPromo') }}
                   </span>
-                  <p class="flex-shrink-0 text-sm font-bold tabular-nums text-primary">
+                  <p class="flex-shrink-0 text-sm font-semibold tabular-nums text-text-primary/80">
                     {{ formatCurrency(item.price) }}
                   </p>
                 </button>
@@ -2541,7 +2541,7 @@ onUnmounted(() => {
                 </span>
               </template>
               <template #cell-price="{ item }">
-                <span class="text-sm font-bold tabular-nums text-primary">{{ formatCurrency(item.price) }}</span>
+                <span class="text-sm font-semibold tabular-nums text-text-primary/80">{{ formatCurrency(item.price) }}</span>
               </template>
             </UiResponsiveDataView>
           </div>

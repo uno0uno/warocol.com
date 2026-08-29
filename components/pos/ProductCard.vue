@@ -15,7 +15,7 @@
     >
       <span
         v-if="promoBadge"
-        class="absolute top-1 start-1 end-1 z-10 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+        class="absolute top-1 start-1 end-1 z-10 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg/80 text-badge-success-text/90 px-1.5 py-0.5 rounded-full font-medium truncate text-center pointer-events-none"
         :title="promoBadge.title || promoBadge.label"
       >
         {{ promoBadge.label }}
@@ -36,7 +36,7 @@
     >
       <span
         v-if="promoBadge"
-        class="max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+        class="max-w-full text-[9px] md:text-[10px] bg-badge-success-bg/80 text-badge-success-text/90 px-1.5 py-0.5 rounded-full font-medium truncate text-center pointer-events-none"
         :title="promoBadge.title || promoBadge.label"
       >
         {{ promoBadge.label }}
@@ -50,7 +50,7 @@
 
     <!-- Price — pinned to bottom for equal card bottoms -->
     <div class="mt-auto w-full pt-1.5 md:pt-2.5 border-t border-border/60">
-      <p class="text-[10px] md:text-sm font-bold text-primary text-center">
+      <p class="text-[10px] md:text-sm font-semibold text-text-primary/80 text-center">
         {{ formatCurrency(product.price) }}
       </p>
     </div>
@@ -103,51 +103,51 @@ interface ColorEntry {
 }
 
 // Similarity-based: score by how many keywords appear in the text.
-// Fondos en -200, hover -300, slot -300, bordes -500/-600 con 2px
+// Fondos más bajos (-50/-100), bordes suaves (-300/-400) — menos saturación en POS
 const colorEntries: ColorEntry[] = [
   {
     keywords: ['veg', 'viggi', 'saludab', 'ensalad', 'orella', 'bowl', 'organico', 'orgánico'],
-    bg: '#DCFCE7', hoverBg: '#BBF7D0', border: '#16A34A', slotBg: '#BBF7D0'   // 🟢 verde
+    bg: '#F0FDF4', hoverBg: '#DCFCE7', border: '#86EFAC', slotBg: '#DCFCE7'   // 🟢 verde suave
   },
   {
     keywords: ['bebida', 'jugo', 'agua', 'cafe', 'café', 'limon', 'cerveza', 'coctel', 'fresco', 'smoothie', 'soda', 'refresc', 'gaseosa', 'drink'],
-    bg: '#E0F2FE', hoverBg: '#BAE6FD', border: '#0284C7', slotBg: '#BAE6FD'   // 🔵 azul cielo
+    bg: '#F0F9FF', hoverBg: '#E0F2FE', border: '#7DD3FC', slotBg: '#E0F2FE'   // 🔵 cielo suave
   },
   {
     keywords: ['postre', 'torta', 'helado', 'dulce', 'brownie', 'galleta', 'donut', 'cake', 'tarta', 'flan', 'mousse', 'crepe', 'pastel'],
-    bg: '#FCE7F3', hoverBg: '#FBCFE8', border: '#DB2777', slotBg: '#FBCFE8'   // 🩷 rosa
+    bg: '#FDF2F8', hoverBg: '#FCE7F3', border: '#F9A8D4', slotBg: '#FCE7F3'   // 🩷 rosa suave
   },
   {
     keywords: ['hamburgues', 'burg', 'hot dog', 'hotdog', 'chorizo', 'chori', 'pollo', 'res', 'carne', 'chicken', 'beef', 'costilla', 'cerdo', 'lomo', 'filete', 'asado', 'bestial', 'sencill'],
-    bg: '#FFEDD5', hoverBg: '#FED7AA', border: '#EA580C', slotBg: '#FED7AA'   // 🟠 naranja
+    bg: '#FFF7ED', hoverBg: '#FFEDD5', border: '#FDBA74', slotBg: '#FFEDD5'   // 🟠 naranja suave
   },
   {
     keywords: ['pizza', 'calzone'],
-    bg: '#FFE4E6', hoverBg: '#FECDD3', border: '#E11D48', slotBg: '#FECDD3'   // 🔴 rojo coral
+    bg: '#FFF1F2', hoverBg: '#FFE4E6', border: '#FDA4AF', slotBg: '#FFE4E6'   // 🔴 coral suave
   },
   {
     keywords: ['pasta', 'sopa', 'crema', 'arroz', 'fideo', 'lasaña', 'espagueti'],
-    bg: '#FEF9C3', hoverBg: '#FEF08A', border: '#CA8A04', slotBg: '#FEF08A'   // 🟡 amarillo
+    bg: '#FEFCE8', hoverBg: '#FEF9C3', border: '#FDE047', slotBg: '#FEF9C3'   // 🟡 amarillo suave
   },
   {
     keywords: ['papa', 'frit', 'empanada', 'snack', 'alita', 'croqueta', 'entrada'],
-    bg: '#CCFBF1', hoverBg: '#99F6E4', border: '#0D9488', slotBg: '#99F6E4'   // 🩵 teal
+    bg: '#F0FDFA', hoverBg: '#CCFBF1', border: '#5EEAD4', slotBg: '#CCFBF1'   // 🩵 teal suave
   },
   {
     keywords: ['pescado', 'marisco', 'salmon', 'salmón', 'atun', 'atún', 'camaron', 'camarón', 'langosta', 'pulpo', 'seafood'],
-    bg: '#E0E7FF', hoverBg: '#C7D2FE', border: '#4338CA', slotBg: '#C7D2FE'   // 🔷 índigo
+    bg: '#EEF2FF', hoverBg: '#E0E7FF', border: '#A5B4FC', slotBg: '#E0E7FF'   // 🔷 índigo suave
   },
   {
     keywords: ['desayuno', 'huevo', 'tostada', 'pancake', 'waffle', 'arepa', 'tamal', 'breakfast'],
-    bg: '#FEF3C7', hoverBg: '#FDE68A', border: '#D97706', slotBg: '#FDE68A'   // 🟤 ámbar
+    bg: '#FFFBEB', hoverBg: '#FEF3C7', border: '#FCD34D', slotBg: '#FEF3C7'   // 🟤 ámbar suave
   },
   {
     keywords: ['caja', 'llevar', 'empaque', 'bolsa', 'envase'],
-    bg: '#EDE9FE', hoverBg: '#DDD6FE', border: '#7C3AED', slotBg: '#DDD6FE'   // 🟣 violeta
+    bg: '#F5F3FF', hoverBg: '#EDE9FE', border: '#C4B5FD', slotBg: '#EDE9FE'   // 🟣 violeta suave
   },
   {
     keywords: ['sandwich', 'wrap', 'panini', 'taco', 'burrito', 'quesadilla'],
-    bg: '#FAE8FF', hoverBg: '#F5D0FE', border: '#C026D3', slotBg: '#F5D0FE'   // 💜 fucsia
+    bg: '#FDF4FF', hoverBg: '#FAE8FF', border: '#E879F9', slotBg: '#FAE8FF'   // 💜 fucsia suave
   },
 ]
 
@@ -180,7 +180,7 @@ const cardStyle = computed(() => {
   return {
     backgroundColor: isHovered.value ? colors.hoverBg : colors.bg,
     borderColor: colors.border,
-    borderWidth: '2px',
+    borderWidth: '1.5px',
   }
 })
 
