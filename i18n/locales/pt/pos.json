@@ -593,7 +593,9 @@
     },
     "catalog": {
       "searchPlaceholder": "Buscar produtos...",
-      "all": "Todos"
+      "all": "Todos",
+      "product": "Produto",
+      "price": "Preço"
     },
     "reprint": {
       "title": "Reimprimir comandas",

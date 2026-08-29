@@ -7,7 +7,8 @@
       "bitacora": "Activity log",
       "turnos": "Shifts",
       "personalizar": "Customize",
-      "propinas": "Tips"
+      "propinas": "Tips",
+      "pos": "POS"
     },
     "head": {
       "module": "Operations | WARO",
@@ -16,7 +17,8 @@
       "propinas": "Tips | Sales",
       "personalizar": "Customize | Operations",
       "comandas": "Tickets & Kitchen | Operations",
-      "impresoras": "Printers | Operations"
+      "impresoras": "Printers | Operations",
+      "pos": "POS | Operations"
     },
     "impresoras": {
       "title": "Printers",
@@ -288,6 +290,29 @@
       ,"needTwoTables": "You need at least 2 active {tables}"
       ,"dragToOrder": "Drag to order {tables} in POS"
       ,"billRequested": "Bill requested"
+    },
+    "pos": {
+      "layoutTitle": "Catalog layout",
+      "layoutHelp": "Default product layout in POS. Each user will be able to pick grid or list for themselves in a later phase.",
+      "layoutGrid": "Grid",
+      "layoutList": "List",
+      "layoutGridSaved": "POS catalog will use grid by default",
+      "layoutListSaved": "POS catalog will use list by default",
+      "imagesEnabled": "Show product images",
+      "imagesDisabled": "Hide product images",
+      "imagesHelp": "When off, POS does not show photos or emoji placeholders in the catalog.",
+      "imagesOn": "Catalog images are visible in POS",
+      "imagesOff": "Catalog images are hidden in POS",
+      "enableImages": "Show images",
+      "disableImages": "Hide images",
+      "searchEnabled": "Show search",
+      "searchDisabled": "Hide search",
+      "searchHelp": "When off, POS hides the catalog search bar.",
+      "searchOn": "Catalog search is visible in POS",
+      "searchOff": "Catalog search is hidden in POS",
+      "enableSearch": "Show search",
+      "disableSearch": "Hide search",
+      "saveError": "Could not save POS preference"
     },
     "propinas": {
       "taxedDefaultOn": "By default tips will be charged taxed (with tax)",

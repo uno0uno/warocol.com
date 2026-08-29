@@ -8,7 +8,11 @@
     @click="$emit('select', product)"
   >
     <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
-    <div :style="iconSlotStyle" class="relative w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+    <div
+      v-if="showImage"
+      :style="iconSlotStyle"
+      class="relative w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden"
+    >
       <span
         v-if="promoBadge"
         class="absolute top-1 start-1 end-1 z-10 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
@@ -25,6 +29,13 @@
       />
       <span v-else class="text-3xl md:text-5xl">{{ product.image }}</span>
     </div>
+    <span
+      v-else-if="promoBadge"
+      class="mb-1.5 max-w-full text-[9px] md:text-[10px] bg-badge-success-bg text-badge-success-text px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+      :title="promoBadge.title || promoBadge.label"
+    >
+      {{ promoBadge.label }}
+    </span>
 
     <!-- Name -->
     <p class="text-xs md:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] flex items-center justify-center px-0.5">
@@ -63,13 +74,16 @@ interface PromoBadge {
 interface Props {
   product: Product
   promoBadge?: PromoBadge | null
+  showImage?: boolean
 }
 
 interface Emits {
   (e: 'select', product: Product): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showImage: true,
+})
 defineEmits<Emits>()
 
 const isHovered = ref(false)
