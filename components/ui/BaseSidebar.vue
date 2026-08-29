@@ -25,16 +25,15 @@
               </div>
             </Transition>
             <button
-              ref="menuButtonEl"
               type="button"
               class="base-sidebar-menu-button"
               :aria-expanded="isExpanded"
               :aria-label="sidebarToggleLabel"
               @click.stop="toggleSidebar"
-              @mouseenter="showCollapsedTip"
-              @mouseleave="hideCollapsedTip"
-              @focus="showCollapsedTip"
-              @blur="hideCollapsedTip"
+              @mouseenter="showMenuTip"
+              @mouseleave="hideMenuTip"
+              @focus="showMenuTip"
+              @blur="hideMenuTip"
             >
               <svg class="base-sidebar-panel-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.8" />
@@ -46,16 +45,15 @@
           <!-- Overlay: hamburger then brand -->
           <template v-else>
             <button
-              ref="menuButtonEl"
               type="button"
               class="base-sidebar-menu-button"
               :aria-expanded="isExpanded"
               :aria-label="sidebarToggleLabel"
               @click.stop="toggleSidebar"
-              @mouseenter="showCollapsedTip"
-              @mouseleave="hideCollapsedTip"
-              @focus="showCollapsedTip"
-              @blur="hideCollapsedTip"
+              @mouseenter="showMenuTip"
+              @mouseleave="hideMenuTip"
+              @focus="showMenuTip"
+              @blur="hideMenuTip"
             >
               <span class="base-sidebar-menu-line" />
               <span class="base-sidebar-menu-line" />
@@ -121,24 +119,13 @@
         @dblclick="resetSidebarWidth"
       />
     </aside>
-
-    <!-- Teleport: shell/aside use overflow:hidden — CSS ::after tips get clipped -->
-    <Teleport to="body">
-      <div
-        v-if="tipVisible"
-        class="base-sidebar-tip"
-        role="tooltip"
-        :style="tipStyle"
-      >
-        {{ tipLabel }}
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import logoSrc from '~/public/logo_waro_colombia.png'
+import type { SidebarCollapsedTipApi } from '~/composables/useSidebarCollapsedTip'
 
 const { t } = useI18n()
 
@@ -164,9 +151,8 @@ const isOverlayOpen = ref(false)
 const isToggleOpen = ref(false)
 const sidebarWidthPx = ref(SIDEBAR_WIDTH_DEFAULT_PX)
 const isResizing = ref(false)
-const menuButtonEl = ref<HTMLButtonElement | null>(null)
-const tipVisible = ref(false)
-const tipStyle = ref<Record<string, string>>({})
+
+const tipApi = inject<SidebarCollapsedTipApi | null>('sidebarCollapsedTip', null)
 
 const hasMenuButton = computed(() => props.overlay || props.toggle)
 const isExpanded = computed(() => {
@@ -174,37 +160,22 @@ const isExpanded = computed(() => {
   if (props.toggle) return isToggleOpen.value
   return isHovered.value
 })
+const isCollapsed = computed(() => !isExpanded.value)
 
-const tipLabel = computed(() =>
+const sidebarToggleLabel = computed(() =>
   isExpanded.value ? t('shell.collapseSidebar') : t('shell.expandSidebar'),
 )
-const sidebarToggleLabel = computed(() => tipLabel.value)
 
-function positionCollapsedTip() {
-  const el = menuButtonEl.value
-  if (!el || typeof window === 'undefined') return
-  const rect = el.getBoundingClientRect()
-  tipStyle.value = {
-    top: `${Math.round(rect.top + rect.height / 2)}px`,
-    left: `${Math.round(rect.right + 8)}px`,
-  }
+function showMenuTip(event: Event) {
+  tipApi?.show(event, sidebarToggleLabel.value, isCollapsed.value)
 }
 
-function showCollapsedTip() {
-  if (isExpanded.value) {
-    tipVisible.value = false
-    return
-  }
-  positionCollapsedTip()
-  tipVisible.value = true
-}
-
-function hideCollapsedTip() {
-  tipVisible.value = false
+function hideMenuTip() {
+  tipApi?.hide()
 }
 
 watch(isExpanded, (expanded) => {
-  if (expanded) tipVisible.value = false
+  if (expanded) tipApi?.hide()
 })
 
 const wrapperClass = computed(() => [
@@ -613,23 +584,5 @@ function closeOverlay() {
     min-height: 2.5rem;
   }
 
-}
-
-.base-sidebar-tip {
-  position: fixed;
-  z-index: 10050;
-  transform: translateY(-50%);
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.5rem;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--surface));
-  color: hsl(var(--text-primary));
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px hsl(var(--neutral-950) / 0.1);
-  pointer-events: none;
 }
 </style>

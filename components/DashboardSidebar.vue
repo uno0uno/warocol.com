@@ -10,11 +10,18 @@
     fullscreen-z-class="z-[9999]"
   />
 
+  <UiSidebarCollapsedTip
+    :visible="tipVisible"
+    :position-style="tipStyle"
+    :chars="tipChars"
+    :nonce="tipNonce"
+  />
+
   <UiBaseSidebar
     :overlay="props.overlay"
     :toggle="props.toggle"
     v-bind="$attrs"
-    @expanded-change="$emit('expanded-change', $event)"
+    @expanded-change="onExpandedChange"
   >
     <template #brand>
       <NuxtLink
@@ -40,7 +47,7 @@
             v-for="item in visiblePrimaryItems"
             :key="item.to"
             :to="item.to"
-            :title="t(item.labelKey)"
+            :aria-label="t(item.labelKey)"
             :class="[
               'nav-item group',
               collapsed ? 'justify-center' : '',
@@ -49,6 +56,10 @@
             ]"
             :aria-disabled="isNavItemBlocked(item)"
             :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @mouseenter="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @mouseleave="hideNavTip"
+            @focus="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @blur="hideNavTip"
             @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
@@ -65,7 +76,7 @@
             v-for="item in visibleSecondaryItems"
             :key="item.to"
             :to="item.to"
-            :title="t(item.labelKey)"
+            :aria-label="t(item.labelKey)"
             :class="[
               'nav-item',
               collapsed ? 'justify-center' : '',
@@ -74,6 +85,10 @@
             ]"
             :aria-disabled="isNavItemBlocked(item)"
             :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @mouseenter="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @mouseleave="hideNavTip"
+            @focus="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @blur="hideNavTip"
             @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
@@ -96,10 +111,14 @@
           <a
             href="https://warotickets.com/gestion/eventos"
             target="_blank"
-            :title="t('nav.eventos')"
+            :aria-label="t('nav.eventos')"
             :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '', props.billingBlocked ? 'nav-item--disabled' : '']"
             :aria-disabled="props.billingBlocked"
             :tabindex="props.billingBlocked ? -1 : undefined"
+            @mouseenter="(e) => showNavTip(e, t('nav.eventos'), collapsed)"
+            @mouseleave="hideNavTip"
+            @focus="(e) => showNavTip(e, t('nav.eventos'), collapsed)"
+            @blur="hideNavTip"
             @click="(event) => handleExternalNavClick(event, close)"
           >
             <Squares2X2Icon class="nav-icon" />
@@ -118,7 +137,7 @@
             v-for="item in visibleCuentaItems"
             :key="item.to"
             :to="item.to"
-            :title="t(item.labelKey)"
+            :aria-label="t(item.labelKey)"
             :class="[
               'nav-item',
               collapsed ? 'justify-center' : '',
@@ -127,6 +146,10 @@
             ]"
             :aria-disabled="isNavItemBlocked(item)"
             :tabindex="isNavItemBlocked(item) ? -1 : undefined"
+            @mouseenter="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @mouseleave="hideNavTip"
+            @focus="(e) => showNavTip(e, t(item.labelKey), collapsed)"
+            @blur="hideNavTip"
             @click="(event) => handleNavItemClick(event, item, close)"
           >
             <component :is="item.icon" class="nav-icon" />
@@ -146,7 +169,11 @@
           'nav-item nav-item--idle nav-item--logout group w-full',
           collapsed ? 'justify-center' : '',
         ]"
-        :title="t('shell.logout')"
+        :aria-label="t('shell.logout')"
+        @mouseenter="(e) => showNavTip(e, t('shell.logout'), collapsed)"
+        @mouseleave="hideNavTip"
+        @focus="(e) => showNavTip(e, t('shell.logout'), collapsed)"
+        @blur="hideNavTip"
       >
         <ArrowRightOnRectangleIcon class="nav-icon" />
         <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ t('shell.logout') }}</span>
@@ -160,7 +187,7 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { computed, ref } from 'vue'
+import { computed, provide, ref } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
   Squares2X2Icon,
@@ -173,6 +200,10 @@ import {
   type DashboardNavItem,
 } from '~/constants/dashboardNavigation'
 import { getDashboardHome } from '~/utils/internalAccess'
+import {
+  useSidebarCollapsedTip,
+  type SidebarCollapsedTipApi,
+} from '~/composables/useSidebarCollapsedTip'
 
 interface Props {
   activePage?: ActivePage
@@ -187,9 +218,39 @@ const props = withDefaults(defineProps<Props>(), {
   billingBlocked: false,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'expanded-change', value: boolean): void
 }>()
+
+const collapsedTip = useSidebarCollapsedTip()
+const tipVisible = collapsedTip.visible
+const tipStyle = collapsedTip.style
+const tipChars = collapsedTip.chars
+const tipNonce = collapsedTip.nonce
+
+/** Tracks BaseSidebar expanded state for tip gating on the menu button. */
+const sidebarExpanded = ref(false)
+const sidebarCollapsed = computed(() => !sidebarExpanded.value)
+
+const tipApi: SidebarCollapsedTipApi = {
+  ...collapsedTip,
+  collapsed: sidebarCollapsed,
+}
+provide('sidebarCollapsedTip', tipApi)
+
+function onExpandedChange(value: boolean) {
+  sidebarExpanded.value = value
+  if (value) collapsedTip.hide()
+  emit('expanded-change', value)
+}
+
+function showNavTip(event: Event, label: string, collapsed: boolean) {
+  collapsedTip.show(event, label, collapsed)
+}
+
+function hideNavTip() {
+  collapsedTip.hide()
+}
 
 const isLoggingOut = ref(false)
 const router = useRouter()
