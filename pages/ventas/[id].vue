@@ -1740,8 +1740,8 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <dl class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 border-t border-border">
-          <div class="px-4 py-3 border-b xl:border-b-0 border-e border-border min-w-0">
+        <dl class="sale-meta-grid grid grid-cols-2 md:grid-cols-4 border-t border-border">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.saleCustomer') }}</dt>
             <dd class="m-0 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
@@ -1774,7 +1774,7 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <div class="px-4 py-3 border-b xl:border-b-0 border-e border-border min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.telefono') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums truncate">
               <a
@@ -1786,7 +1786,7 @@ onUnmounted(() => {
             </dd>
           </div>
 
-          <div class="px-4 py-3 border-b xl:border-b-0 border-e border-border min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.clientes.email') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary truncate">
               <a
@@ -1798,7 +1798,7 @@ onUnmounted(() => {
             </dd>
           </div>
 
-          <div class="px-4 py-3 border-b xl:border-b-0 border-e border-border min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.mesero') }}</dt>
             <dd class="m-0">
               <NuxtLink
@@ -1814,7 +1814,7 @@ onUnmounted(() => {
             </dd>
           </div>
 
-          <div class="px-4 py-3 border-e border-border min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.common.metodoPago') }}</dt>
             <dd class="m-0">
               <button
@@ -1835,21 +1835,21 @@ onUnmounted(() => {
             </dd>
           </div>
 
-          <div class="px-4 py-3 min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.ordenes.colSource') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary">
               {{ saleReceiptLocationLabel || t('ventas.common.pos') }}
             </dd>
           </div>
 
-          <div class="px-4 py-3 border-e border-border min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.tableLabel') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary">
               {{ order.table_custom_label || order.table_name || '—' }}
             </dd>
           </div>
 
-          <div class="px-4 py-3 min-w-0">
+          <div class="sale-meta-cell px-4 py-3 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('ventas.detail.covers') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
               <template v-if="order.table_covers">
