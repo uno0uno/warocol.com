@@ -595,7 +595,13 @@
       "searchPlaceholder": "Buscar produtos...",
       "all": "Todos",
       "product": "Produto",
-      "price": "Preço"
+      "price": "Preço",
+      "layoutAria": "Layout do catálogo",
+      "layoutGrid": "Grade",
+      "layoutList": "Lista",
+      "layoutDefault": "Padrão",
+      "layoutDefaultHelp": "Usar o layout definido em Operações → POS",
+      "layoutSaveError": "Não foi possível salvar seu layout do catálogo"
     },
     "reprint": {
       "title": "Reimprimir comandas",

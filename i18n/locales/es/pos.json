@@ -623,7 +623,13 @@
       "searchPlaceholder": "Buscar productos...",
       "all": "Todos",
       "product": "Producto",
-      "price": "Precio"
+      "price": "Precio",
+      "layoutAria": "Vista del catálogo",
+      "layoutGrid": "Cuadrícula",
+      "layoutList": "Listado",
+      "layoutDefault": "Por defecto",
+      "layoutDefaultHelp": "Usar la vista configurada en Operaciones → POS",
+      "layoutSaveError": "No se pudo guardar tu vista del catálogo"
     },
     "reprint": {
       "title": "Reimprimir comandas",

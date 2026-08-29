@@ -141,11 +141,59 @@ const isResolvingSettings = computed(() => {
 
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
-const resolvedCatalogLayout = computed<'grid' | 'list'>(() => {
-  // Batch #2495: tenant default only. #2496 adds user override ?? tenant.
+const authStore = useAuthStore()
+const tenantCatalogLayoutDefault = computed<'grid' | 'list'>(() => {
   const value = settingsData.value?.data?.pos_catalog_layout_default
   return value === 'list' ? 'list' : 'grid'
 })
+const catalogLayoutOverride = computed<'grid' | 'list' | null>(() => {
+  const value = authStore.posCatalogLayoutOverride
+  return value === 'grid' || value === 'list' ? value : null
+})
+const resolvedCatalogLayout = computed<'grid' | 'list'>(() => {
+  // #2496: personal override ?? tenant default from #2495
+  return catalogLayoutOverride.value ?? tenantCatalogLayoutDefault.value
+})
+const catalogLayoutChoice = computed<'grid' | 'list' | 'default'>(() => {
+  return catalogLayoutOverride.value ?? 'default'
+})
+const isSavingCatalogLayout = ref(false)
+const showCatalogLayoutInBanner = computed(() => {
+  // Mesa banner has Liberar — put toggle there. Bar/counter use catalog row.
+  return !!posStore.activeTableSession && !posStore.activeTableSession.isBar
+})
+const showCatalogLayoutInControls = computed(() => !showCatalogLayoutInBanner.value)
+
+const setCatalogLayoutPreference = async (choice: 'grid' | 'list' | 'default') => {
+  if (isSavingCatalogLayout.value) return
+  const nextOverride = choice === 'default' ? null : choice
+  if (nextOverride === catalogLayoutOverride.value) return
+  const previous = catalogLayoutOverride.value
+  isSavingCatalogLayout.value = true
+  authStore.patchSessionUser({ pos_catalog_layout_override: nextOverride })
+  try {
+    await $fetch('/api/auth/update-profile', {
+      method: 'PUT',
+      body: { pos_catalog_layout_override: nextOverride },
+    })
+  } catch (error: any) {
+    authStore.patchSessionUser({ pos_catalog_layout_override: previous })
+    toast.error(error?.data?.detail || t('pos.catalog.layoutSaveError'), {
+      title: t('pos.banner.error'),
+    })
+  } finally {
+    isSavingCatalogLayout.value = false
+  }
+}
+
+const catalogLayoutButtonClass = (choice: 'grid' | 'list' | 'default') => [
+  'h-9 min-w-9 px-2 rounded-lg border text-[11px] font-semibold transition-colors',
+  catalogLayoutChoice.value === choice
+    ? 'border-action-primary-border bg-action-primary-bg text-action-primary-text'
+    : 'border-border bg-surface text-text-secondary hover:bg-surface-secondary hover:text-text-primary',
+  isSavingCatalogLayout.value ? 'opacity-50 pointer-events-none' : '',
+]
+
 const posShowProductImage = computed(
   () => settingsData.value?.data?.pos_show_product_image !== false,
 )
@@ -2106,6 +2154,42 @@ onUnmounted(() => {
                 <span class="hidden sm:inline">{{ t('pos.banner.release') }}</span>
               </template>
             </button>
+            <div
+              v-if="showCatalogLayoutInBanner"
+              class="flex flex-shrink-0 items-center"
+              :class="siblingGapClass"
+              role="group"
+              :aria-label="t('pos.catalog.layoutAria')"
+            >
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('grid')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'grid'"
+                @click="setCatalogLayoutPreference('grid')"
+              >
+                {{ t('pos.catalog.layoutGrid') }}
+              </button>
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('list')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'list'"
+                @click="setCatalogLayoutPreference('list')"
+              >
+                {{ t('pos.catalog.layoutList') }}
+              </button>
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('default')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'default'"
+                :title="t('pos.catalog.layoutDefaultHelp')"
+                @click="setCatalogLayoutPreference('default')"
+              >
+                {{ t('pos.catalog.layoutDefault') }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2292,6 +2376,42 @@ onUnmounted(() => {
 
           <!-- Catalog controls: search + category filters -->
           <div :class="['flex flex-col', sectionGapClass]">
+            <div
+              v-if="showCatalogLayoutInControls"
+              class="flex flex-wrap items-center"
+              :class="siblingGapClass"
+              role="group"
+              :aria-label="t('pos.catalog.layoutAria')"
+            >
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('grid')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'grid'"
+                @click="setCatalogLayoutPreference('grid')"
+              >
+                {{ t('pos.catalog.layoutGrid') }}
+              </button>
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('list')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'list'"
+                @click="setCatalogLayoutPreference('list')"
+              >
+                {{ t('pos.catalog.layoutList') }}
+              </button>
+              <button
+                type="button"
+                :class="catalogLayoutButtonClass('default')"
+                :disabled="isSavingCatalogLayout"
+                :aria-pressed="catalogLayoutChoice === 'default'"
+                :title="t('pos.catalog.layoutDefaultHelp')"
+                @click="setCatalogLayoutPreference('default')"
+              >
+                {{ t('pos.catalog.layoutDefault') }}
+              </button>
+            </div>
             <UiSearchBar
               v-if="posShowSearch"
               v-model="searchQuery"
