@@ -3330,4 +3330,40 @@ onUnmounted(() => {
     transform: translateX(100%);
   }
 }
+
+/* Sale meta: 2×4 mobile / 4×2 desktop — even cells */
+.sale-meta-grid > .sale-meta-cell {
+  border-bottom: 1px solid hsl(var(--border));
+  border-inline-end: 1px solid hsl(var(--border));
+}
+
+/* Mobile: 2 cols — drop end border on even cells */
+.sale-meta-grid > .sale-meta-cell:nth-child(2n) {
+  border-inline-end: none;
+}
+
+/* Mobile: drop bottom border on last row (7–8) */
+.sale-meta-grid > .sale-meta-cell:nth-last-child(-n + 2) {
+  border-bottom: none;
+}
+
+@media (min-width: 768px) {
+  /* Desktop: 4 cols — drop end border every 4th */
+  .sale-meta-grid > .sale-meta-cell:nth-child(2n) {
+    border-inline-end: 1px solid hsl(var(--border));
+  }
+
+  .sale-meta-grid > .sale-meta-cell:nth-child(4n) {
+    border-inline-end: none;
+  }
+
+  /* Desktop: drop bottom border on last row (5–8) */
+  .sale-meta-grid > .sale-meta-cell:nth-last-child(-n + 2) {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .sale-meta-grid > .sale-meta-cell:nth-last-child(-n + 4) {
+    border-bottom: none;
+  }
+}
 </style>
