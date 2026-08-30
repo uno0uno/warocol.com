@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2507
+title: "fix(blog): Colombia public CTAs use monthly USD $9, not COP 95.900"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2507-co-cta-usd9
+
+paths:
+  - utils/articleMarket.ts
+  - utils/blogLeadCta.ts
+  - utils/publicCta.ts
+  - utils/articleMarket.test.ts
+  - utils/blogLeadCta.test.ts
+  - utils/publicCta.test.ts
+  - .wr/2507.yaml
+
+ac:
+  - Colombia ES CTAs show USD $9/mes not COP 95.900
+  - Default/omitted market also USD $9/mes
+  - US EN still USD $30/month
+  - EUR (ES) still EUR packaging
+  - LATAM still USD $9/mes
+  - Unit tests cover articleMarket / blogLeadCta / publicCta
+
+out_of_scope:
+  - Paddle catalog
+  - In-app Starter trial banner
+  - API/DB
+  - Annual packaging for CO
+
+hints:
+  entry: "CO_MARKET + PUBLIC_OFFER + getBlogLeadCta"
+  pattern: "utils/articleMarket.ts CO_MARKET; publicCta PUBLIC_OFFER"
+  tests: "node --experimental-strip-types --test utils/articleMarket.test.ts utils/blogLeadCta.test.ts utils/publicCta.test.ts"
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "ready-for-review + wr-review"

@@ -48,10 +48,10 @@ interface PublicAttributionStorage {
   setItem(key: string, value: string): void
 }
 
-/** Colombia ES public marketing offer (default). */
+/** Colombia + default public marketing offer — usd_9 monthly only. */
 export const PUBLIC_OFFER: PublicOffer = Object.freeze({
-  annualPrice: 'COP 95.900/año',
-  monthlyEquivalent: 'menos de COP 8.000/mes',
+  annualPrice: 'USD $9/mes',
+  monthlyEquivalent: 'menos de USD $9/mes',
   activation: 'El acceso a los módulos se activa después del pago.',
 })
 
@@ -88,8 +88,16 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
     || '',
   ).toLowerCase().startsWith('en')
 
-  // LATAM region: monthly usd_9 only (no annual packaging).
-  if (market.market === 'LATAM' || rawCountry === 'LATAM') {
+  // Colombia + LATAM: monthly usd_9 only (no COP / no annual packaging).
+  if (
+    market.market === 'LATAM'
+    || market.market === 'CO'
+    || rawCountry === 'LATAM'
+    || rawCountry === 'CO'
+    || rawCountry === 'COL'
+    || rawCountry.includes('COLOMBIA')
+    || rawCurrency === 'COP'
+  ) {
     return {
       annualPrice: isEn ? 'USD $9/month' : 'USD $9/mes',
       monthlyEquivalent: isEn ? 'under USD $9/month' : 'menos de USD $9/mes',
@@ -99,9 +107,7 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
 
   // Country / currency segmentation (ISO-2, names, or resolved ArticleMarket.market)
   if (rawCountry || rawCurrency) {
-    const isCo = rawCountry === 'CO' || rawCountry === 'COL' || rawCountry.includes('COLOMBIA') || rawCurrency === 'COP'
     const isUs = rawCountry === 'US' || rawCountry === 'USA' || rawCountry.includes('UNITED STATES')
-    if (isCo) return PUBLIC_OFFER
     if (EUR_30_COUNTRIES.has(rawCountry) || rawCurrency === 'EUR') {
       return {
         annualPrice: isEn ? 'EUR €360/year' : 'EUR €360/año',
@@ -125,7 +131,7 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
     }
     // Default usd_9 for MX/AR/PE/CL etc. (e.g. MX/MXN, AR/ARS)
     return {
-      annualPrice: isEn ? 'USD $108/year' : 'USD $108/año',
+      annualPrice: isEn ? 'USD $9/month' : 'USD $9/mes',
       monthlyEquivalent: isEn ? 'under USD $9/month' : 'menos de USD $9/mes',
       activation: isEn ? 'Module access activates after payment.' : PUBLIC_OFFER.activation,
     }
@@ -242,13 +248,16 @@ const BENEFIT_COPY_EN: Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'bod
 }
 
 function finalCopyEs(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  const monthly = /\/mes$|\/month$/i.test(offer.annualPrice)
   return {
     pos: {
       headline: 'Activa un POS creado para restaurantes colombianos.',
       body: `Vende, controla inventario y conoce tus costos con el Plan Pro por ${offer.annualPrice}.`,
     },
     pricing: {
-      headline: 'Activa WARO con un plan anual claro.',
+      headline: monthly
+        ? 'Activa WARO con un precio mensual claro.'
+        : 'Activa WARO con un plan anual claro.',
       body: `Plan Pro por ${offer.annualPrice}, equivalente a ${offer.monthlyEquivalent}.`,
     },
     costs: {
@@ -267,13 +276,16 @@ function finalCopyEs(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta
 }
 
 function finalCopyEn(offer: PublicOffer): Record<PublicCtaIntent, Pick<PublicCta, 'headline' | 'body'>> {
+  const monthly = /\/mes$|\/month$/i.test(offer.annualPrice)
   return {
     pos: {
       headline: 'Activate a POS built for restaurant operators.',
       body: `Sell, control inventory, and know your costs with Plan Pro for ${offer.annualPrice}.`,
     },
     pricing: {
-      headline: 'Activate WARO with a clear annual plan.',
+      headline: monthly
+        ? 'Activate WARO with clear monthly pricing.'
+        : 'Activate WARO with a clear annual plan.',
       body: `Plan Pro for ${offer.annualPrice}, equivalent to ${offer.monthlyEquivalent}.`,
     },
     costs: {
