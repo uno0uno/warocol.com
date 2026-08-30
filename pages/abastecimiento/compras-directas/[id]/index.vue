@@ -108,6 +108,15 @@
         </div>
       </div>
 
+      <div
+        v-if="isPurchasePaid"
+        class="rounded-lg border border-border bg-muted/30 px-4 py-3"
+        role="status"
+      >
+        <p class="text-sm font-semibold text-text-primary">{{ t('abastecimiento.compraDirectaDetalle.paidLockedTitle') }}</p>
+        <p class="text-xs text-text-secondary mt-1">{{ t('abastecimiento.compraDirectaDetalle.paidLockedMessage') }}</p>
+      </div>
+
       <!-- Items Section -->
       <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
         <div class="flex items-center justify-between mb-4 sm:mb-6">
@@ -119,8 +128,8 @@
             <span>{{ t('abastecimiento.common.items') }} ({{ editItems.length }})</span>
           </h3>
 
-          <!-- Edit / Delete -->
-          <div v-if="!isEditMode" class="flex items-center gap-2 shrink-0">
+          <!-- Edit / Delete (unpaid only) -->
+          <div v-if="!isEditMode && !isPurchasePaid" class="flex items-center gap-2 shrink-0">
             <button
               type="button"
               @click="enterEditMode"
@@ -818,6 +827,7 @@ const { data: purchaseResponse, asyncStatus, error: fetchError, refetch } = useQ
 })
 
 const purchase = computed(() => (purchaseResponse.value as any)?.data || null)
+const isPurchasePaid = computed(() => purchase.value?.status === 'paid')
 const isPurchaseCash = computed(() => isCashPaymentSlug(purchase.value?.payment_method))
 const purchaseCashDrawerLabel = computed(() =>
   readFromCashDrawer(purchase.value)

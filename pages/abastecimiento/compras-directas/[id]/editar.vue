@@ -1004,8 +1004,12 @@ const existingPaymentAttachments = computed(() =>
   originalPurchase.value?.attachments?.filter((a: any) => a.attachment_type === 'payment_proof') || []
 )
 
-// Initialize form when purchase loads
+// Initialize form when purchase loads; paid purchases are immutable (#2513)
 watch(originalPurchase, (purchase) => {
+  if (purchase?.status === 'paid') {
+    navigateTo(`/abastecimiento/compras-directas/${purchaseId}`, { replace: true })
+    return
+  }
   if (purchase) {
     form.value.purchase_date = purchase.purchase_date
       ? localDateAtNoon(isoFromDate(new Date(purchase.purchase_date)))
