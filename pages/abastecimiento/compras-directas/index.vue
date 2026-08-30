@@ -197,6 +197,7 @@
               <EyeIcon class="h-4 w-4" />
             </button>
             <button
+              v-if="row.status !== 'paid'"
               type="button"
               class="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
               :title="t('abastecimiento.comprasDirectas.delete')"

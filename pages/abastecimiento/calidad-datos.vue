@@ -176,7 +176,7 @@
         <template #cell-actions="{ row }">
           <div class="flex justify-center">
             <NuxtLink
-              :to="`/abastecimiento/compras-directas/${row.purchase_id}/editar`"
+              :to="`/abastecimiento/compras-directas/${row.purchase_id}`"
               :aria-label="t('abastecimiento.calidad.viewAndFixOrder', { order: row.purchase_number ?? '' })"
               target="_blank"
               rel="noopener noreferrer"
@@ -330,7 +330,7 @@ const ordersWithAnomalies = computed(() => {
 
 // Navigation
 const viewOrder = (order: any) => {
-  window.open(`/abastecimiento/compras-directas/${order.purchase_id}/editar`, '_blank', 'noopener,noreferrer')
+  window.open(`/abastecimiento/compras-directas/${order.purchase_id}`, '_blank', 'noopener,noreferrer')
 }
 
 // Helpers
