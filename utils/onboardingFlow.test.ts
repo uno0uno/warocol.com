@@ -11,7 +11,6 @@ import {
   isPendingBillingPath,
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
-  shouldOpenPaddleInsteadOfSetupRedirect,
   shouldResumeHostedCheckoutInsteadOfSetupRedirect,
 } from './onboardingFlow.ts'
 
@@ -58,15 +57,6 @@ test('allows pending sessions to stay on billing and payment return paths', () =
   assert.equal(isPendingBillingPath('/gestion/billing/uso'), true)
   assert.equal(isPendingBillingPath('/billing/confirmacion'), true)
   assert.equal(isPendingBillingPath('/ventas'), false)
-})
-
-test('open Paddle txn skips active+setup redirect to Mi Plan (#2217)', () => {
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('txn_01abc'), true)
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('txn_01kzrq05y0tqp70djn7r8n0dxw'), true)
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(null), false)
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(undefined), false)
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(''), false)
-  assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('not-a-txn'), false)
 })
 
 test('hosted LS checkout id resumes thank-you instead of Mi Plan (#943)', () => {

@@ -1473,7 +1473,7 @@ watch(() => currentTenant.value?.id, async () => {
               </div>
             </div>
 
-            <!-- Transaction ID (Paddle preferred, Wompi legacy) -->
+            <!-- Transaction ID (MoR / Wompi legacy) -->
             <div v-if="billingEventProviderRef(selectedEvent.metadata)" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
                 <p class="text-xs font-medium text-text-secondary mb-0.5">{{ t('billing.transactionId') }}</p>

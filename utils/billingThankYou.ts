@@ -1,5 +1,5 @@
 /**
- * Post-checkout thank-you polling helpers (#943 Lemon Squeezy / MoR).
+ * Post-checkout thank-you polling helpers (#943 / #944 Lemon Squeezy MoR).
  * Activation remains webhook/API reconcile — never trust browser alone.
  */
 
@@ -29,14 +29,3 @@ export function billingThankYouPhaseFromStatus (
   if (attempt >= maxAttempts) return 'timeout'
   return 'activating'
 }
-
-/** @deprecated Use BillingThankYouPhase — kept until #944 purge */
-export type PaddleThankYouPhase = BillingThankYouPhase
-/** @deprecated Use BillingCheckoutStatusResponse */
-export type PaddleTxnStatusResponse = BillingCheckoutStatusResponse
-/** @deprecated Use BILLING_THANK_YOU_POLL_MS */
-export const PADDLE_THANK_YOU_POLL_MS = BILLING_THANK_YOU_POLL_MS
-/** @deprecated Use BILLING_THANK_YOU_MAX_ATTEMPTS */
-export const PADDLE_THANK_YOU_MAX_ATTEMPTS = BILLING_THANK_YOU_MAX_ATTEMPTS
-/** @deprecated Use billingThankYouPhaseFromStatus */
-export const paddleThankYouPhaseFromStatus = billingThankYouPhaseFromStatus

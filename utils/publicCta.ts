@@ -140,7 +140,7 @@ export function resolvePublicOffer(marketInput: ArticleMarketInput | ArticleMark
   return PUBLIC_OFFER
 }
 
-/** Paddle charge segments mirrored from api billing_pricing.resolve_price_segment. */
+/** Regional MoR charge segments mirrored from api billing_pricing.resolve_price_segment. */
 const EUR_30_COUNTRIES = new Set(['ES', 'DE', 'FR', 'NL'])
 const USD_30_COUNTRIES = new Set(['US', 'PA', 'GB', 'CA', 'AU', 'NZ', 'SG', 'AE'])
 

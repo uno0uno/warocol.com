@@ -125,14 +125,14 @@ import {
   isHostedCheckoutPending,
   normalizeLsCheckoutId,
   readStoredHostedCheckoutId,
-} from '~/composables/usePaddleCheckout'
+} from '~/composables/useHostedBillingCheckout'
 import {
   billingThankYouPhaseFromStatus,
   BILLING_THANK_YOU_MAX_ATTEMPTS,
   BILLING_THANK_YOU_POLL_MS,
   type BillingThankYouPhase,
   type BillingCheckoutStatusResponse,
-} from '~/utils/paddleThankYou'
+} from '~/utils/billingThankYou'
 import {
   returnToneFromView,
   statusCardBorderClass,

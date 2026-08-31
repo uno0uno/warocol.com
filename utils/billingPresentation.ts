@@ -230,6 +230,3 @@ export function normalizeLocalCheckoutUrl (url: string): string {
     return url
   }
 }
-
-/** @deprecated Use normalizeLocalCheckoutUrl */
-export const normalizeLocalPaddleCheckoutUrl = normalizeLocalCheckoutUrl
