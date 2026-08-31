@@ -265,11 +265,16 @@ const pollThankYouOnce = async () => {
       }
       return
     }
+    if (thankYouPhase.value === 'timeout') {
+      clearHostedCheckoutPending()
+      return
+    }
     if (thankYouPhase.value === 'activating') scheduleThankYouPoll()
   } catch {
     pollAttempt.value += 1
     thankYouPhase.value = billingThankYouPhaseFromStatus(null, pollAttempt.value)
     if (pollAttempt.value >= BILLING_THANK_YOU_MAX_ATTEMPTS) {
+      clearHostedCheckoutPending()
       errorMessage.value = t('billing.thankYouPollError')
     } else {
       scheduleThankYouPoll()
@@ -341,8 +346,9 @@ const checkLegacyReturn = async () => {
   }
 
   if (!transactionId) {
-    // Authenticated return from hosted checkout without query — poll tenant state.
-    await startThankYou()
+    // No MoR checkout signal and no legacy Wompi id — do not enter thank-you.
+    view.value = 'pending'
+    await cache.invalidateQueries({ key: ['billing'] })
     return
   }
   try {

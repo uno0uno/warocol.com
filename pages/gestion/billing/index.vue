@@ -21,6 +21,8 @@ import {
   normalizeLocalCheckoutUrl,
 } from '~/utils/billingPresentation'
 
+const { openCheckoutUrl } = useHostedBillingCheckout()
+
 interface Column {
   key: string
   title: string
@@ -438,7 +440,6 @@ const handleSubscribe = async () => {
       return
     }
     clearBillingIntent()
-    const { openCheckoutUrl } = useHostedBillingCheckout()
     await openCheckoutUrl(result.checkout_url, {
       checkoutId: result.gateway_reference || null,
       normalizeUrl: normalizeLocalCheckoutUrl,
@@ -465,7 +466,6 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
     return
   }
 
-  const { openCheckoutUrl } = useHostedBillingCheckout()
   await openCheckoutUrl(checkoutUrl, {
     normalizeUrl: normalizeLocalCheckoutUrl,
   })
