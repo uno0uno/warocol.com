@@ -1,0 +1,46 @@
+issue: 2518
+title: "feat(pos): table list/grid toggle and pending delivery queue to checkout"
+repo: both
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-2518-pos-floor-deliveries
+
+paths:
+  - components/pos/MesasFloorPlan.vue
+  - pages/pos/checkout.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+  - ../api_warocol.com/app/routers/tables.py
+  - ../api_warocol.com/app/services/tables_service.py
+  - ../api_warocol.com/tests/test_tables_pending_deliveries.py
+
+ac:
+  - Table floor has list/grid toggle matching catalog control
+  - Mesas / Domicilios control; Mesas keeps bar + tables
+  - Domicilios lists pending unpaid delivery orders
+  - Click opens POS checkout to collect payment
+  - Empty state when no pending deliveries
+  - Bar and tables work in grid and list
+  - Does not route through Ventas or change dispatch
+
+out_of_scope:
+  - Online orders
+  - Dispatch
+  - Changing leave-pending Barra flow
+  - Collecting payment from Ventas
+
+hints:
+  entry: "MesasFloorPlan floorView + /pos/checkout?pendingOrder="
+  pattern: "pages/pos/index.vue catalogLayoutToggle; tables_service.defer_tab_delivery_payment"
+  tests: "pytest tests/test_tables_pending_deliveries.py -q"
+
+risk:
+  sensitive: true
+  areas: [payments]
+
+skip:
+  audits: [ux, color, typography]
+
+next:
+  after_pr: "Auto wr-review; human pass on payment path"
