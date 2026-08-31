@@ -2257,7 +2257,53 @@ const processWompiCollection = async () => {
     processingError.value = ''
     const amount = finalAmountToCollect.value
     if (isPendingDeliveryMode.value && pendingOrderId.value) {
-      openWompiSlideover(pendingOrderId.value, amount, false)
+      if (!selectedCustomer.value) {
+        processingError.value = t('pos.checkout.errors.selectCustomer')
+        return
+      }
+      const _discountAmtPos = discountAmount.value
+      const _subtotalPos = cartTotal.value
+      const response = await $fetch(`/api/tables/pending-deliveries/${pendingOrderId.value}/complete`, {
+        method: 'POST',
+        body: {
+          wompi_collection: true,
+          customer_id: selectedCustomer.value.id,
+          ...(discountEnabled.value && _discountAmtPos > 0
+            ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+            : {}),
+          ...checkoutServedByBody.value,
+          ...checkoutTipBody.value,
+          ...checkoutWaroBody.value,
+        },
+      }) as {
+        success: boolean
+        data: {
+          order_id: string
+          order_number: number
+          total_amount: number
+          status?: string
+          payment_status?: string | null
+        }
+      }
+      if (!response.success || !response.data.order_id) {
+        processingError.value = t('pos.checkout.errors.processOrder')
+        return
+      }
+      orderResult.value = {
+        order_id: response.data.order_id,
+        order_number: response.data.order_number,
+        total_amount: response.data.total_amount,
+        payment_method: 'digital',
+        payment_method_name: 'Wompi',
+        status: response.data.status,
+        payment_status: response.data.payment_status,
+        customer_id: selectedCustomer.value.id,
+        ...(discountEnabled.value && _discountAmtPos > 0
+          ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
+          : {}),
+      }
+      cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
+      openWompiSlideover(response.data.order_id, Number(response.data.total_amount || amount), false)
       return
     }
     if (isKitchenServiceMode.value) {
@@ -3934,10 +3980,10 @@ onMounted(async () => {
   if (isPendingDeliveryMode.value) {
     posDebugLog('checkout', 'syncCart:skipped-pending-delivery')
     isSyncingCart.value = false
-    return
+  } else {
+    await syncCart()
+    posDebugLog('checkout', 'mount:after-syncCart', checkoutDebugSnapshot())
   }
-  await syncCart()
-  posDebugLog('checkout', 'mount:after-syncCart', checkoutDebugSnapshot())
   unsubscribeWompiPayment = subscribeOrderPaymentApproved((payload) => {
     if (payload.order_id && payload.order_id === wompiOrderId.value) {
       void finishWompiSale()
