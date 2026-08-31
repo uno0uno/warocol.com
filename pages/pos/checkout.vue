@@ -66,6 +66,7 @@ definePageMeta({
 useHead({ title: () => t('pos.checkout.title') })
 
 const router = useRouter()
+const route = useRoute()
 const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
@@ -500,6 +501,70 @@ const showAddressForm = ref(false)
 const addressFormError = ref<string | null>(null)
 const addressFormLoading = ref(false)
 
+const pendingOrderId = computed(() => {
+  const q = route.query.pendingOrder
+  return typeof q === 'string' && q.length > 0 ? q : null
+})
+const isPendingDeliveryMode = computed(() => !!pendingOrderId.value)
+
+type PendingDeliveryDetail = {
+  id: string
+  order_number: number
+  total_amount: number
+  status: string
+  payment_status?: string | null
+  delivery_address_id?: string | null
+  delivery_instructions?: string | null
+  customer?: { id?: string | null; name?: string | null; phone?: string | null; phone_number?: string | null; email?: string | null }
+  items?: Array<{
+    id: string
+    quantity: number
+    price_at_purchase: number
+    subtotal: number
+    promo_savings_allocated?: number
+    promotion_name?: string | null
+    promotion_type?: string | null
+    tax_category?: string | null
+    product?: { id?: string | null; name?: string | null }
+    modifiers?: Array<{ name: string; price: number; quantity?: number }>
+  }>
+}
+
+const {
+  data: pendingDeliveryPayload,
+  status: pendingDeliveryStatus,
+  error: pendingDeliveryError,
+} = useQuery({
+  key: () => ['tables', 'pending-deliveries', pendingOrderId.value],
+  query: () => $fetch<{ success: boolean; data: PendingDeliveryDetail }>(
+    `/api/tables/pending-deliveries/${pendingOrderId.value}`,
+  ),
+  enabled: () => !!pendingOrderId.value,
+  staleTime: 0,
+})
+const pendingDeliveryOrder = computed(() => pendingDeliveryPayload.value?.data ?? null)
+
+const mapPendingDeliveryItemToCheckoutLine = (item: NonNullable<PendingDeliveryDetail['items']>[number]) => ({
+  orderItemId: item.id,
+  promotionName: item.promotion_name ?? null,
+  promoType: item.promotion_type ?? null,
+  promoSavings: Number(item.promo_savings_allocated) || 0,
+  promoOptOut: false,
+  tax_category: item.tax_category ?? null,
+  product: {
+    id: item.product?.id ?? '',
+    name: item.product?.name ?? '',
+    price: item.price_at_purchase,
+    image: '🍽️',
+    category: '',
+    tax_category: item.tax_category ?? null,
+  },
+  modifiers: item.modifiers ?? [],
+  quantity: item.quantity,
+  notes: undefined,
+  subtotal: Number(item.subtotal) || 0,
+})
+
 const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) => {
   const raw = item as any
   return {
@@ -528,6 +593,9 @@ const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) =>
 
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
+  if (isPendingDeliveryMode.value) {
+    return (pendingDeliveryOrder.value?.items ?? []).map(mapPendingDeliveryItemToCheckoutLine)
+  }
   if (isKitchenServiceMode.value) {
     const fromTab = storeTabItems.value.map(mapTabItemToCheckoutLine)
     if (fromTab.length > 0) return fromTab
@@ -545,7 +613,11 @@ const hasOrderLines = computed(
     || (!!posStore.activeTableSession && storeTabItems.value.length > 0),
 )
 const showEmptyCheckout = computed(
-  () => !showSuccessModal.value && !isKitchenServiceMode.value && !hasOrderLines.value,
+  () =>
+    !showSuccessModal.value
+    && !isKitchenServiceMode.value
+    && !isPendingDeliveryMode.value
+    && !hasOrderLines.value,
 )
 
 const checkoutDebugSnapshot = () => ({
@@ -580,6 +652,14 @@ const promoOptOutSignature = computed(() => {
     .join(',')
 })
 const cartTotal = computed(() => {
+  if (isPendingDeliveryMode.value) {
+    const total = Number(pendingDeliveryOrder.value?.total_amount)
+    if (Number.isFinite(total) && total > 0) return total
+    return cartItems.value.reduce((sum, item) => {
+      const line = item as { subtotal?: number; product?: { price?: number }; quantity?: number }
+      return sum + (Number(line.subtotal) || (Number(line.product?.price) || 0) * (Number(line.quantity) || 0))
+    }, 0)
+  }
   if (isKitchenServiceMode.value) {
     if (storeTabItems.value.length > 0) {
       return storeTabItems.value.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0)
@@ -863,6 +943,21 @@ const { data: posTaxPreviewData } = useQuery({
 // Tax preview derived from whichever query is active (mesa vs POS).
 // Replaces the manually-managed taxPreview ref + refreshTaxPreview function.
 const taxPreview = computed<TaxPreview | null>(() => {
+  if (isPendingDeliveryMode.value) {
+    const order = pendingDeliveryOrder.value as (PendingDeliveryDetail & {
+      standard_tax?: number
+      liquor_tax?: number
+      standard_tax_label?: string
+      liquor_tax_label?: string
+    }) | null
+    if (!order) return null
+    return {
+      standard_tax: Number(order.standard_tax) || 0,
+      liquor_tax: Number(order.liquor_tax) || 0,
+      standard_tax_label: localizedInternalTaxLabel(order.standard_tax_label),
+      liquor_tax_label: localizedInternalTaxLabel(order.liquor_tax_label),
+    }
+  }
   if (isKitchenServiceMode.value) {
     const session = mesaCurrentData.value?.data?.session
     if (!session) return null
@@ -1592,12 +1687,11 @@ watch(
 // Delivery eligibility — allowed for counter and bar (anything that's not a real mesa).
 // Mesa is dine-in by definition; bar is a permanent counter tab used as walk-in/mostrador.
 const canRegisterDelivery = computed(() => !isMesaMode.value)
-const isDeliveryEligible = computed(() =>
-  canRegisterDelivery.value &&
-  acceptsOnlineOrders.value &&
-  !!selectedCustomer.value &&
-  !isAnonymousCustomer.value
-)
+const isDeliveryEligible = computed(() => {
+  const identified = !!selectedCustomer.value && !isAnonymousCustomer.value
+  if (isPendingDeliveryMode.value) return identified
+  return canRegisterDelivery.value && acceptsOnlineOrders.value && identified
+})
 
 // Sync address store with selected customer; reset delivery state when customer cleared
 watch(() => selectedCustomer.value?.id, (customerId, prevId) => {
@@ -1614,6 +1708,7 @@ watch(() => selectedCustomer.value?.id, (customerId, prevId) => {
 
 // Auto-disable delivery toggle when eligibility is lost (mesa mode, anon customer, gate flipped off)
 watch(isDeliveryEligible, (eligible) => {
+  if (isPendingDeliveryMode.value) return
   if (!eligible) {
     deliveryEnabled.value = false
     showAddressForm.value = false
@@ -2161,6 +2256,10 @@ const processWompiCollection = async () => {
     isProcessing.value = true
     processingError.value = ''
     const amount = finalAmountToCollect.value
+    if (isPendingDeliveryMode.value && pendingOrderId.value) {
+      openWompiSlideover(pendingOrderId.value, amount, false)
+      return
+    }
     if (isKitchenServiceMode.value) {
       const pending = pendingKitchenOrder()
       if (pending.length !== 1 || !pending[0]?.id) {
@@ -2228,6 +2327,98 @@ const processWompiCollection = async () => {
   }
 }
 
+const completePendingDeliveryPayment = async () => {
+  if (!pendingOrderId.value || !selectedCustomer.value) return
+  if (splitMode.value) {
+    processingError.value = t('pos.checkout.split.enterAmount')
+    return
+  }
+  try {
+    isProcessing.value = true
+    processingError.value = ''
+    if (!(await ensureWalletTenderCanPay(finalAmountToCollect.value))) return
+    const _discountAmt = discountAmount.value
+    const _subtotal = cartTotal.value
+    const response = await $fetch(`/api/tables/pending-deliveries/${pendingOrderId.value}/complete`, {
+      method: 'POST',
+      body: {
+        payment_method: selectedPaymentMethod.value,
+        payment_method_id: selectedPaymentMethodId.value ?? null,
+        customer_id: selectedCustomer.value.id,
+        ...(selectedGroup.value?.triggersCartera && creditDueDate.value
+          ? { credit_due_date: creditDueDate.value }
+          : {}),
+        ...(discountEnabled.value && _discountAmt > 0
+          ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+          : {}),
+        ...(isCashMethod.value
+          ? { cash_received: Number(cashReceivedInput.value) }
+          : {}),
+        ...checkoutServedByBody.value,
+        ...checkoutTipBody.value,
+        ...checkoutWaroBody.value,
+      },
+    }) as {
+      success: boolean
+      data: {
+        order_id: string
+        order_number: number
+        total_amount: number
+        status?: string
+        payment_status?: string | null
+        payment_method?: string | null
+        customer_id?: string | null
+        standard_tax?: number
+        liquor_tax?: number
+        standard_tax_label?: string
+        liquor_tax_label?: string
+      }
+    }
+    if (!response.success) {
+      processingError.value = t('pos.checkout.errors.processOrder')
+      return
+    }
+    const subMethodName = selectedPaymentMethodId.value
+      ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
+      : undefined
+    orderResult.value = {
+      order_id: response.data.order_id,
+      order_number: response.data.order_number,
+      total_amount: response.data.total_amount,
+      payment_method: response.data.payment_method ?? selectedPaymentMethod.value,
+      payment_method_name: subMethodName,
+      status: response.data.status,
+      payment_status: response.data.payment_status,
+      customer_id: selectedCustomer.value.id,
+      standard_tax: response.data.standard_tax ?? taxPreview.value?.standard_tax ?? 0,
+      liquor_tax: response.data.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0,
+      standard_tax_label: localizedInternalTaxLabel(response.data.standard_tax_label || taxPreview.value?.standard_tax_label),
+      liquor_tax_label: localizedInternalTaxLabel(response.data.liquor_tax_label || taxPreview.value?.liquor_tax_label),
+      ...(discountEnabled.value && _discountAmt > 0
+        ? { discount_amount: _discountAmt, subtotal: _subtotal }
+        : {}),
+    }
+    wasMesaMode.value = false
+    cartItemsSnapshot.value = snapshotCartItemsForReceipt()
+    captureReceiptPrintContext()
+    applyReceiptEmailAfterSale(selectedCustomer.value)
+    receiptEmail.value = ''
+    emailSent.value = false
+    lastSentEmail.value = ''
+    emailFromProfile.value = false
+    posStore.exitSession()
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+    cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
+    showSuccessModal.value = true
+    document.body.classList.remove('printing-prefactura')
+    prefacturaPrintSnapshot.value = null
+  } catch (error: any) {
+    processingError.value = checkoutErrorMessage(error, t('pos.checkout.deliveryCheckout.completePendingError'))
+  } finally {
+    isProcessing.value = false
+  }
+}
+
 const processOrder = async () => {
   if (showWompiSlideover.value) return
   // Mesa mode: close the table session as payment
@@ -2241,6 +2432,11 @@ const processOrder = async () => {
   }
   if (isWompiTender.value) {
     await processWompiCollection()
+    return
+  }
+
+  if (isPendingDeliveryMode.value) {
+    await completePendingDeliveryPayment()
     return
   }
 
@@ -2602,7 +2798,7 @@ const isWompiTender = computed(() => {
   return isWompiPaymentMethod(group)
 })
 const canDeferDeliveryPayment = computed(() =>
-  isDeliveryEligible.value
+  isDeliveryEligible.value && !isPendingDeliveryMode.value
 )
 const isDeferredDeliveryPayment = computed(() =>
   deliveryEnabled.value && !isMesaMode.value && !selectedPaymentMethod.value
@@ -3651,6 +3847,9 @@ const syncCart = async () => {
 // isRefreshing: a refetch is in-flight while we already have data. Surfaced
 // in the layout header via registerProgressiveLoading — content stays visible.
 const isLoading = computed(() => {
+  if (isPendingDeliveryMode.value) {
+    return pendingDeliveryStatus.value === 'pending' && !pendingDeliveryPayload.value
+  }
   if (
     posStore.activeTableSession?.isBar
     && settingsAsyncStatus.value === 'loading'
@@ -3672,7 +3871,10 @@ const isRefreshing = computed(() => {
   }
   return false
 })
-const checkoutError = computed(() => (isKitchenServiceMode.value ? mesaCurrentError.value : null))
+const checkoutError = computed(() => {
+  if (isPendingDeliveryMode.value) return pendingDeliveryError.value
+  return isKitchenServiceMode.value ? mesaCurrentError.value : null
+})
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const refreshAll = async () => {
@@ -3721,7 +3923,7 @@ onMounted(async () => {
   })
 
   // Siempre regeneramos el carrito backend desde el estado local actual.
-  if (posStore.cart.length > 0) {
+  if (!isPendingDeliveryMode.value && posStore.cart.length > 0) {
     isSyncingCart.value = true
   }
 
@@ -3729,6 +3931,11 @@ onMounted(async () => {
 
   // Cart sync is the only operation that's genuinely sequential (mutation
   // local → backend). All read queries already kicked off from setup.
+  if (isPendingDeliveryMode.value) {
+    posDebugLog('checkout', 'syncCart:skipped-pending-delivery')
+    isSyncingCart.value = false
+    return
+  }
   await syncCart()
   posDebugLog('checkout', 'mount:after-syncCart', checkoutDebugSnapshot())
   unsubscribeWompiPayment = subscribeOrderPaymentApproved((payload) => {
@@ -3784,6 +3991,7 @@ onUnmounted(() => {
 watch(
   () => posStore.currentCustomer,
   (customer) => {
+    if (isPendingDeliveryMode.value) return
     if (!customer || selectedCustomer.value) return
     selectedCustomer.value = {
       id: customer.id,
@@ -3795,10 +4003,32 @@ watch(
   { immediate: true },
 )
 
+watch(
+  pendingDeliveryOrder,
+  (order) => {
+    if (!order || !isPendingDeliveryMode.value) return
+    if (order.customer?.id) {
+      selectedCustomer.value = {
+        id: order.customer.id,
+        name: order.customer.name ?? null,
+        phone_number: order.customer.phone ?? order.customer.phone_number ?? null,
+        email: order.customer.email ?? null,
+      }
+    }
+    deliveryEnabled.value = true
+    deliveryInstructions.value = order.delivery_instructions || ''
+    if (order.delivery_address_id) {
+      addressStore.selectAddress(order.delivery_address_id)
+    }
+  },
+  { immediate: true },
+)
+
 const autoSelectAttempted = ref(false)
 watch(
   () => posCheckoutBusiness.value,
   async (business) => {
+    if (isPendingDeliveryMode.value) return
     if (autoSelectAttempted.value) return
     if (!posCheckoutContext.value) return                 // not loaded yet — wait
     if (!business.auto_select_generic_enabled) return     // tenant opted out
@@ -4508,7 +4738,7 @@ onUnmounted(() => {
                 v-model="deliveryEnabled"
                 type="checkbox"
                 class="sr-only peer"
-                :disabled="!isDeliveryEligible"
+                :disabled="!isDeliveryEligible || isPendingDeliveryMode"
                 :aria-label="t('pos.checkout.deliveryCheckout.toggleAria')"
               />
               <div class="w-11 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
@@ -4835,7 +5065,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Split Payment (Cobro Parcial) — only after customer is set -->
-        <div v-if="selectedCustomer" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+        <div v-if="selectedCustomer && !isPendingDeliveryMode" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">

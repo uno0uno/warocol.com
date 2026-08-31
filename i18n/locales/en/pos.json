@@ -150,7 +150,8 @@
         "realCustomerRequired": "Identify a real customer to register delivery",
         "pendingSaleNeedsKitchen": "Add the items to the tab and send them to kitchen before leaving it pending",
         "saveAddressError": "Could not save the address",
-        "deferSaleError": "Error leaving the sale pending"
+        "deferSaleError": "Error leaving the sale pending",
+        "completePendingError": "Could not collect payment for this pending delivery"
       },
       "split": {
         "title": "Split payment",
@@ -405,7 +406,20 @@
       "coversOnly": "{covers}",
       "tableAriaWithCapacity": "{name} — {capacity} — {status}",
       "tableAriaWithAliasCapacity": "{alias} — {name} — {capacity} — {status}",
-      "tableAriaWithAlias": "{alias} — {name} — {status}"
+      "tableAriaWithAlias": "{alias} — {name} — {status}",
+      "viewTables": "Tables",
+      "viewDeliveries": "Deliveries",
+      "viewDeliveriesAria": "Pending deliveries ({count})",
+      "colTable": "Table",
+      "colStatus": "Status",
+      "colTotal": "Total",
+      "colCustomer": "Customer",
+      "colAddress": "Address",
+      "colTime": "Time",
+      "deliveriesEmptyTitle": "No pending deliveries",
+      "deliveriesEmptyBody": "Bar orders left as pending delivery show up here so you can collect payment.",
+      "unknownCustomer": "Customer",
+      "noAddress": "No address"
     },
     "delivery": {
       "notesPlaceholder": "e.g. gate on 51st street, yellow building",

@@ -150,7 +150,8 @@
         "realCustomerRequired": "Identifica un cliente real para registrar domicilio",
         "pendingSaleNeedsKitchen": "Agrega los ítems a la cuenta y envíalos a cocina antes de dejarla pendiente",
         "saveAddressError": "No se pudo guardar la dirección",
-        "deferSaleError": "Error al dejar la venta pendiente"
+        "deferSaleError": "Error al dejar la venta pendiente",
+        "completePendingError": "Error al cobrar el domicilio pendiente"
       },
       "split": {
         "title": "Cobro Parcial",
@@ -405,7 +406,20 @@
       "coversOnly": "{covers}",
       "tableAriaWithCapacity": "{name} — {capacity} — {status}",
       "tableAriaWithAliasCapacity": "{alias} — {name} — {capacity} — {status}",
-      "tableAriaWithAlias": "{alias} — {name} — {status}"
+      "tableAriaWithAlias": "{alias} — {name} — {status}",
+      "viewTables": "Mesas",
+      "viewDeliveries": "Domicilios",
+      "viewDeliveriesAria": "Domicilios pendientes ({count})",
+      "colTable": "Mesa",
+      "colStatus": "Estado",
+      "colTotal": "Total",
+      "colCustomer": "Cliente",
+      "colAddress": "Dirección",
+      "colTime": "Tiempo",
+      "deliveriesEmptyTitle": "No hay domicilios pendientes",
+      "deliveriesEmptyBody": "Los pedidos de barra dejados como domicilio pendiente aparecen aquí para cobrarlos.",
+      "unknownCustomer": "Cliente",
+      "noAddress": "Sin dirección"
     },
     "delivery": {
       "notesPlaceholder": "Ej: portería en la calle 51, edificio amarillo",
