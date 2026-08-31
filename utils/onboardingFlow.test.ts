@@ -12,6 +12,7 @@ import {
   isPendingOnboardingSession,
   normalizeOnboardingNextStep,
   shouldOpenPaddleInsteadOfSetupRedirect,
+  shouldResumeHostedCheckoutInsteadOfSetupRedirect,
 } from './onboardingFlow.ts'
 
 test('classifies active, pending, customer and anonymous sessions', () => {
@@ -66,6 +67,13 @@ test('open Paddle txn skips active+setup redirect to Mi Plan (#2217)', () => {
   assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(undefined), false)
   assert.equal(shouldOpenPaddleInsteadOfSetupRedirect(''), false)
   assert.equal(shouldOpenPaddleInsteadOfSetupRedirect('not-a-txn'), false)
+})
+
+test('hosted LS checkout id resumes thank-you instead of Mi Plan (#943)', () => {
+  assert.equal(shouldResumeHostedCheckoutInsteadOfSetupRedirect('ls_chk_abc'), true)
+  assert.equal(shouldResumeHostedCheckoutInsteadOfSetupRedirect('12345'), true)
+  assert.equal(shouldResumeHostedCheckoutInsteadOfSetupRedirect(null), false)
+  assert.equal(shouldResumeHostedCheckoutInsteadOfSetupRedirect(''), false)
 })
 
 test('normalizes onboarding steps safely', () => {

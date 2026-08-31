@@ -7,7 +7,7 @@ import {
   billingOfferAnnualSavings,
   canStartBillingSubscription,
   formatBillingOfferAmount,
-  normalizeLocalPaddleCheckoutUrl,
+  normalizeLocalCheckoutUrl,
   resolveBillingScenario,
   shouldShowBillingRecoveryAlert,
   type BillingPriceOffer,
@@ -200,17 +200,21 @@ test('prefers paddle transaction id over wompi for event refs', () => {
     billingEventProviderLabelKey({ wompi_transaction_id: 'txn_w' }),
     'billing.processedByWompi',
   )
+  assert.equal(
+    billingEventProviderLabelKey({ provider: 'lemon_squeezy' }),
+    'billing.processedByLemonSqueezy',
+  )
 })
 
-test('normalizes local paddle checkout urls to http without waro-colombia prefix', () => {
+test('normalizes local hosted checkout urls to http without waro-colombia prefix', () => {
   assert.equal(
-    normalizeLocalPaddleCheckoutUrl(
-      'https://localhost:8080/waro-colombia/billing/confirmacion?_ptxn=txn_x',
+    normalizeLocalCheckoutUrl(
+      'https://localhost:8080/waro-colombia/billing/confirmacion?ls_checkout=ls_chk_x',
     ),
-    'http://localhost:8080/billing/confirmacion?_ptxn=txn_x',
+    'http://localhost:8080/billing/confirmacion?ls_checkout=ls_chk_x',
   )
   assert.equal(
-    normalizeLocalPaddleCheckoutUrl('https://warocol.com/billing/confirmacion?_ptxn=txn_x'),
-    'https://warocol.com/billing/confirmacion?_ptxn=txn_x',
+    normalizeLocalCheckoutUrl('https://warocol.com/billing/confirmacion?ls_checkout=ls_chk_x'),
+    'https://warocol.com/billing/confirmacion?ls_checkout=ls_chk_x',
   )
 })

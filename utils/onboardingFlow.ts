@@ -48,13 +48,19 @@ export const isActiveOnboardingSetupSession = (session: unknown) =>
   && normalizeOnboardingNextStep(getSessionNextStep(session)) === 'setup'
 
 /**
- * Payment return with an open Paddle txn must open checkout, not bounce
- * active+setup (Starter) sessions to Mi Plan (#2217).
+ * Payment return with a hosted MoR checkout id must resume thank-you / poll,
+ * not bounce active+setup (Starter) sessions to Mi Plan (#2217 / #943).
+ */
+export const shouldResumeHostedCheckoutInsteadOfSetupRedirect = (
+  checkoutId: string | null | undefined,
+) => Boolean(checkoutId && String(checkoutId).trim())
+
+/**
+ * @deprecated Legacy Paddle txn_ ids — prefer shouldResumeHostedCheckoutInsteadOfSetupRedirect.
  */
 export const shouldOpenPaddleInsteadOfSetupRedirect = (
   paddleTxnId: string | null | undefined,
 ) => Boolean(paddleTxnId && String(paddleTxnId).startsWith('txn_'))
-
 export const isOnboardingEntrySession = (session: unknown) =>
   isPendingOnboardingSession(session)
 
