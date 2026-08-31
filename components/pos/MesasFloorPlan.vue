@@ -21,6 +21,21 @@ const emit = defineEmits<{
   (e: 'move-table', ctx: { tableId: string; sessionId: string; tableName: string }): void
 }>()
 
+type FloorView = 'mesas' | 'domicilios'
+type FloorLayout = 'grid' | 'list'
+
+interface PendingDeliveryRow {
+  id: string
+  order_number: number
+  order_date: string | null
+  total_amount: number
+  status: string
+  payment_status: string | null
+  delivery_instructions: string | null
+  address_label: string | null
+  customer: { id: string | null; name: string | null; phone_number: string | null }
+}
+
 const { currentTenant } = useTenantReactive()
 
 // ── Tables data ────────────────────────────────────────────────────────────
@@ -35,9 +50,69 @@ const loadingTables = computed(() => tablesStatus.value === 'pending')
 const isRefreshing = computed(() => tablesAsyncStatus.value === 'loading' && tablesData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isRefreshing)
 
 const tables = computed(() => tablesData.value?.data ?? [])
+
+const floorView = ref<FloorView>('mesas')
+const floorLayout = ref<FloorLayout>('grid')
+const floorLayoutToggleTarget = computed<FloorLayout>(() =>
+  floorLayout.value === 'grid' ? 'list' : 'grid',
+)
+const toggleFloorLayout = () => {
+  floorLayout.value = floorLayoutToggleTarget.value
+}
+
+const {
+  data: pendingDeliveriesData,
+  status: pendingDeliveriesStatus,
+  asyncStatus: pendingDeliveriesAsyncStatus,
+  error: pendingDeliveriesError,
+  refetch: refetchPendingDeliveries,
+} = useQuery({
+  key: () => ['tables', 'pending-deliveries', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: PendingDeliveryRow[] }>('/api/tables/pending-deliveries'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 0,
+})
+
+const pendingDeliveries = computed(() => pendingDeliveriesData.value?.data ?? [])
+const loadingPendingDeliveries = computed(() => pendingDeliveriesStatus.value === 'pending')
+const isRefreshingDeliveries = computed(() =>
+  pendingDeliveriesAsyncStatus.value === 'loading' && pendingDeliveriesData.value != null,
+)
+const isFloorRefreshing = computed(() => isRefreshing.value || isRefreshingDeliveries.value)
+registerProgressiveLoading(isFloorRefreshing)
+
+const refreshFloor = async () => {
+  await Promise.all([refetch(), refetchPendingDeliveries()])
+}
+
+const handleDeliveryClick = (order: PendingDeliveryRow) => {
+  navigateTo({ path: '/pos/checkout', query: { pendingOrder: order.id } })
+}
+
+const tableListColumns = computed(() => [
+  { key: 'name', title: t('pos.floor.colTable'), sortable: false },
+  { key: 'status', title: t('pos.floor.colStatus'), sortable: false },
+  { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
+])
+
+const deliveryListColumns = computed(() => [
+  { key: 'customer', title: t('pos.floor.colCustomer'), sortable: false },
+  { key: 'address', title: t('pos.floor.colAddress'), sortable: false },
+  { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
+  { key: 'time', title: t('pos.floor.colTime'), sortable: false },
+])
+
+const floorToolbarButtonClass = [
+  'inline-flex items-center justify-center min-h-9 px-3 rounded-lg text-xs font-semibold border transition-colors',
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35',
+]
+const floorToolbarToggleClass = [
+  'relative w-9 px-0 overflow-hidden text-text-secondary border border-border rounded-lg min-h-9',
+  'hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35',
+  'inline-flex items-center justify-center',
+]
 
 // Bar tile is always-on — separate from regular tables
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
@@ -356,12 +431,12 @@ const totalVentas = computed(() =>
 )
 
 onMounted(() => {
-  setRefreshHandler(refetch)
-  pollInterval = setInterval(refetch, 30_000)
+  setRefreshHandler(refreshFloor)
+  pollInterval = setInterval(refreshFloor, 30_000)
 })
 
 onUnmounted(() => {
-  clearRefreshHandler(refetch)
+  clearRefreshHandler(refreshFloor)
   if (pollInterval) clearInterval(pollInterval)
 })
 </script>
@@ -378,6 +453,154 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="inline-flex rounded-lg border border-border p-0.5 bg-surface">
+          <button
+            type="button"
+            :class="[
+              floorToolbarButtonClass,
+              floorView === 'mesas'
+                ? 'bg-badge-primary-bg text-badge-primary-text border-badge-primary-border'
+                : 'border-transparent text-text-secondary hover:text-text-primary',
+            ]"
+            @click="floorView = 'mesas'"
+          >
+            {{ t('pos.floor.viewTables') }}
+          </button>
+          <button
+            type="button"
+            :class="[
+              floorToolbarButtonClass,
+              floorView === 'domicilios'
+                ? 'bg-badge-primary-bg text-badge-primary-text border-badge-primary-border'
+                : 'border-transparent text-text-secondary hover:text-text-primary',
+            ]"
+            :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
+            @click="floorView = 'domicilios'"
+          >
+            {{ t('pos.floor.viewDeliveries') }}
+            <span
+              v-if="pendingDeliveries.length"
+              class="ms-1.5 min-w-5 px-1 rounded-full bg-status-warning-bg text-status-warning-text text-[10px] font-bold tabular-nums"
+            >
+              {{ pendingDeliveries.length }}
+            </span>
+          </button>
+        </div>
+        <button
+          type="button"
+          :class="floorToolbarToggleClass"
+          :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
+          :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
+          @click="toggleFloorLayout"
+        >
+          <svg
+            v-if="floorLayoutToggleTarget === 'list'"
+            class="h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+          <svg
+            v-else
+            class="h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+          </svg>
+        </button>
+      </div>
+
+      <div v-if="floorView === 'domicilios'">
+        <div v-if="loadingPendingDeliveries" class="flex items-center justify-center min-h-[40vh]">
+          <CommonsTheCustomLoader size="large" />
+        </div>
+        <CommonsTheErrorState v-else-if="pendingDeliveriesError" />
+        <div
+          v-else-if="pendingDeliveries.length === 0"
+          class="flex flex-col items-center justify-center min-h-[40vh] text-center px-4"
+        >
+          <p class="text-base font-semibold text-text-primary">{{ t('pos.floor.deliveriesEmptyTitle') }}</p>
+          <p class="text-sm text-text-secondary mt-1">{{ t('pos.floor.deliveriesEmptyBody') }}</p>
+        </div>
+        <UiResponsiveDataView
+          v-else-if="floorLayout === 'list'"
+          :columns="deliveryListColumns"
+          :data="pendingDeliveries"
+          item-key="id"
+          :empty-message="t('pos.floor.deliveriesEmptyTitle')"
+          row-size="sm"
+          @row-click="handleDeliveryClick"
+        >
+          <template #card="{ item }">
+            <button
+              type="button"
+              class="flex w-full flex-col gap-1 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg"
+              @click="handleDeliveryClick(item)"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="min-w-0 truncate text-sm font-semibold text-text-primary">
+                  {{ item.customer?.name || t('pos.floor.unknownCustomer') }}
+                </p>
+                <p class="flex-shrink-0 text-sm font-semibold tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
+              </div>
+              <p class="text-xs text-text-secondary truncate">
+                {{ item.address_label || t('pos.floor.noAddress') }}
+                <span v-if="item.order_date"> · {{ formatDuration(item.order_date) }}</span>
+              </p>
+            </button>
+          </template>
+          <template #cell-customer="{ item }">
+            <span class="font-semibold">{{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
+          </template>
+          <template #cell-address="{ item }">
+            <span class="text-text-secondary">{{ item.address_label || t('pos.floor.noAddress') }}</span>
+          </template>
+          <template #cell-total="{ item }">
+            <span class="tabular-nums">{{ formatCurrency(item.total_amount) }}</span>
+          </template>
+          <template #cell-time="{ item }">
+            <span class="text-text-secondary">{{ item.order_date ? formatDuration(item.order_date) : '—' }}</span>
+          </template>
+        </UiResponsiveDataView>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
+          <button
+            v-for="order in pendingDeliveries"
+            :key="order.id"
+            type="button"
+            class="table-card w-full h-full flex flex-col rounded-xl overflow-hidden border border-status-warning-text/30 bg-surface text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 hover:border-status-warning-text/60"
+            @click="handleDeliveryClick(order)"
+          >
+            <div class="flex-1 p-3">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-status-warning-text mb-1">
+                {{ t('pos.floor.viewDeliveries') }} · #{{ order.order_number }}
+              </p>
+              <p class="font-bold text-text-primary line-clamp-2 min-h-[2.5rem]">
+                {{ order.customer?.name || t('pos.floor.unknownCustomer') }}
+              </p>
+              <p class="text-xs text-text-secondary line-clamp-2 mt-1">
+                {{ order.address_label || t('pos.floor.noAddress') }}
+              </p>
+            </div>
+            <div class="px-3 py-2 bg-status-warning-bg/60 flex items-center justify-between gap-2">
+              <span class="text-sm font-bold tabular-nums text-status-warning-text">{{ formatCurrency(order.total_amount) }}</span>
+              <span class="text-xs text-text-secondary">{{ order.order_date ? formatDuration(order.order_date) : '' }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <template v-else>
       <!-- Bar tile — always visible, pinned before regular tables -->
       <div v-if="barTable" class="mb-4">
         <button
@@ -416,7 +639,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Table grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
+      <div v-if="floorLayout === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
         <div v-for="table in regularTables" :key="table.id" class="h-full">
 
           <!-- Card — uniform height across grid -->
@@ -500,6 +723,43 @@ onUnmounted(() => {
 
         </div>
       </div>
+
+      <UiResponsiveDataView
+        v-else
+        :columns="tableListColumns"
+        :data="regularTables"
+        item-key="id"
+        :empty-message="t('pos.floor.free')"
+        row-size="sm"
+        @row-click="handleTableClick"
+      >
+        <template #card="{ item }">
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg disabled:opacity-60"
+            :disabled="openingTableId === item.id"
+            @click="handleTableClick(item)"
+          >
+            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{{ tableCardTitle(item) }}</p>
+            <span class="flex-shrink-0 text-xs font-semibold uppercase text-text-secondary">{{ badgeLabel(item.status) }}</span>
+            <p class="flex-shrink-0 text-sm font-semibold tabular-nums">
+              {{ item.status === 'free' ? '—' : formatCurrency(item.session?.running_total ?? 0) }}
+            </p>
+          </button>
+        </template>
+        <template #cell-name="{ item }">
+          <span class="font-semibold">{{ tableCardTitle(item) }}</span>
+        </template>
+        <template #cell-status="{ item }">
+          {{ badgeLabel(item.status) }}
+        </template>
+        <template #cell-total="{ item }">
+          <span class="tabular-nums">
+            {{ item.status === 'free' ? '—' : formatCurrency(item.session?.running_total ?? 0) }}
+          </span>
+        </template>
+      </UiResponsiveDataView>
+      </template>
     </div>
 
   </div>
