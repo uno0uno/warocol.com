@@ -21,7 +21,22 @@ import {
   normalizeLocalCheckoutUrl,
 } from '~/utils/billingPresentation'
 
-const { openCheckoutUrl } = useHostedBillingCheckout()
+const {
+  openCheckoutUrl,
+  clearHostedCheckoutPending,
+  normalizeLsCheckoutId,
+} = useHostedBillingCheckout()
+
+const checkoutIdFromUrl = (url: string): string | null => {
+  try {
+    const parsed = new URL(url)
+    return normalizeLsCheckoutId(
+      parsed.searchParams.get('ls_checkout') || parsed.searchParams.get('checkout_id'),
+    )
+  } catch {
+    return null
+  }
+}
 
 interface Column {
   key: string
@@ -467,6 +482,7 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
   }
 
   await openCheckoutUrl(checkoutUrl, {
+    checkoutId: checkoutIdFromUrl(checkoutUrl),
     normalizeUrl: normalizeLocalCheckoutUrl,
   })
   checkoutRedirecting.value = false
@@ -493,6 +509,7 @@ const handleAbandonPendingCheckout = async () => {
       return
     }
     abandonConfirmOpen.value = false
+    clearHostedCheckoutPending()
     await Promise.all([
       fetchBillingOverview(),
       accessStore.load(),
