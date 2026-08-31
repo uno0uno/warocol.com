@@ -112,6 +112,18 @@ test('builds the exact API payload and computes resend cooldown', () => {
     source: 'blog',
     campaign: 'julio',
   })
+  assert.deepEqual(buildRegistrationPayload(draft, ' opaque-trail-id '), {
+    email: 'owner@example.com',
+    phone_country_code: 57,
+    phone_number: '3001234567',
+    business_name: 'Panaderia Central',
+    country_code: 'CO',
+    base_currency_code: 'COP',
+    consent: true,
+    source: 'blog',
+    campaign: 'julio',
+    visitor_key: 'opaque-trail-id',
+  })
   assert.equal(getRegistrationCooldownSeconds(10_000, 10_001), 30)
   assert.equal(getRegistrationCooldownSeconds(10_000, 40_000), 0)
 })

@@ -50,6 +50,11 @@ export const normalizeRegistrationPhone = (value: unknown) =>
 export const normalizeRegistrationBusinessName = (value: unknown) =>
   typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 120) : ''
 
+export const normalizeRegistrationVisitorKey = (value: unknown) => {
+  const text = typeof value === 'string' ? value.trim() : ''
+  return text ? text.slice(0, 128) : undefined
+}
+
 const normalizeCatalogCode = (value: unknown, length: number) =>
   typeof value === 'string' ? value.trim().toUpperCase().slice(0, length) : ''
 
@@ -136,7 +141,10 @@ export const getRegistrationCooldownSeconds = (sentAt: number | null, now = Date
   return Math.max(0, Math.ceil((sentAt + REGISTRATION_RESEND_COOLDOWN_MS - now) / 1000))
 }
 
-export const buildRegistrationPayload = (draft: RegistrationDraft) => {
+export const buildRegistrationPayload = (
+  draft: RegistrationDraft,
+  visitorKey?: string | null,
+) => {
   const country_code = normalizeCatalogCode(draft.businessCountryCode, 2)
   const payload: Record<string, unknown> = {
     email: normalizeRegistrationEmail(draft.email),
@@ -150,5 +158,7 @@ export const buildRegistrationPayload = (draft: RegistrationDraft) => {
   }
   const jurisdiction = normalizeCatalogCode(draft.taxJurisdictionCode, 10)
   if (jurisdiction) payload.tax_jurisdiction_code = jurisdiction
+  const normalizedVisitorKey = normalizeRegistrationVisitorKey(visitorKey)
+  if (normalizedVisitorKey) payload.visitor_key = normalizedVisitorKey
   return payload
 }

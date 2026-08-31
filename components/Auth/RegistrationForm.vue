@@ -517,6 +517,7 @@ const sendRegistration = async (isResend: boolean) => {
   error.value = ''
   try {
     const draft = currentDraft()
+    const visitorKey = import.meta.client ? useCookie('waro_visitor_key').value : null
     const result = await $fetch<RegistrationMagicLinkResult>('/api/auth/register-magic-link', {
       method: 'POST',
       credentials: 'include',
@@ -524,7 +525,7 @@ const sendRegistration = async (isResend: boolean) => {
         'Content-Type': 'application/json',
         'Origin': baseUrl || 'http://localhost:8080',
       },
-      body: buildRegistrationPayload(draft),
+      body: buildRegistrationPayload(draft, visitorKey),
     })
     if (result.action === 'login_required') {
       const normalizedEmail = email.value.trim().toLocaleLowerCase()
