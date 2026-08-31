@@ -4,7 +4,7 @@ import test from 'node:test'
 import {
   billingThankYouPhaseFromStatus,
   BILLING_THANK_YOU_MAX_ATTEMPTS,
-} from './paddleThankYou.ts'
+} from './billingThankYou.ts'
 
 test('thank-you phase is ready when WARO access is full', () => {
   assert.equal(
