@@ -195,9 +195,7 @@ export default defineNuxtConfig({
       schemaDescription: process.env.NUXT_PUBLIC_SCHEMA_DESCRIPTION || '',
       // Google Tag Manager
       gtmContainerId: process.env.NUXT_PUBLIC_GTM_CONTAINER_ID || '',
-      // Paddle.js Billing (#2209) — client-side token only (test_… / live_…)
-      paddleClientToken: process.env.NUXT_PUBLIC_PADDLE_CLIENT_TOKEN || '',
-      paddleEnvironment: process.env.NUXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox',
+      // Billing MoR is Lemon Squeezy hosted checkout (#943) — no client token required.
     }
   },
   app: {

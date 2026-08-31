@@ -1,186 +1,79 @@
 /**
- * Paddle.js Billing checkout helper (#2209).
- * Opens an existing transaction via ?_ptxn= / Checkout.open({ transactionId }).
- * Default display mode is inline (full page), not overlay.
+ * Hosted MoR checkout helper (#943 Lemon Squeezy).
+ * Opens checkout_url externally; thank-you page polls the API — no Lemon.js / Paddle.js.
  */
-const PADDLE_JS_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js'
-const DONE_KEY_PREFIX = 'waro_paddle_txn_done:'
-export const PADDLE_INLINE_FRAME_ID = 'waro-paddle-checkout-frame'
 
-type PaddleEvent = {
-  name?: string
-  type?: string
-  data?: Record<string, unknown>
-}
+const PENDING_FLAG_KEY = 'waro_hosted_checkout_pending'
+const CHECKOUT_ID_KEY = 'waro_ls_checkout_id'
 
-type PaddleCheckoutOpenOptions = {
-  transactionId: string
-  settings?: {
-    displayMode?: 'overlay' | 'inline'
-    theme?: 'light' | 'dark'
-    frameTarget?: string
-    frameInitialHeight?: string | number
-    frameStyle?: string
-  }
-}
-
-type PaddleApi = {
-  Environment: { set: (env: 'sandbox' | 'production') => void }
-  Initialize: (opts: {
-    token: string
-    eventCallback?: (event: PaddleEvent) => void
-  }) => void
-  Checkout: { open: (opts: PaddleCheckoutOpenOptions) => void }
-}
-
-declare global {
-  interface Window {
-    Paddle?: PaddleApi
-  }
-}
-
-let scriptPromise: Promise<void> | null = null
-let initializedToken: string | null = null
-let activeEventHandler: ((event: PaddleEvent) => void) | null = null
-
-function loadPaddleScript (): Promise<void> {
-  if (!import.meta.client) return Promise.resolve()
-  if (window.Paddle) return Promise.resolve()
-  if (scriptPromise) return scriptPromise
-  scriptPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${PADDLE_JS_SRC}"]`)
-    if (existing) {
-      existing.addEventListener('load', () => resolve())
-      existing.addEventListener('error', () => reject(new Error('Paddle.js failed to load')))
-      if (window.Paddle) resolve()
-      return
-    }
-    const script = document.createElement('script')
-    script.src = PADDLE_JS_SRC
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Paddle.js failed to load'))
-    document.head.appendChild(script)
-  })
-  return scriptPromise
-}
-
-function txnDoneKey (transactionId: string) {
-  return `${DONE_KEY_PREFIX}${transactionId}`
-}
-
-export function isPaddleTransactionMarkedDone (transactionId: string): boolean {
-  if (!import.meta.client) return false
-  try {
-    return sessionStorage.getItem(txnDoneKey(transactionId)) === '1'
-  } catch {
-    return false
-  }
-}
-
-export function markPaddleTransactionDone (transactionId: string) {
+export function markHostedCheckoutPending (checkoutId?: string | null) {
   if (!import.meta.client) return
   try {
-    sessionStorage.setItem(txnDoneKey(transactionId), '1')
+    sessionStorage.setItem(PENDING_FLAG_KEY, '1')
+    const id = checkoutId != null ? String(checkoutId).trim() : ''
+    if (id) sessionStorage.setItem(CHECKOUT_ID_KEY, id)
   } catch {
     /* ignore quota / private mode */
   }
 }
 
-export function usePaddleCheckout () {
-  const config = useRuntimeConfig()
-
-  const clientToken = computed(() => String(config.public.paddleClientToken || '').trim())
-  const paddleEnv = computed(() => {
-    const raw = String(config.public.paddleEnvironment || 'sandbox').trim().toLowerCase()
-    return raw === 'production' || raw === 'live' ? 'production' : 'sandbox'
-  })
-
-  async function ensureInitialized () {
-    const token = clientToken.value
-    if (!token) {
-      throw new Error('missing_paddle_client_token')
-    }
-    await loadPaddleScript()
-    const paddle = window.Paddle
-    if (!paddle) throw new Error('paddle_js_unavailable')
-
-    if (initializedToken !== token) {
-      if (paddleEnv.value === 'sandbox') {
-        paddle.Environment.set('sandbox')
-      }
-      paddle.Initialize({
-        token,
-        eventCallback: (event) => {
-          activeEventHandler?.(event)
-        },
-      })
-      initializedToken = token
-    }
-    return paddle
+export function clearHostedCheckoutPending () {
+  if (!import.meta.client) return
+  try {
+    sessionStorage.removeItem(PENDING_FLAG_KEY)
+    sessionStorage.removeItem(CHECKOUT_ID_KEY)
+  } catch {
+    /* ignore */
   }
+}
 
-  async function openTransactionCheckout (
-    transactionId: string,
-    handlers?: {
-      onCompleted?: () => void
-      onClosed?: () => void
-      onError?: (message: string) => void
-    },
-    options?: {
-      displayMode?: 'overlay' | 'inline'
-      frameTarget?: string
-    },
+export function isHostedCheckoutPending (): boolean {
+  if (!import.meta.client) return false
+  try {
+    return sessionStorage.getItem(PENDING_FLAG_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function readStoredHostedCheckoutId (): string | null {
+  if (!import.meta.client) return null
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_ID_KEY)
+    return raw && raw.trim() ? raw.trim() : null
+  } catch {
+    return null
+  }
+}
+
+/** Normalize gateway_reference `ls_chk_{id}` or raw id for status poll query. */
+export function normalizeLsCheckoutId (raw: string | null | undefined): string | null {
+  if (raw == null) return null
+  const value = String(raw).trim()
+  if (!value) return null
+  if (value.startsWith('ls_chk_') && !value.startsWith('ls_chk_mock_')) {
+    return value.slice('ls_chk_'.length) || null
+  }
+  return value
+}
+
+export function useHostedBillingCheckout () {
+  async function openCheckoutUrl (
+    url: string,
+    options?: { checkoutId?: string | null, normalizeUrl?: (u: string) => string },
   ) {
-    if (!transactionId.startsWith('txn_')) {
-      throw new Error('invalid_paddle_transaction_id')
-    }
-    if (isPaddleTransactionMarkedDone(transactionId)) {
-      handlers?.onCompleted?.()
-      return { opened: false as const, reason: 'already_done' as const }
-    }
-
-    const displayMode = options?.displayMode || 'inline'
-    // Paddle.js frameTarget is a CSS class name (not an element id).
-    const frameTarget = options?.frameTarget || PADDLE_INLINE_FRAME_ID
-
-    activeEventHandler = (event) => {
-      const name = event.name || event.type || ''
-      if (name === 'checkout.completed') {
-        markPaddleTransactionDone(transactionId)
-        handlers?.onCompleted?.()
-      } else if (name === 'checkout.closed') {
-        handlers?.onClosed?.()
-      } else if (name === 'checkout.error' || name === 'checkout.warning') {
-        const detail = String(event.data?.error || event.data?.message || name)
-        handlers?.onError?.(detail)
-      }
-    }
-
-    const paddle = await ensureInitialized()
-
-    const settings: PaddleCheckoutOpenOptions['settings'] = {
-      displayMode,
-      theme: 'light',
-    }
-    if (displayMode === 'inline') {
-      settings.frameTarget = frameTarget
-      settings.frameInitialHeight = 520
-      settings.frameStyle = 'width: 100%; min-width: 286px; background-color: transparent; border: none;'
-    }
-
-    paddle.Checkout.open({
-      transactionId,
-      settings,
-    })
-    return { opened: true as const, reason: 'opened' as const }
+    const checkoutId = options?.checkoutId
+    markHostedCheckoutPending(checkoutId)
+    const href = options?.normalizeUrl ? options.normalizeUrl(url) : url
+    await navigateTo(href, { external: true })
   }
 
   return {
-    clientToken,
-    paddleEnv,
-    openTransactionCheckout,
-    isPaddleTransactionMarkedDone,
-    markPaddleTransactionDone,
+    openCheckoutUrl,
+    markHostedCheckoutPending,
+    clearHostedCheckoutPending,
+    isHostedCheckoutPending,
+    readStoredHostedCheckoutId,
+    normalizeLsCheckoutId,
   }
 }

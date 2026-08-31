@@ -18,7 +18,7 @@ import {
   formatBillingOfferAmount,
   billingEventProviderRef,
   billingEventProviderLabelKey,
-  normalizeLocalPaddleCheckoutUrl,
+  normalizeLocalCheckoutUrl,
 } from '~/utils/billingPresentation'
 
 interface Column {
@@ -438,7 +438,11 @@ const handleSubscribe = async () => {
       return
     }
     clearBillingIntent()
-    await navigateTo(normalizeLocalPaddleCheckoutUrl(result.checkout_url), { external: true })
+    const { openCheckoutUrl } = useHostedBillingCheckout()
+    await openCheckoutUrl(result.checkout_url, {
+      checkoutId: result.gateway_reference || null,
+      normalizeUrl: normalizeLocalCheckoutUrl,
+    })
   } catch (err) {
     if (isTermsAcceptanceRequiredError(err)) {
       await redirectToTermsAcceptance()
@@ -461,7 +465,10 @@ const handleExistingCheckout = async (checkoutUrl?: string | null) => {
     return
   }
 
-  await navigateTo(normalizeLocalPaddleCheckoutUrl(checkoutUrl), { external: true })
+  const { openCheckoutUrl } = useHostedBillingCheckout()
+  await openCheckoutUrl(checkoutUrl, {
+    normalizeUrl: normalizeLocalCheckoutUrl,
+  })
   checkoutRedirecting.value = false
 }
 
@@ -1319,7 +1326,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <span>{{ subscribing ? t('billing.processing') : t('billing.payWithPaddle') }}</span>
+              <span>{{ subscribing ? t('billing.processing') : t('billing.payWithCheckout') }}</span>
             </button>
 
             <!-- Security note -->
@@ -1327,7 +1334,7 @@ watch(() => currentTenant.value?.id, async () => {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              {{ t('billing.securePaddlePayment') }}
+              {{ t('billing.secureCheckoutPayment') }}
             </div>
           </template>
 

@@ -174,7 +174,7 @@ export interface BillingPriceOffer {
   annual_amount: number
 }
 
-/** Format SaaS list price from Paddle price_offer (major units). */
+/** Format SaaS list price from MoR price_offer (major units). */
 export const formatBillingOfferAmount = (
   amount: number,
   currency: string,
@@ -201,16 +201,20 @@ export const billingEventProviderRef = (metadata: Record<string, unknown> | null
 
 export const billingEventProviderLabelKey = (metadata: Record<string, unknown> | null | undefined) => {
   if (!metadata) return 'billing.processedByProvider'
-  if (metadata.paddle_transaction_id || metadata.provider === 'paddle') return 'billing.processedByPaddle'
-  if (metadata.wompi_transaction_id || metadata.provider === 'wompi') return 'billing.processedByWompi'
+  const provider = String(metadata.provider || '').toLowerCase()
+  if (provider === 'lemon_squeezy' || metadata.ls_checkout_id || metadata.ls_order_id) {
+    return 'billing.processedByLemonSqueezy'
+  }
+  if (metadata.paddle_transaction_id || provider === 'paddle') return 'billing.processedByPaddle'
+  if (metadata.wompi_transaction_id || provider === 'wompi') return 'billing.processedByWompi'
   return 'billing.processedByProvider'
 }
 
 /**
- * Paddle may return https://localhost even when the default payment link is http.
- * Local Nuxt has no TLS — force http and drop a mistaken /waro-colombia prefix (#2205).
+ * Hosted checkout may return https://localhost even when Nuxt is http.
+ * Local Nuxt has no TLS — force http and drop a mistaken /waro-colombia prefix (#2205 / #943).
  */
-export function normalizeLocalPaddleCheckoutUrl (url: string): string {
+export function normalizeLocalCheckoutUrl (url: string): string {
   try {
     const parsed = new URL(url)
     const localHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
@@ -226,3 +230,6 @@ export function normalizeLocalPaddleCheckoutUrl (url: string): string {
     return url
   }
 }
+
+/** @deprecated Use normalizeLocalCheckoutUrl */
+export const normalizeLocalPaddleCheckoutUrl = normalizeLocalCheckoutUrl
