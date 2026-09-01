@@ -1,0 +1,38 @@
+issue: 2524
+title: "feat(pos): add order number and date columns to pending deliveries list"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2524-delivery-columns
+
+paths:
+  - components/pos/MesasFloorPlan.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+
+ac:
+  - Desktop pending deliveries list shows # and Date columns
+  - Mobile card shows order number and formatted datetime
+  - Time column stays relative duration; Date is absolute via formatDateTime
+  - i18n es/en column headers
+
+out_of_scope:
+  - API changes
+  - Filters/sort
+  - /despacho/domicilios
+
+hints:
+  entry: MesasFloorPlan deliveryListColumns + #card + #cell-*
+  pattern: "pages/despacho/domicilios/index.vue:#order_number + useFormatters formatDateTime"
+  tests: none (front-only UI)
+
+risk:
+  sensitive: false
+  areas: []
+
+skip:
+  audits: []
+
+next:
+  after_pr: "/wr-review optional"
