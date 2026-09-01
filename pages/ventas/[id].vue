@@ -21,7 +21,7 @@ import {
   splitPaymentShowsWompiDetail,
   waroCollectionLandingUrl,
 } from '~/utils/wompiCollections'
-import { saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
+import { saleHasLockedInvoiceWithoutRecordedPayments, saleMutationsLockedByInvoice } from '~/utils/saleInvoiceLock'
 import {
   canShowSaleStatusPanel,
   isFinalizePaymentGroupVisible,
@@ -759,14 +759,28 @@ const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isPartialSplitSale = computed(() =>
   order.value?.status === 'completed' && order.value?.payment_status === 'partial',
 )
+const saleAmountDue = computed(() => {
+  const o = order.value
+  if (!o) return 0
+  return Number(o.total_amount) + Number(o.tip_amount || 0) + Number(o.tip_tax_amount || 0)
+})
+const saleInvoicePaymentMismatch = computed(() =>
+  saleHasLockedInvoiceWithoutRecordedPayments({
+    invoiceStatus: invoiceData.value?.status,
+    recordedPaidTotal: recordedSplitPaid.value,
+    amountDue: saleAmountDue.value,
+  }),
+)
+const canManageSplitTenders = computed(() =>
+  isPartialSplitSale.value || saleInvoicePaymentMismatch.value,
+)
 const recordedSplitPaid = computed(() =>
   (order.value?.split_payments ?? []).reduce((sum: number, payment: any) => sum + (Number(payment.amount) || 0), 0),
 )
 const remainingSplitDue = computed(() => {
   const o = order.value
   if (!o) return 0
-  const due = Number(o.total_amount) + Number(o.tip_amount || 0) + Number(o.tip_tax_amount || 0)
-  return Math.max(0, Math.round(due - recordedSplitPaid.value))
+  return Math.max(0, Math.round(saleAmountDue.value - recordedSplitPaid.value))
 })
 const invoiceAcquirer = computed(() =>
   (invoiceData.value as any)?.presentation?.acquirer ?? null,
@@ -1818,14 +1832,19 @@ onUnmounted(() => {
             <dt class="sale-meta-label">{{ t('ventas.common.metodoPago') }}</dt>
             <dd class="sale-meta-value m-0">
               <button
-                v-if="order.split_payments?.length"
+                v-if="order.split_payments?.length || saleInvoicePaymentMismatch"
                 type="button"
                 class="text-start w-full rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                :aria-label="t('ventas.detail.viewSplitDetail')"
+                :aria-label="saleInvoicePaymentMismatch ? t('ventas.detail.registerMissingPayment') : t('ventas.detail.viewSplitDetail')"
                 @click="showSplitPaymentsPanel = true"
               >
                 <span class="text-sm font-medium text-primary hover:underline">
-                  {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
+                  <template v-if="saleInvoicePaymentMismatch">
+                    {{ t('ventas.detail.registerMissingPayment') }}
+                  </template>
+                  <template v-else>
+                    {{ t('ventas.detail.splitPaymentLabel', { count: order.split_payments.length }) }}
+                  </template>
                 </span>
               </button>
               <p v-else-if="order.payment_method" class="leading-snug break-words">
@@ -1895,6 +1914,31 @@ onUnmounted(() => {
           >
             {{ isVerifyingWompi ? t('common.loading') : 'Comprobar pago' }}
           </button>
+        </div>
+      </div>
+
+      <div
+        v-if="saleInvoicePaymentMismatch"
+        class="mb-6 bg-status-warning-bg border border-status-warning-text/30 rounded-xl p-4 w-full"
+        role="alert"
+      >
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2">{{ t('ventas.detail.invoicePaymentMismatchTitle') }}</p>
+        <p class="text-sm text-text-secondary mb-3">{{ t('ventas.detail.invoicePaymentMismatchBody') }}</p>
+        <p class="text-sm text-text-secondary mb-3">{{ t('ventas.detail.invoicePaymentMismatchPosHint') }}</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            class="min-h-[44px] rounded-xl bg-primary text-primary-foreground font-semibold px-4"
+            @click="showSplitPaymentsPanel = true"
+          >
+            {{ t('ventas.detail.registerMissingPayment') }}
+          </button>
+          <NuxtLink
+            to="/facturacion"
+            class="min-h-[44px] inline-flex items-center justify-center rounded-xl border border-border font-semibold text-text-primary px-4"
+          >
+            {{ t('ventas.detail.invoicePaymentMismatchCreditNoteCta') }}
+          </NuxtLink>
         </div>
       </div>
 
@@ -3172,7 +3216,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div v-if="isPartialSplitSale" class="pt-3 space-y-3 border-t border-border">
+            <div v-if="canManageSplitTenders" class="pt-3 space-y-3 border-t border-border">
               <p class="text-sm font-semibold text-text-primary">
                 {{ t('pos.checkout.split.pendingBalance') }}
                 <span class="tabular-nums text-primary">{{ formatCurrency(remainingSplitDue) }}</span>
