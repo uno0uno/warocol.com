@@ -59,11 +59,18 @@
           </NuxtLink>
 
           <button
-            v-if="!isPosRoute"
             type="button"
-            class="flex flex-shrink-0 items-center justify-center gap-1.5 h-9 bg-shell-action-bg border border-shell-action-border text-shell-action-text px-2.5 rounded-lg text-sm font-medium hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+            :class="[
+              'flex flex-shrink-0 items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border text-sm font-medium transition-colors',
+              'border-shell-action-border text-shell-action-text',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-shell-action-focus-ring',
+              isPosRoute
+                ? 'bg-shell-action-hover-bg hover:bg-shell-action-hover-bg ring-0 focus:ring-0 focus-visible:ring-0'
+                : 'bg-shell-action-bg hover:bg-shell-action-hover-bg',
+            ]"
             :title="t('nav.pos')"
             :aria-label="t('nav.pos')"
+            :aria-current="isPosRoute ? 'page' : undefined"
             @click="$emit('navigate-pos')"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>

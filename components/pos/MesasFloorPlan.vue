@@ -66,8 +66,9 @@ const floorLayoutToggleTarget = computed<FloorLayout>(() =>
 const toggleFloorLayout = () => {
   floorLayout.value = floorLayoutToggleTarget.value
 }
-const toggleDeliveriesView = () => {
+const toggleDeliveriesView = (event: MouseEvent) => {
   floorView.value = floorView.value === 'domicilios' ? 'mesas' : 'domicilios'
+  ;(event.currentTarget as HTMLButtonElement).blur()
 }
 
 const {
@@ -151,7 +152,7 @@ const codeFilterOptions = computed(() =>
 
 const capacityFilterOptions = computed(() =>
   uniqueSortedLabels(
-    regularTables.value.map((table: any) => tableCardCapacityLabel(table)).filter(Boolean) as string[],
+    regularTables.value.map((table: any) => tableCardCapacityLabel(table)),
   ).map((value) => ({ label: value, value })),
 )
 
@@ -251,9 +252,6 @@ const tableListStatusChipClass = (status: string) => {
   if (status === 'bill_requested') return `${listChipClass} list-status-chip list-status-chip--bill`
   return `${listChipClass} list-status-chip list-status-chip--free`
 }
-
-const tableListMinChipClass = (table: any) =>
-  minimumConsumptionLabel(table) ? listFilledChipClass : listEmptyChipClass
 
 const tableListWaiterName = (table: { effective_waiter_member_name?: string | null }) =>
   table.effective_waiter_member_name?.trim() || null
@@ -517,30 +515,30 @@ const tableEffectiveCapacity = (table: {
   session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
 }) => sessionCapacitySnapshot(table.session) ?? tableCatalogCapacity(table)
 
-const tableCardCapacityLabel = (table: {
-  status: string
+const tableListCapacityLabel = (table: {
   capacity?: unknown
   session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
 }): string | null => {
   const capacity = tableEffectiveCapacity(table)
   const covers = parsePositiveInt(table.session?.covers)
 
-  if (table.status === 'free') {
-    if (!capacity) return null
-    return t('pos.floor.capacityOnly', { count: capacity })
-  }
-
   if (covers != null && capacity != null) {
     return t('pos.floor.coversOfCapacity', { covers, capacity })
   }
   if (covers != null) {
-    return t('pos.floor.coversOnly', { covers })
+    return String(covers)
   }
   if (capacity != null) {
-    return t('pos.floor.capacityOnly', { count: capacity })
+    return String(capacity)
   }
   return null
 }
+
+const tableCardCapacityLabel = (table: {
+  status: string
+  capacity?: unknown
+  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
+}): string => tableListCapacityLabel(table) ?? '0'
 
 const tableCardTitle = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
   tableCardDisplayName(table)
@@ -560,7 +558,7 @@ const tableCardSecondaryParts = (table: {
   if (code && code !== title && !title.includes(code)) parts.push({ text: code, bold: true })
   if (tableCardShowsCatalogName(table)) parts.push({ text: table.name })
   const capacity = tableCardCapacityLabel(table)
-  if (capacity) parts.push({ text: capacity, bold: true })
+  parts.push({ text: capacity, bold: capacity !== '0' })
   const minLabel = minimumConsumptionLabel(table)
   if (minLabel) parts.push({ text: minLabel, bold: true })
   return parts
@@ -643,25 +641,23 @@ onUnmounted(() => {
           :aria-pressed="floorView === 'domicilios'"
           @click="toggleDeliveriesView"
         >
-          <span class="relative inline-flex h-4 w-4 items-center justify-center">
-            <svg
-              class="h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.75"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-            <span
-              v-if="pendingDeliveries.length"
-              :class="shellHeaderToolBadgeClass"
-            >
-              {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
-            </span>
+          <svg
+            :class="['h-4 w-4', pendingDeliveries.length ? 'text-primary' : '']"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.75"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          </svg>
+          <span
+            v-if="pendingDeliveries.length"
+            :class="shellHeaderToolBadgeClass"
+          >
+            {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
           </span>
         </button>
       </Teleport>
@@ -737,6 +733,26 @@ onUnmounted(() => {
           row-size="sm"
           @row-click="handleDeliveryClick"
         >
+          <template #card="{ item }">
+            <button
+              type="button"
+              class="flex w-full flex-col gap-2 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg"
+              @click="handleDeliveryClick(item)"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="min-w-0 truncate text-sm font-semibold text-text-primary">
+                  {{ item.customer?.name || t('pos.floor.unknownCustomer') }}
+                </p>
+                <span class="text-sm font-semibold tabular-nums">{{ formatCurrency(item.total_amount) }}</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span v-if="item.address_label" class="text-xs text-text-secondary">{{ item.address_label }}</span>
+                <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noAddress') }}</span>
+                <span v-if="item.order_date" class="text-xs tabular-nums text-text-secondary">{{ formatDuration(item.order_date) }}</span>
+                <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
+              </div>
+            </button>
+          </template>
           <template #cell-customer="{ item }">
             <span class="font-semibold">{{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
           </template>
@@ -928,18 +944,14 @@ onUnmounted(() => {
               <span :class="tableListStatusChipClass(item.status)">{{ badgeLabel(item.status) }}</span>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
-              <span :class="tableListAlias(item) ? listFilledChipClass : listEmptyChipClass">
-                {{ tableListAlias(item) || t('pos.floor.noAlias') }}
-              </span>
-              <span :class="tableListCode(item) ? listFilledChipClass : listEmptyChipClass">
-                {{ tableListCode(item) || t('pos.floor.noCode') }}
-              </span>
-              <span :class="tableCardCapacityLabel(item) ? listFilledChipClass : listEmptyChipClass">
-                {{ tableCardCapacityLabel(item) || t('pos.floor.noCapacity') }}
-              </span>
-              <span :class="tableListMinChipClass(item)">
-                {{ minimumConsumptionLabel(item) || t('pos.floor.noMin') }}
-              </span>
+              <span v-if="tableListAlias(item)" class="text-xs text-text-secondary">{{ tableListAlias(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noAlias') }}</span>
+              <span v-if="tableListCode(item)" class="text-xs text-text-secondary">{{ tableListCode(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noCode') }}</span>
+              <span v-if="tableListCapacityLabel(item)" class="text-xs tabular-nums text-text-secondary">{{ tableListCapacityLabel(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noCapacity') }}</span>
+              <span v-if="minimumConsumptionLabel(item)" class="text-xs text-text-secondary">{{ minimumConsumptionLabel(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noMin') }}</span>
               <span class="text-sm font-semibold tabular-nums">{{ tableListTotalLabel(item) }}</span>
               <span v-if="tableListTimeLabel(item)" class="text-xs tabular-nums text-text-secondary">{{ tableListTimeLabel(item) }}</span>
               <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
@@ -956,24 +968,20 @@ onUnmounted(() => {
           <span class="truncate font-semibold">{{ tableListCatalogName(item) }}</span>
         </template>
         <template #cell-alias="{ item }">
-          <span :class="tableListAlias(item) ? listFilledChipClass : listEmptyChipClass">
-            {{ tableListAlias(item) || t('pos.floor.noAlias') }}
-          </span>
+          <span v-if="tableListAlias(item)" class="text-text-secondary">{{ tableListAlias(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noAlias') }}</span>
         </template>
         <template #cell-code="{ item }">
-          <span :class="tableListCode(item) ? listFilledChipClass : listEmptyChipClass">
-            {{ tableListCode(item) || t('pos.floor.noCode') }}
-          </span>
+          <span v-if="tableListCode(item)" class="text-text-secondary">{{ tableListCode(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noCode') }}</span>
         </template>
         <template #cell-capacity="{ item }">
-          <span :class="tableCardCapacityLabel(item) ? listFilledChipClass : listEmptyChipClass">
-            {{ tableCardCapacityLabel(item) || t('pos.floor.noCapacity') }}
-          </span>
+          <span v-if="tableListCapacityLabel(item)" class="tabular-nums text-text-secondary">{{ tableListCapacityLabel(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noCapacity') }}</span>
         </template>
         <template #cell-min="{ item }">
-          <span :class="tableListMinChipClass(item)">
-            {{ minimumConsumptionLabel(item) || t('pos.floor.noMin') }}
-          </span>
+          <span v-if="minimumConsumptionLabel(item)" class="text-text-secondary">{{ minimumConsumptionLabel(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noMin') }}</span>
         </template>
         <template #cell-status="{ item }">
           <span :class="tableListStatusChipClass(item.status)">{{ badgeLabel(item.status) }}</span>

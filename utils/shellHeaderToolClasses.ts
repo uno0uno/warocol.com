@@ -3,13 +3,15 @@ export const shellHeaderToolButtonClass = [
   'relative h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border',
   'border-shell-action-border bg-shell-action-bg text-shell-action-text',
   'hover:bg-shell-action-hover-bg',
-  'focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-shell-action-focus-ring',
   'transition-colors',
 ].join(' ')
 
+/** Selected toggle — same border as default, hover tint as persistent background (no primary ring). */
 export const shellHeaderToolButtonActiveClass = [
-  'text-primary border-primary/30 bg-primary/10',
-  'hover:text-primary hover:bg-primary/10',
+  'border-shell-action-border bg-shell-action-hover-bg',
+  'hover:bg-shell-action-hover-bg',
+  'ring-0 focus:ring-0 focus-visible:ring-0',
 ].join(' ')
 
 export const shellHeaderToolBadgeClass =
