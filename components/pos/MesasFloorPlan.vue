@@ -4,6 +4,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
+import {
+  shellHeaderToolBadgeClass,
+  shellHeaderToolButtonClass,
+  shellHeaderToolButtonActiveClass,
+} from '~/utils/shellHeaderToolClasses'
 
 const { formatCurrency } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
@@ -106,19 +111,6 @@ const deliveryListColumns = computed(() => [
   { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
   { key: 'time', title: t('pos.floor.colTime'), sortable: false },
 ])
-
-const floorSquareButtonClass = [
-  'relative h-9 w-9 min-h-9 min-w-9 px-0 overflow-hidden rounded-lg',
-  'inline-flex items-center justify-center',
-  'text-text-secondary border border-border bg-surface',
-  'hover:text-text-primary hover:bg-surface-secondary',
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1',
-  'active:scale-[0.94] transition-colors',
-]
-const floorSquareButtonActiveClass = [
-  'text-status-warning-text border-status-warning-text/40 bg-status-warning-bg',
-  'hover:text-status-warning-text hover:bg-status-warning-bg',
-]
 
 // Bar tile is always-on — separate from regular tables
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
@@ -449,6 +441,79 @@ onUnmounted(() => {
 
 <template>
   <div>
+    <ClientOnly>
+      <Teleport to="#dashboard-header-pos-tools">
+        <button
+          v-if="floorView !== 'domicilios'"
+          type="button"
+          :class="shellHeaderToolButtonClass"
+          :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
+          :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
+          @click="toggleFloorLayout"
+        >
+          <span class="inline-flex h-4 w-4 items-center justify-center">
+            <Transition name="pos-layout-icon" mode="out-in">
+              <svg
+                v-if="floorLayoutToggleTarget === 'list'"
+                key="icon-list"
+                class="h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              <svg
+                v-else
+                key="icon-grid"
+                class="h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+              </svg>
+            </Transition>
+          </span>
+        </button>
+        <button
+          type="button"
+          :class="[shellHeaderToolButtonClass, floorView === 'domicilios' ? shellHeaderToolButtonActiveClass : '']"
+          :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
+          :title="t('pos.floor.viewDeliveries')"
+          :aria-pressed="floorView === 'domicilios'"
+          @click="toggleDeliveriesView"
+        >
+          <span class="relative inline-flex h-4 w-4 items-center justify-center">
+            <svg
+              class="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.75"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            <span
+              v-if="pendingDeliveries.length"
+              :class="shellHeaderToolBadgeClass"
+            >
+              {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
+            </span>
+          </span>
+        </button>
+      </Teleport>
+    </ClientOnly>
+
     <!-- Loading State -->
     <div v-if="loadingTables || openingTableId" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -459,14 +524,13 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <div class="flex items-stretch gap-2 mb-4">
-        <button
-          v-if="barTable"
-          class="min-w-0 flex-1 flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-          :disabled="isEnteringBar"
-          :aria-label="t('pos.floor.barAlwaysOpenAria')"
-          @click="handleBarClick"
-        >
+      <button
+        v-if="barTable"
+        class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        :disabled="isEnteringBar"
+        :aria-label="t('pos.floor.barAlwaysOpenAria')"
+        @click="handleBarClick"
+      >
           <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-status-warning-text/12 border border-status-warning-text/30">
             <svg class="w-6 h-6 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
@@ -490,77 +554,7 @@ onUnmounted(() => {
           <svg class="w-5 h-5 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
-        </button>
-
-        <div class="flex flex-col gap-2 justify-center flex-shrink-0" :class="barTable ? '' : 'ms-auto'">
-          <button
-            type="button"
-            :class="floorSquareButtonClass"
-            :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
-            :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
-            @click="toggleFloorLayout"
-          >
-            <span class="inline-flex h-4 w-4 items-center justify-center">
-              <Transition name="pos-layout-icon" mode="out-in">
-                <svg
-                  v-if="floorLayoutToggleTarget === 'list'"
-                  key="icon-list"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                <svg
-                  v-else
-                  key="icon-grid"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                </svg>
-              </Transition>
-            </span>
-          </button>
-          <button
-            type="button"
-            :class="[floorSquareButtonClass, floorView === 'domicilios' ? floorSquareButtonActiveClass : '']"
-            :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
-            :title="t('pos.floor.viewDeliveries')"
-            :aria-pressed="floorView === 'domicilios'"
-            @click="toggleDeliveriesView"
-          >
-            <span class="relative inline-flex h-4 w-4 items-center justify-center">
-              <svg
-                class="h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15m5.25-4.5H21a.75.75 0 0 0 .75-.75V13.5a2.25 2.25 0 0 0-2.25-2.25h-1.5V8.25A2.25 2.25 0 0 0 16.5 6h-3.375m8.25 9.75h-8.25" />
-              </svg>
-              <span
-                v-if="pendingDeliveries.length"
-                class="absolute -top-1.5 -end-1.5 min-w-3.5 h-3.5 px-0.5 rounded-full bg-status-warning-text text-white text-[8px] font-bold leading-none flex items-center justify-center tabular-nums"
-              >
-                {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
-              </span>
-            </span>
-          </button>
-        </div>
-      </div>
+      </button>
 
       <div v-if="floorView === 'domicilios'">
         <div v-if="loadingPendingDeliveries" class="flex items-center justify-center min-h-[40vh]">

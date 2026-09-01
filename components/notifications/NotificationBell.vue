@@ -7,18 +7,26 @@
       :aria-expanded="isOpen"
       aria-haspopup="true"
       aria-label="Notificaciones"
-      class="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-shell-notification-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors"
+      :class="buttonClass"
     >
       <!-- Animated bell icon: solid when there are unread notifications -->
-      <BellAlertIcon v-if="unreadCount > 0" class="w-6 h-6 text-shell-notification-accent" aria-hidden="true" />
-      <BellIcon v-else class="w-6 h-6 text-shell-notification-muted-text" aria-hidden="true" />
+      <BellAlertIcon
+        v-if="unreadCount > 0"
+        :class="[iconClass, shellCompact ? 'text-primary' : 'text-shell-notification-accent']"
+        aria-hidden="true"
+      />
+      <BellIcon
+        v-else
+        :class="[iconClass, shellCompact ? 'text-shell-action-text' : 'text-shell-notification-muted-text']"
+        aria-hidden="true"
+      />
 
       <!-- Unread count badge -->
       <span
         v-if="unreadCount > 0"
         aria-live="polite"
         aria-atomic="true"
-        class="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none"
+        :class="badgeClass"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
@@ -129,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { BellIcon, BellAlertIcon, DocumentTextIcon, ShoppingBagIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications, type Notification } from '~/composables/useNotifications'
 import {
@@ -140,6 +148,31 @@ import {
 } from '~/composables/useNotificationDespachoLink'
 import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 import { useTableQrNotificationNavigation } from '~/composables/useTableQrNotificationNavigation'
+import {
+  shellHeaderToolBadgeClass,
+  shellHeaderToolButtonClass,
+} from '~/utils/shellHeaderToolClasses'
+
+const props = withDefaults(
+  defineProps<{
+    shellCompact?: boolean
+  }>(),
+  { shellCompact: false },
+)
+
+const buttonClass = computed(() =>
+  props.shellCompact
+    ? shellHeaderToolButtonClass
+    : 'relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-shell-notification-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring transition-colors',
+)
+
+const iconClass = computed(() => (props.shellCompact ? 'w-4 h-4' : 'w-6 h-6'))
+
+const badgeClass = computed(() =>
+  props.shellCompact
+    ? shellHeaderToolBadgeClass
+    : 'absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold rounded-full leading-none',
+)
 
 const { notifications, unreadCount, init, markAsRead, markAllRead } = useNotifications()
 const { enabled: soundEnabled, toggleEnabled, unlockFromGesture, prefetchBuffer } = useDespachoNotificationAudio()
