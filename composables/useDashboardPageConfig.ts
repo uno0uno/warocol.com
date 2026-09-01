@@ -645,7 +645,17 @@ export const useDashboardPageConfig = () => {
           label: 'Volver'
         }
       }
-    } else if (path === '/pos' || path.includes('/pos')) {
+    } else if (path === '/pos') {
+      return {
+        pageTitle: 'Punto de Venta',
+        pageSubtitle: undefined,
+        searchPlaceholder: undefined,
+        activePage: 'pos' as const,
+        showBreadcrumb: false,
+        breadcrumbPage: undefined,
+        backButton: undefined,
+      }
+    } else if (path.includes('/pos')) {
       return {
         pageTitle: 'Punto de Venta',
         pageSubtitle: undefined,
@@ -654,8 +664,8 @@ export const useDashboardPageConfig = () => {
         showBreadcrumb: false,
         breadcrumbPage: undefined,
         backButton: {
-          label: 'Volver'
-        }
+          label: 'Volver',
+        },
       }
     } else if (path === '/ventas' || path === '/ventas/') {
       return {
