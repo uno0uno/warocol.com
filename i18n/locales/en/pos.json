@@ -151,7 +151,10 @@
         "pendingSaleNeedsKitchen": "Add the items to the tab and send them to kitchen before leaving it pending",
         "saveAddressError": "Could not save the address",
         "deferSaleError": "Error leaving the sale pending",
-        "completePendingError": "Could not collect payment for this pending delivery"
+        "completePendingError": "Could not collect payment for this pending delivery",
+        "pendingLockedHint": "Address was set when payment was deferred. It cannot be changed while collecting.",
+        "pendingAddressLabel": "Delivery address",
+        "pendingInstructionsLabel": "Courier notes"
       },
       "split": {
         "title": "Split payment",
