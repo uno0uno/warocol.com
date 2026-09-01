@@ -4327,7 +4327,7 @@ onUnmounted(() => {
       <div
         v-if="hasActivePromos"
         role="status"
-        :class="[checkoutAlertBannerClass, 'bg-status-success-bg border border-status-success-text/25']"
+        :class="[checkoutAlertBannerClass, 'lg:col-span-12 bg-status-success-bg border border-status-success-text/25']"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
           <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
