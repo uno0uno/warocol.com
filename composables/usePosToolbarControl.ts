@@ -41,6 +41,32 @@ export function usePosToolbarControl() {
     'font-medium whitespace-nowrap theme-transition',
   ].join(' ')
 
+  /** Checkout — touch-friendly controls (44px) and section rhythm aligned with POS toolbar scale */
+  const checkoutControlHeightClass = 'min-h-[44px]'
+  const checkoutSectionCardClass =
+    'bg-surface rounded-2xl shadow-sm border border-border p-4'
+  const checkoutSectionCardFlushClass =
+    'bg-surface rounded-2xl border border-border overflow-hidden shadow-sm'
+  const checkoutSectionTitleClass =
+    'font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base'
+  const checkoutAccordionTriggerClass = [
+    checkoutControlHeightClass,
+    'w-full px-4 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors',
+  ].join(' ')
+  const checkoutStatGridClass = 'grid grid-cols-3 gap-3 items-stretch'
+  const checkoutStatCardClass = [
+    'rounded-lg bg-surface-secondary/70 px-2 py-2 text-center min-h-[3rem]',
+    'flex flex-col justify-center',
+  ].join(' ')
+  const checkoutInlineRowClass = [
+    checkoutControlHeightClass,
+    'flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-secondary/40 px-3',
+  ].join(' ')
+  const checkoutAlertBannerClass = [
+    checkoutControlHeightClass,
+    'flex items-center gap-3 px-4 py-3 rounded-xl',
+  ].join(' ')
+
   return {
     controlHeightClass,
     controlRadiusClass,
@@ -53,5 +79,14 @@ export function usePosToolbarControl() {
     bannerActionButtonClass,
     bannerSessionFieldClass,
     categoryChipClass,
+    checkoutControlHeightClass,
+    checkoutSectionCardClass,
+    checkoutSectionCardFlushClass,
+    checkoutSectionTitleClass,
+    checkoutAccordionTriggerClass,
+    checkoutStatGridClass,
+    checkoutStatCardClass,
+    checkoutInlineRowClass,
+    checkoutAlertBannerClass,
   }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { usePosToolbarControl } from '~/composables/usePosToolbarControl'
+
 interface ReceiptPaymentLine {
   id: string
   amount: number
@@ -11,6 +13,10 @@ interface ReceiptPaymentLine {
 
 const { t, locale } = useI18n({ useScope: 'global' })
 const { formatCurrency } = useFormatters()
+const {
+  checkoutSectionCardClass,
+  checkoutControlHeightClass,
+} = usePosToolbarControl()
 
 const cashReceivedInput = defineModel<number>('cashReceivedInput', { default: 0 })
 
@@ -51,7 +57,7 @@ const uiLocale = computed(() => locale.value)
 </script>
 
 <template>
-  <div class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+  <div :class="checkoutSectionCardClass">
     <div class="flex items-center justify-between">
       <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
         <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -89,7 +95,7 @@ const uiLocale = computed(() => locale.value)
           <div
             v-for="(p, idx) in splitPayments"
             :key="p.id"
-            class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm"
+            :class="[checkoutControlHeightClass, 'flex items-center gap-2.5 px-3 bg-surface-secondary rounded-lg text-sm']"
           >
             <svg class="h-[1em] w-[1em] text-state-success-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
@@ -191,7 +197,7 @@ const uiLocale = computed(() => locale.value)
         v-if="!splitIsComplete"
         type="button"
         :disabled="!canAddSplitPayment"
-        class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        :class="[checkoutControlHeightClass, 'w-full px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2']"
         @click="$emit('addSplitPayment')"
       >
         <UiLoadingDots v-if="isAddingPayment" size="10px" />

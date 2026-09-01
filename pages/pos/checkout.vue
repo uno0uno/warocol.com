@@ -1,5 +1,16 @@
 <script setup lang="ts">
 const { t, locale } = useI18n({ useScope: 'global' })
+const {
+  checkoutSectionCardClass,
+  checkoutSectionCardFlushClass,
+  checkoutSectionTitleClass,
+  checkoutControlHeightClass,
+  checkoutAccordionTriggerClass,
+  checkoutStatGridClass,
+  checkoutStatCardClass,
+  checkoutInlineRowClass,
+  checkoutAlertBannerClass,
+} = usePosToolbarControl()
 import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
@@ -4313,7 +4324,7 @@ onUnmounted(() => {
       <div
         v-if="hasActivePromos"
         role="status"
-        class="lg:col-span-12 flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+        :class="[checkoutAlertBannerClass, 'lg:col-span-12 bg-status-success-bg border border-status-success-text/25']"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
           <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -4329,11 +4340,11 @@ onUnmounted(() => {
       <div class="lg:col-span-8 space-y-6">
 
         <!-- ACCORDION: Orden -->
-        <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+        <div :class="checkoutSectionCardFlushClass">
           <button
             type="button"
             @click="activeAccordion = activeAccordion === 'order' ? null : 'order'"
-            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-start hover:bg-surface-secondary/70 transition-colors"
+            :class="[checkoutAccordionTriggerClass, 'justify-between bg-surface-secondary/50 hover:bg-surface-secondary/70']"
           >
             <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
                 <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -4423,8 +4434,11 @@ onUnmounted(() => {
 
                 <label
                   v-if="lineShowsPromoToggle(item)"
-                  class="mt-2 flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2 cursor-pointer"
-                  :class="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') ? 'opacity-60 pointer-events-none' : ''"
+                  :class="[
+                    checkoutInlineRowClass,
+                    'mt-2 cursor-pointer',
+                    togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') && 'opacity-60 pointer-events-none',
+                  ]"
                 >
                   <span class="text-xs font-medium text-text-primary">{{ t('pos.checkout.applyPromo') }}</span>
                   <span class="relative inline-flex items-center flex-shrink-0">
@@ -4444,8 +4458,8 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Customer Identification -->
-        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
+        <div :class="checkoutSectionCardClass">
+          <h2 :class="checkoutSectionTitleClass">
             <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
@@ -4522,7 +4536,7 @@ onUnmounted(() => {
           <button
             v-else-if="!isPendingDeliveryMode"
             @click="showCustomerModal = true"
-            class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
+            :class="[checkoutControlHeightClass, 'w-full flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all']"
           >
             <svg class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -4532,8 +4546,8 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Payment Method -->
-        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
+        <div :class="checkoutSectionCardClass">
+          <h2 :class="checkoutSectionTitleClass">
             <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
             </svg>
@@ -4551,10 +4565,13 @@ onUnmounted(() => {
               v-if="canDeferDeliveryPayment"
               type="button"
               @click="deferDeliveryPayment"
-              class="w-full min-h-[48px] flex items-center gap-3 rounded-xl border px-4 py-3 theme-transition active:scale-[0.99]"
-              :class="isDeferredDeliveryPayment
-                ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
-                : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
+              :class="[
+                checkoutControlHeightClass,
+                'w-full flex items-center gap-3 rounded-xl border px-4 py-3 theme-transition active:scale-[0.99]',
+                isDeferredDeliveryPayment
+                  ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
+                  : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary',
+              ]"
             >
               <div class="bg-status-warning-bg text-status-warning-text w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -4611,10 +4628,10 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Descuento -->
-        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+        <div :class="checkoutSectionCardClass">
           <!-- Header with toggle -->
           <div class="flex items-center justify-between">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+            <h2 :class="checkoutSectionTitleClass">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
@@ -4746,9 +4763,9 @@ onUnmounted(() => {
         <!-- Section: Domicilio pendiente (solo lectura — fijado al diferir) -->
         <div
           v-if="isPendingDeliveryMode"
-          class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6"
+          :class="checkoutSectionCardClass"
         >
-          <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+          <h2 :class="checkoutSectionTitleClass">
             <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
               <path d="M15 18H9" />
@@ -4780,9 +4797,9 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
-        <div v-else-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+        <div v-else-if="canRegisterDelivery" :class="checkoutSectionCardClass">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+            <h2 :class="checkoutSectionTitleClass">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
                 <path d="M15 18H9" />
@@ -4882,12 +4899,12 @@ onUnmounted(() => {
         <!-- ACCORDION 1: Customer Insights (loading or has history) -->
         <div
           v-if="insightsLoading || (customerInsights && customerInsights.orders_count > 0)"
-          class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+          :class="checkoutSectionCardFlushClass"
         >
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-            class="w-full px-5 py-4 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
+            :class="checkoutAccordionTriggerClass"
           >
             <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
               {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
@@ -4926,11 +4943,11 @@ onUnmounted(() => {
         </div>
 
         <!-- ACCORDION 2: Resumen de la Orden -->
-        <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div :class="checkoutSectionCardFlushClass">
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
-            class="w-full px-5 py-4 flex items-center justify-between text-start hover:bg-surface-secondary/40 transition-colors"
+            :class="[checkoutAccordionTriggerClass, 'justify-between']"
           >
 	            <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
             <svg
@@ -4943,7 +4960,7 @@ onUnmounted(() => {
           </button>
 
           <!-- Body -->
-          <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
+          <div v-show="activeAccordion === 'summary'" class="border-t border-border px-4 py-4">
             <div class="space-y-3 mb-4">
               <div class="flex justify-between text-sm text-text-secondary">
 	                <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
@@ -5038,11 +5055,11 @@ onUnmounted(() => {
         <!-- WAROS CARD (desktop) — accordion -->
         <div
           v-if="warosPanelVisible"
-          class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+          :class="checkoutSectionCardFlushClass"
         >
           <button
             @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
-            class="w-full px-5 py-3.5 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
+            :class="checkoutAccordionTriggerClass"
           >
             <svg class="h-[1em] w-[1em] text-state-warning-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
@@ -5060,24 +5077,24 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
             </svg>
           </button>
-          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4 space-y-4">
-            <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-3 gap-2">
-              <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg h-12" />
+          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-4 py-4 space-y-4">
+            <div v-if="isLoadingWaros || isWalletPending" :class="checkoutStatGridClass">
+              <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg min-h-[3rem]" />
             </div>
-            <div v-else class="grid grid-cols-3 gap-2">
-              <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+            <div v-else :class="checkoutStatGridClass">
+              <div :class="checkoutStatCardClass">
                 <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.points') }}</p>
                 <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                   {{ warosBalance.toLocaleString(uiLocale) }}
                 </p>
               </div>
-              <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+              <div :class="checkoutStatCardClass">
                 <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Wallet</p>
                 <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                   {{ formatCurrency(walletBalanceCop) }}
                 </p>
               </div>
-              <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+              <div v-if="warosEarnBlockVisible" :class="checkoutStatCardClass">
                 <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.earn') }}</p>
                 <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                   <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
@@ -5100,8 +5117,10 @@ onUnmounted(() => {
                 <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                   <li v-for="reward in activeWaroRewards" :key="reward.id">
                     <label
-                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
-                      :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+                      :class="[
+                        checkoutInlineRowClass,
+                        warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50',
+                      ]"
                     >
                       <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
                       <span class="flex items-center gap-3 flex-shrink-0">
@@ -5180,7 +5199,7 @@ onUnmounted(() => {
         <div
           v-if="showKitchenSendOnChargeBanner"
           role="status"
-          class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
+          :class="[checkoutAlertBannerClass, 'bg-state-warning-bg border border-state-warning-border']"
         >
           <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
             <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -5265,7 +5284,7 @@ onUnmounted(() => {
       <div
         v-if="hasActivePromos"
         role="status"
-        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+        :class="[checkoutAlertBannerClass, 'bg-status-success-bg border border-status-success-text/25']"
       >
         <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
           <svg class="h-[1em] w-[1em] text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -5280,11 +5299,11 @@ onUnmounted(() => {
       <!-- ACCORDION: Customer Insights (same as desktop) -->
       <div
         v-if="insightsLoading || (customerInsights && customerInsights.orders_count > 0)"
-        class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+        :class="checkoutSectionCardFlushClass"
       >
         <button
           @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-          class="w-full px-5 py-4 flex items-center gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
+          :class="checkoutAccordionTriggerClass"
         >
           <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
             {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
@@ -5316,10 +5335,10 @@ onUnmounted(() => {
       </div>
 
       <!-- ACCORDION: Resumen de la Orden -->
-      <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
+      <div :class="checkoutSectionCardFlushClass">
         <button
           @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
-          class="w-full px-5 py-4 flex items-center justify-between text-start hover:bg-surface-secondary/40 transition-colors"
+          :class="[checkoutAccordionTriggerClass, 'justify-between']"
         >
 	          <h3 class="font-bold text-text-primary">{{ t('pos.checkout.summary.title') }}</h3>
           <svg
@@ -5330,7 +5349,7 @@ onUnmounted(() => {
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
           </svg>
         </button>
-        <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
+        <div v-show="activeAccordion === 'summary'" class="border-t border-border px-4 py-4">
           <div class="space-y-3 mb-4">
             <div class="flex justify-between text-sm text-text-secondary">
 	              <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
@@ -5424,32 +5443,32 @@ onUnmounted(() => {
       <!-- WAROS CARD (mobile) -->
       <div
         v-if="warosPanelVisible"
-        class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+        :class="checkoutSectionCardFlushClass"
       >
-        <div class="px-5 py-4 space-y-4">
+        <div class="px-4 py-4 space-y-4">
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold text-text-primary text-sm">Waros</h3>
             <span v-if="!isLoadingWaros" class="text-sm font-bold tabular-nums text-state-warning-text">
               {{ warosBalance.toLocaleString(uiLocale) }}
             </span>
           </div>
-          <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-3 gap-2">
-            <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg h-12" />
+          <div v-if="isLoadingWaros || isWalletPending" :class="checkoutStatGridClass">
+            <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg min-h-[3rem]" />
           </div>
-          <div v-else class="grid grid-cols-3 gap-2">
-            <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+          <div v-else :class="checkoutStatGridClass">
+            <div :class="checkoutStatCardClass">
               <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.points') }}</p>
               <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                 {{ warosBalance.toLocaleString(uiLocale) }}
               </p>
             </div>
-            <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+            <div :class="checkoutStatCardClass">
               <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Wallet</p>
               <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                 {{ formatCurrency(walletBalanceCop) }}
               </p>
             </div>
-            <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+            <div v-if="warosEarnBlockVisible" :class="checkoutStatCardClass">
               <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{{ t('pos.wallet.earn') }}</p>
               <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-state-success-text' : 'text-text-tertiary'">
                 <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
@@ -5467,8 +5486,10 @@ onUnmounted(() => {
               <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                 <li v-for="reward in activeWaroRewards" :key="reward.id">
                   <label
-                    class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
-                    :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+                    :class="[
+                      checkoutInlineRowClass,
+                      warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50',
+                    ]"
                   >
                     <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
                     <span class="flex items-center gap-3 flex-shrink-0">
@@ -5537,7 +5558,7 @@ onUnmounted(() => {
       <div
         v-if="showKitchenSendOnChargeBanner"
         role="status"
-        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
+        :class="[checkoutAlertBannerClass, 'bg-state-warning-bg border border-state-warning-border']"
       >
         <div class="flex-shrink-0 bg-state-warning-bg p-1.5 rounded-lg">
           <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
