@@ -566,6 +566,13 @@ type PendingDeliveryDetail = {
   total_amount: number
   status: string
   payment_status?: string | null
+  discount_amount?: number
+  promo_savings?: number
+  promo_breakdown?: PromoBreakdownLine[]
+  standard_tax?: number
+  liquor_tax?: number
+  standard_tax_label?: string
+  liquor_tax_label?: string
   delivery_address_id?: string | null
   delivery_instructions?: string | null
   customer?: { id?: string | null; name?: string | null; phone?: string | null; phone_number?: string | null; email?: string | null }
@@ -732,14 +739,23 @@ const promoOptOutSignature = computed(() => {
     .map(item => `${item.id ?? ''}:${item.promo_opt_out ? 1 : 0}`)
     .join(',')
 })
+const pendingDeliveryGrossSubtotal = computed(() =>
+  cartItems.value.reduce((sum, item) => {
+    const line = item as { subtotal?: number; product?: { price?: number }; quantity?: number }
+    return sum + (Number(line.subtotal) || (Number(line.product?.price) || 0) * (Number(line.quantity) || 0))
+  }, 0),
+)
+const persistedPendingOrderDiscount = computed(() => {
+  if (!isPendingDeliveryMode.value || discountEnabled.value) return 0
+  return Number(pendingDeliveryOrder.value?.discount_amount) || 0
+})
 const cartTotal = computed(() => {
   if (isPendingDeliveryMode.value) {
+    const gross = pendingDeliveryGrossSubtotal.value
+    if (gross > 0) return gross
     const total = Number(pendingDeliveryOrder.value?.total_amount)
     if (Number.isFinite(total) && total > 0) return total
-    return cartItems.value.reduce((sum, item) => {
-      const line = item as { subtotal?: number; product?: { price?: number }; quantity?: number }
-      return sum + (Number(line.subtotal) || (Number(line.product?.price) || 0) * (Number(line.quantity) || 0))
-    }, 0)
+    return 0
   }
   if (isKitchenServiceMode.value) {
     if (storeTabItems.value.length > 0) {
@@ -753,6 +769,19 @@ const cartTotal = computed(() => {
   return posStore.cartTotal
 })
 const checkoutPromoPreview = computed<CheckoutPromoPreview | null>(() => {
+  if (isPendingDeliveryMode.value) {
+    const order = pendingDeliveryOrder.value
+    if (!order) return null
+    const gross = pendingDeliveryGrossSubtotal.value
+    const savings = Number(order.promo_savings) || 0
+    return {
+      subtotal: gross,
+      promo_savings: savings,
+      subtotal_after_promos: savings > 0 ? Math.max(0, gross - savings) : gross,
+      promo_breakdown: order.promo_breakdown ?? [],
+      lines: [],
+    }
+  }
   if (isKitchenServiceMode.value) {
     const session = mesaCurrentData.value?.data?.session
     if (!session) return null
@@ -902,6 +931,23 @@ function promoFieldsFromCloseResponse(
     subtotal: Number(data?.subtotal) || fallbackSubtotal,
   }
 }
+
+function orderDiscountFieldsFromCheckout(
+  data: { discount_amount?: number; subtotal?: number | null } | null | undefined,
+  fallbackSubtotal: number,
+) {
+  if (discountEnabled.value && discountAmount.value > 0) {
+    return { discount_amount: discountAmount.value, subtotal: fallbackSubtotal }
+  }
+  const fromApi = Number(data?.discount_amount) || 0
+  if (fromApi > 0) {
+    return {
+      discount_amount: fromApi,
+      subtotal: Number(data?.subtotal) || fallbackSubtotal,
+    }
+  }
+  return {}
+}
 // Manual checkout contract (#1397): automatic promos are evaluated first;
 // manual discounts use subtotalAfterPromos, then WaRo redemption is applied.
 const discountAmount = computed(() => {
@@ -965,7 +1011,13 @@ const {
 const waroDiscountCop = computed(() => Number(waroPreview.value?.total_waro_discount_cop) || 0)
 const combinedDiscountForTax = computed(() => discountAmount.value + waroDiscountCop.value)
 const discountedTotal = computed(() =>
-  Math.max(0, subtotalAfterPromos.value - discountAmount.value - waroDiscountCop.value),
+  Math.max(
+    0,
+    subtotalAfterPromos.value
+      - discountAmount.value
+      - persistedPendingOrderDiscount.value
+      - waroDiscountCop.value,
+  ),
 )
 // warocol.com#639 — final amount charged to the customer when tipping is enabled.
 // total_amount on orders never includes tip (tax-base invariant from migration 079);
@@ -1302,6 +1354,11 @@ function finalizePendingDeliverySuccess(
   data: Record<string, any>,
   opts?: { paymentMethod?: string; paymentMethodName?: string | null },
 ) {
+  const promoSource = {
+    promo_savings: data.promo_savings ?? pendingDeliveryOrder.value?.promo_savings,
+    promo_breakdown: data.promo_breakdown ?? pendingDeliveryOrder.value?.promo_breakdown,
+    subtotal: data.subtotal,
+  }
   orderResult.value = {
     order_id: data.order_id ?? pendingOrderId.value,
     order_number: Number(data.order_number ?? pendingDeliveryOrder.value?.order_number ?? 0),
@@ -1315,9 +1372,14 @@ function finalizePendingDeliverySuccess(
     liquor_tax: Number(data.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
     standard_tax_label: localizedInternalTaxLabel(data.standard_tax_label ?? taxPreview.value?.standard_tax_label),
     liquor_tax_label: localizedInternalTaxLabel(data.liquor_tax_label ?? taxPreview.value?.liquor_tax_label),
-    ...(discountEnabled.value && discountAmount.value > 0
-      ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
-      : {}),
+    ...promoFieldsFromCloseResponse(promoSource, cartTotal.value),
+    ...orderDiscountFieldsFromCheckout(
+      {
+        ...data,
+        discount_amount: data.discount_amount ?? pendingDeliveryOrder.value?.discount_amount,
+      },
+      cartTotal.value,
+    ),
   }
   wasMesaMode.value = false
   cartItemsSnapshot.value = snapshotCartItemsForReceipt()
@@ -2713,6 +2775,8 @@ const processOrder = async () => {
           liquor_tax: taxPreview.value?.liquor_tax ?? 0,
           standard_tax_label: localizedInternalTaxLabel(taxPreview.value?.standard_tax_label),
           liquor_tax_label: localizedInternalTaxLabel(taxPreview.value?.liquor_tax_label),
+          ...promoFieldsForReceipt(cartTotal.value),
+          ...orderDiscountFieldsFromCheckout(null, cartTotal.value),
         }
         wasMesaMode.value = false
         cartItemsSnapshot.value = snapshotCartItemsForReceipt()
@@ -2945,9 +3009,7 @@ const processOrder = async () => {
         standard_tax_label: localizedInternalTaxLabel(response.data.standard_tax_label),
         liquor_tax_label: localizedInternalTaxLabel(response.data.liquor_tax_label),
         ...promoFieldsFromCloseResponse(response.data, _subtotalPos),
-        ...(discountEnabled.value && _discountAmtPos > 0
-          ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
-          : {}),
+        ...orderDiscountFieldsFromCheckout(response.data, _subtotalPos),
         // warocol.com#639 — surface tip in the success modal when present
         ...(response.data.tip_amount && response.data.tip_amount > 0
           ? { tip_amount: response.data.tip_amount, charged_amount: response.data.charged_amount }
@@ -4966,13 +5028,12 @@ onUnmounted(() => {
 	                <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
               </div>
-              <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
+              <div v-if="promoSavings > 0 && displayPromoBreakdown.length === 0" class="flex justify-between text-sm text-state-success-text ">
 	                <span>{{ t('pos.checkout.summary.promotion') }}</span>
                 <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
               </div>
               <div
                 v-for="(promo, promoIdx) in displayPromoBreakdown"
-                v-show="displayPromoBreakdown.length > 1"
                 :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
                 class="flex justify-between text-xs text-state-success-text/90  ps-3"
               >
@@ -4989,6 +5050,13 @@ onUnmounted(() => {
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
 	                <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
+              </div>
+              <div
+                v-else-if="persistedPendingOrderDiscount > 0"
+                class="flex justify-between text-sm text-primary"
+              >
+                <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
+                <span class="font-medium">- {{ formatCurrency(persistedPendingOrderDiscount) }}</span>
               </div>
               <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
 	                <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
@@ -5355,13 +5423,12 @@ onUnmounted(() => {
 	              <span>{{ t('pos.checkout.summary.subtotalProducts', { count: cartItems.length }) }}</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
             </div>
-            <div v-if="promoSavings > 0" class="flex justify-between text-sm text-state-success-text ">
+            <div v-if="promoSavings > 0 && displayPromoBreakdown.length === 0" class="flex justify-between text-sm text-state-success-text ">
 	              <span>{{ t('pos.checkout.summary.promotion') }}</span>
               <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
             </div>
             <div
               v-for="(promo, promoIdx) in displayPromoBreakdown"
-              v-show="displayPromoBreakdown.length > 1"
               :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
               class="flex justify-between text-xs text-state-success-text/90  ps-3"
             >
@@ -5378,6 +5445,13 @@ onUnmounted(() => {
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-state-success-text ">
 	              <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
               <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
+            </div>
+            <div
+              v-else-if="persistedPendingOrderDiscount > 0"
+              class="flex justify-between text-sm text-primary"
+            >
+              <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
+              <span class="font-medium">- {{ formatCurrency(persistedPendingOrderDiscount) }}</span>
             </div>
             <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-state-warning-text">
 	              <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : t('pos.checkout.summary.waroRedeem') }}</span>
