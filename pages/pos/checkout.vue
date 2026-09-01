@@ -290,6 +290,48 @@ interface PosCustomer {
   fiscal_business_name?: string | null
   fiscal_email?: string | null
 }
+
+type PosCustomerSource = {
+  id: string
+  name?: string | null
+  phone_number?: string | null
+  phone?: string | null
+  email?: string | null
+  fiscal_id_type?: FiscalIdType | string | null
+  fiscal_id?: string | null
+  fiscal_business_name?: string | null
+  fiscal_email?: string | null
+}
+
+function toPosCustomer(source: PosCustomerSource): PosCustomer {
+  return {
+    id: source.id,
+    name: source.name ?? null,
+    phone_number: source.phone_number ?? source.phone ?? null,
+    email: source.email ?? null,
+    fiscal_id_type: (source.fiscal_id_type as FiscalIdType | null | undefined) ?? null,
+    fiscal_id: source.fiscal_id ?? null,
+    fiscal_business_name: source.fiscal_business_name ?? null,
+    fiscal_email: source.fiscal_email ?? null,
+  }
+}
+
+async function hydrateCustomerFiscalIfMissing(customer: PosCustomer): Promise<PosCustomer> {
+  if (!customer.id || customer.fiscal_id || customer.phone_number === '0000000000') {
+    return customer
+  }
+  try {
+    const res = await $fetch<{ success: boolean; data: PosCustomer }>(
+      `/api/pos/customers/${customer.id}`,
+    )
+    if (res.success && res.data) {
+      return { ...customer, ...res.data }
+    }
+  } catch {
+    // Fall through — wizard will collect fiscal data if still missing.
+  }
+  return customer
+}
 const selectedCustomer = ref<PosCustomer | null>(null)
 const showWompiSlideover = ref(false)
 const wompiOrderId = ref<string | null>(null)
@@ -3849,6 +3891,9 @@ const requestInvoice = async () => {
     return
   }
   if (selectedCustomer.value && !selectedCustomer.value.fiscal_id && !isAnonymousCustomer.value) {
+    selectedCustomer.value = await hydrateCustomerFiscalIfMissing(selectedCustomer.value)
+  }
+  if (selectedCustomer.value && !selectedCustomer.value.fiscal_id && !isAnonymousCustomer.value) {
     fiscalWizardError.value = ''
     fiscalWizardForm.value = {
       fiscal_id_type: '',
@@ -4171,12 +4216,7 @@ watch(
   (customer) => {
     if (isPendingDeliveryMode.value) return
     if (!customer || selectedCustomer.value) return
-    selectedCustomer.value = {
-      id: customer.id,
-      name: customer.name ?? null,
-      phone_number: customer.phone_number ?? null,
-      email: customer.email ?? null,
-    }
+    selectedCustomer.value = toPosCustomer(customer)
   },
   { immediate: true },
 )
@@ -4186,12 +4226,7 @@ watch(
   (order) => {
     if (!order || !isPendingDeliveryMode.value) return
     if (order.customer?.id) {
-      selectedCustomer.value = {
-        id: order.customer.id,
-        name: order.customer.name ?? null,
-        phone_number: order.customer.phone ?? order.customer.phone_number ?? null,
-        email: order.customer.email ?? null,
-      }
+      selectedCustomer.value = toPosCustomer(order.customer)
     }
     deliveryEnabled.value = true
     deliveryInstructions.value = order.delivery_instructions || ''
