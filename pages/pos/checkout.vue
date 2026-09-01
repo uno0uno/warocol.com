@@ -1157,6 +1157,21 @@ const splitPaymentValidationMessage = computed(
   () => splitAmountValidationMessage.value,
 )
 
+const canAddSplitPayment = computed(
+  () =>
+    !isAddingPayment.value
+    && !!selectedPaymentMethod.value
+    && !requiresMethodSelection.value
+    && !!splitAmountToCharge.value
+    && splitAmountToCharge.value > 0
+    && !!selectedCustomer.value
+    && (isKitchenServiceMode.value || !!posStore.cartId)
+    && cashIsValid.value
+    && manualDiscountIsValid.value
+    && !walletTenderValidationMessage.value
+    && !splitPaymentValidationMessage.value,
+)
+
 const splitAmountToCharge = computed(() =>
   splitPartialAmount.value !== null
   && splitPartialAmount.value > 0
@@ -5111,166 +5126,37 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Split Payment (Cobro Parcial) — only after customer is set -->
-        <div v-if="selectedCustomer && !isPendingDeliveryMode" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
-              <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75" />
-              </svg>
-	              {{ t('pos.checkout.split.title') }}
-            </h3>
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="splitMode"
-	              :aria-label="splitMode ? t('pos.checkout.split.disableAria') : t('pos.checkout.split.enableAria')"
-              @click="toggleSplitMode"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              :class="splitMode ? 'bg-primary' : 'bg-border'"
-            >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-control-toggle-thumb shadow transform ring-0 transition duration-200"
-                :class="splitMode ? 'translate-x-5' : 'translate-x-0'"
-              />
-            </button>
-          </div>
-
-          <!-- Split panel -->
-          <div v-if="splitMode" class="mt-3 space-y-3">
-
-            <!-- Payment history -->
-            <div v-if="splitPayments.length > 0">
-              <!-- Header: count + paid so far -->
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-	                  {{ t('pos.checkout.split.registeredPayments') }}
-                </span>
-                <span class="text-xs font-bold text-primary tabular-nums">
-                  {{ splitPayments.length }} · {{ formatCurrency(splitPaidTotal) }}
-                </span>
-              </div>
-              <!-- Payment rows -->
-              <div class="space-y-1.5">
-                <div
-                  v-for="(p, idx) in splitPayments"
-                  :key="p.id"
-                  class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm"
-                >
-                  <!-- Check icon -->
-                  <svg class="h-[1em] w-[1em] text-state-success-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
-                  </svg>
-                  <span class="text-text-secondary flex-1">#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
-                  <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
-                  <!-- Issue warocol.com#649 — void this partial payment -->
-                  <button
-                    type="button"
-                    :disabled="isVoidingPayment === p.id"
-                    @click="openVoidPaymentModal(p)"
-                    :aria-label="`Eliminar pago #${idx + 1} de ${formatCurrency(p.amount)}`"
-                    class="ms-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
-                  >
-                    <svg v-if="isVoidingPayment === p.id" class="h-[1em] w-[1em] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                    <svg v-else class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- warocol.com#737 — settlement total includes tip when selected -->
-            <div
-              v-if="tipAmount > 0"
-              class="rounded-lg border border-border bg-surface-secondary/60 px-3 py-2.5 space-y-1.5 text-sm"
-            >
-              <div class="flex items-center justify-between text-text-secondary">
-	                <span>{{ t('pos.checkout.split.orderTotal') }}</span>
-                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(discountedTotal) }}</span>
-              </div>
-              <div class="flex items-center justify-between text-text-secondary">
-	                <span>{{ t('pos.checkout.split.tip') }}</span>
-                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipAmount) }}</span>
-              </div>
-              <div
-                v-if="tipTaxAmount > 0"
-                class="flex items-center justify-between text-text-secondary"
-              >
-                <span>{{ tipTaxLabel }}</span>
-                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipTaxAmount) }}</span>
-              </div>
-              <div class="flex items-center justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
-	                <span>{{ t('pos.checkout.split.totalToCharge') }}</span>
-                <span class="tabular-nums">{{ formatCurrency(splitAmountDue) }}</span>
-              </div>
-            </div>
-
-            <!-- Remaining counter -->
-            <div
-              class="flex items-center justify-between px-3 py-2.5 rounded-lg"
-              :class="splitIsComplete ? 'bg-state-success-bg ' : 'bg-primary/10'"
-            >
-              <span class="text-sm font-medium flex items-center gap-1.5" :class="splitIsComplete ? 'text-state-success-text ' : 'text-primary'">
-                <svg v-if="splitIsComplete" class="h-[1em] w-[1em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                </svg>
-	                {{ splitIsComplete ? t('pos.checkout.split.complete') : t('pos.checkout.split.pendingBalance') }}
-              </span>
-              <span
-                class="text-sm font-bold tabular-nums"
-                :class="splitIsComplete ? 'text-state-success-text ' : 'text-text-primary'"
-                aria-live="polite"
-              >{{ formatCurrency(splitRemaining) }}</span>
-            </div>
-
-            <!-- Partial amount input -->
-            <div v-if="!splitIsComplete" class="flex flex-col gap-1">
-	              <label class="text-xs font-medium text-text-secondary">{{ t('pos.checkout.split.amountNow') }}</label>
-              <div class="relative">
-                <span class="absolute start-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  :value="splitPartialAmount ? splitPartialAmount.toLocaleString(uiLocale) : ''"
-                  @input="onSplitAmountInput"
-                  class="w-full ps-7 pe-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
-                  :class="splitAmountValidationMessage ? 'border-state-danger-border focus:border-state-danger-border focus:ring-state-danger-border/30' : ''"
-                  placeholder="0"
-                />
-              </div>
-              <p
-                v-if="splitPaymentValidationMessage"
-                class="text-xs font-medium text-state-danger-text"
-              >
-                {{ splitPaymentValidationMessage }}
-              </p>
-            </div>
-
-            <!-- Issue #524 — Cash tender + change calculation (split mode) -->
-            <CheckoutCashTenderPanel
-              v-if="isCashMethod && !splitIsComplete"
-              v-model="cashReceivedInput"
-              input-id="cash-received-input"
-              :amount-to-charge="cashAmountToCharge"
-              require-input-for-feedback
-            />
-
-            <!-- Add payment button -->
-            <button
-              v-if="!splitIsComplete"
-              type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || !!splitPaymentValidationMessage"
-              @click="addSplitPayment"
-              class="w-full min-h-[44px] px-4 py-3 bg-action-primary-bg text-action-primary-text text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-action-primary-hover-bg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <UiLoadingDots v-if="isAddingPayment" size="10px" />
-	              <span v-else>{{ t('pos.checkout.split.chargeAmount', { amount: formatCurrency(splitAmountToCharge), method: getPaymentMethodLabel(selectedPaymentMethod) }) }}</span>
-            </button>
-          </div>
-        </div>
+        <PosCheckoutSplitPaymentPanel
+          v-if="selectedCustomer && !isPendingDeliveryMode"
+          v-model:cash-received-input="cashReceivedInput"
+          cash-input-id="cash-received-input"
+          :split-mode="splitMode"
+          :split-payments="splitPayments"
+          :split-paid-total="splitPaidTotal"
+          :split-is-complete="splitIsComplete"
+          :split-remaining="splitRemaining"
+          :split-amount-due="splitAmountDue"
+          :split-partial-amount="splitPartialAmount"
+          :split-amount-validation-message="splitAmountValidationMessage"
+          :split-payment-validation-message="splitPaymentValidationMessage"
+          :tip-amount="tipAmount"
+          :tip-tax-amount="tipTaxAmount"
+          :tip-tax-label="tipTaxLabel"
+          :discounted-total="discountedTotal"
+          :is-voiding-payment="isVoidingPayment"
+          :is-cash-method="isCashMethod"
+          :cash-amount-to-charge="cashAmountToCharge"
+          :is-adding-payment="isAddingPayment"
+          :selected-payment-method="selectedPaymentMethod"
+          :requires-method-selection="requiresMethodSelection"
+          :split-amount-to-charge="splitAmountToCharge"
+          :can-add-split-payment="canAddSplitPayment"
+          :get-payment-method-label="getPaymentMethodLabel"
+          @toggle-split-mode="toggleSplitMode"
+          @split-amount-input="onSplitAmountInput"
+          @add-split-payment="addSplitPayment"
+          @void-payment="openVoidPaymentModal"
+        />
 
         <!-- Error Message -->
         <div v-if="processingError" class="bg-state-danger-bg  border-2 border-state-danger-border  rounded-xl p-4">
@@ -5602,6 +5488,38 @@ onUnmounted(() => {
           </template>
         </div>
       </div>
+
+      <PosCheckoutSplitPaymentPanel
+        v-if="selectedCustomer && !isPendingDeliveryMode"
+        v-model:cash-received-input="cashReceivedInput"
+        cash-input-id="cash-received-input-mobile-split"
+        :split-mode="splitMode"
+        :split-payments="splitPayments"
+        :split-paid-total="splitPaidTotal"
+        :split-is-complete="splitIsComplete"
+        :split-remaining="splitRemaining"
+        :split-amount-due="splitAmountDue"
+        :split-partial-amount="splitPartialAmount"
+        :split-amount-validation-message="splitAmountValidationMessage"
+        :split-payment-validation-message="splitPaymentValidationMessage"
+        :tip-amount="tipAmount"
+        :tip-tax-amount="tipTaxAmount"
+        :tip-tax-label="tipTaxLabel"
+        :discounted-total="discountedTotal"
+        :is-voiding-payment="isVoidingPayment"
+        :is-cash-method="isCashMethod"
+        :cash-amount-to-charge="cashAmountToCharge"
+        :is-adding-payment="isAddingPayment"
+        :selected-payment-method="selectedPaymentMethod"
+        :requires-method-selection="requiresMethodSelection"
+        :split-amount-to-charge="splitAmountToCharge"
+        :can-add-split-payment="canAddSplitPayment"
+        :get-payment-method-label="getPaymentMethodLabel"
+        @toggle-split-mode="toggleSplitMode"
+        @split-amount-input="onSplitAmountInput"
+        @add-split-payment="addSplitPayment"
+        @void-payment="openVoidPaymentModal"
+      />
 
       <!-- Error Message -->
       <div v-if="processingError" class="bg-state-danger-bg  border-2 border-state-danger-border  rounded-xl p-4">
