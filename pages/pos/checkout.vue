@@ -535,6 +535,12 @@ type PendingDeliveryDetail = {
     payment_method_id?: string | null
     payment_method_name?: string | null
   }>
+  delivery_address?: {
+    address_line1?: string | null
+    address_line2?: string | null
+    city?: string | null
+  } | null
+  address_label?: string | null
 }
 
 const {
@@ -550,6 +556,14 @@ const {
   staleTime: 0,
 })
 const pendingDeliveryOrder = computed(() => pendingDeliveryPayload.value?.data ?? null)
+const pendingDeliveryAddressLabel = computed(() => {
+  const order = pendingDeliveryOrder.value
+  if (!order) return null
+  if (order.address_label?.trim()) return order.address_label.trim()
+  const addr = order.delivery_address
+  if (!addr) return null
+  return [addr.address_line1, addr.address_line2, addr.city].filter(Boolean).join(', ') || null
+})
 
 const mapPendingDeliveryItemToCheckoutLine = (item: NonNullable<PendingDeliveryDetail['items']>[number]) => ({
   orderItemId: item.id,
@@ -1231,6 +1245,44 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
   prefacturaPrintSnapshot.value = null
 }
 
+function finalizePendingDeliverySuccess(
+  data: Record<string, any>,
+  opts?: { paymentMethod?: string; paymentMethodName?: string | null },
+) {
+  orderResult.value = {
+    order_id: data.order_id ?? pendingOrderId.value,
+    order_number: Number(data.order_number ?? pendingDeliveryOrder.value?.order_number ?? 0),
+    total_amount: Number(data.total_amount ?? pendingDeliveryOrder.value?.total_amount ?? discountedTotal.value),
+    payment_method: data.payment_method ?? opts?.paymentMethod ?? selectedPaymentMethod.value,
+    payment_method_name: opts?.paymentMethodName ?? undefined,
+    status: 'completed',
+    payment_status: data.payment_status ?? 'paid',
+    customer_id: selectedCustomer.value?.id,
+    standard_tax: Number(data.standard_tax ?? taxPreview.value?.standard_tax ?? 0),
+    liquor_tax: Number(data.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0),
+    standard_tax_label: localizedInternalTaxLabel(data.standard_tax_label ?? taxPreview.value?.standard_tax_label),
+    liquor_tax_label: localizedInternalTaxLabel(data.liquor_tax_label ?? taxPreview.value?.liquor_tax_label),
+    ...(discountEnabled.value && discountAmount.value > 0
+      ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
+      : {}),
+  }
+  wasMesaMode.value = false
+  cartItemsSnapshot.value = snapshotCartItemsForReceipt()
+  captureReceiptPrintContext()
+  applyReceiptEmailAfterSale(selectedCustomer.value)
+  receiptEmail.value = ''
+  emailSent.value = false
+  lastSentEmail.value = ''
+  emailFromProfile.value = false
+  posStore.exitSession()
+  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+  cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
+  splitMode.value = false
+  showSuccessModal.value = true
+  document.body.classList.remove('printing-prefactura')
+  prefacturaPrintSnapshot.value = null
+}
+
 const addSplitPayment = async () => {
   if (
     !isKitchenServiceMode.value
@@ -1244,6 +1296,7 @@ const addSplitPayment = async () => {
     processingError.value = t('pos.checkout.split.selectMethodAndCustomer')
     return
   }
+  if (!manualDiscountIsValid.value) {
     processingError.value = discountValidationError.value
     return
   }
@@ -1460,38 +1513,10 @@ const addSplitPayment = async () => {
         const subMethodName = selectedPaymentMethodId.value
           ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
           : undefined
-        orderResult.value = {
-          order_id: lastPaymentData?.order_id ?? pendingOrderId.value,
-          order_number: Number(lastPaymentData?.order_number ?? pendingDeliveryOrder.value?.order_number ?? 0),
-          total_amount: Number(lastPaymentData?.total_amount ?? pendingDeliveryOrder.value?.total_amount ?? discountedTotal.value),
-          payment_method: lastPaymentData?.payment_method ?? selectedPaymentMethod.value,
-          payment_method_name: subMethodName,
-          status: lastPaymentData?.status ?? 'completed',
-          payment_status: lastPaymentData?.payment_status ?? 'paid',
-          customer_id: selectedCustomer.value?.id,
-          standard_tax: taxPreview.value?.standard_tax ?? 0,
-          liquor_tax: taxPreview.value?.liquor_tax ?? 0,
-          standard_tax_label: localizedInternalTaxLabel(taxPreview.value?.standard_tax_label),
-          liquor_tax_label: localizedInternalTaxLabel(taxPreview.value?.liquor_tax_label),
-          ...(discountEnabled.value && discountAmount.value > 0
-            ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
-            : {}),
-        }
-        wasMesaMode.value = false
-        cartItemsSnapshot.value = snapshotCartItemsForReceipt()
-        captureReceiptPrintContext()
-        applyReceiptEmailAfterSale(selectedCustomer.value)
-        receiptEmail.value = ''
-        emailSent.value = false
-        lastSentEmail.value = ''
-        emailFromProfile.value = false
-        posStore.exitSession()
-        cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
-        cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
-        splitMode.value = false
-        showSuccessModal.value = true
-        document.body.classList.remove('printing-prefactura')
-        prefacturaPrintSnapshot.value = null
+        finalizePendingDeliverySuccess(lastPaymentData ?? {}, {
+          paymentMethod: selectedPaymentMethod.value,
+          paymentMethodName: subMethodName ?? null,
+        })
       } else {
         openSplitSuccessModal(lastPaymentData ?? {})
       }
@@ -2554,37 +2579,10 @@ const completePendingDeliveryPayment = async () => {
     const subMethodName = selectedPaymentMethodId.value
       ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
       : undefined
-    orderResult.value = {
-      order_id: response.data.order_id,
-      order_number: response.data.order_number,
-      total_amount: response.data.total_amount,
-      payment_method: response.data.payment_method ?? selectedPaymentMethod.value,
-      payment_method_name: subMethodName,
-      status: response.data.status,
-      payment_status: response.data.payment_status,
-      customer_id: selectedCustomer.value.id,
-      standard_tax: response.data.standard_tax ?? taxPreview.value?.standard_tax ?? 0,
-      liquor_tax: response.data.liquor_tax ?? taxPreview.value?.liquor_tax ?? 0,
-      standard_tax_label: localizedInternalTaxLabel(response.data.standard_tax_label || taxPreview.value?.standard_tax_label),
-      liquor_tax_label: localizedInternalTaxLabel(response.data.liquor_tax_label || taxPreview.value?.liquor_tax_label),
-      ...(discountEnabled.value && _discountAmt > 0
-        ? { discount_amount: _discountAmt, subtotal: _subtotal }
-        : {}),
-    }
-    wasMesaMode.value = false
-    cartItemsSnapshot.value = snapshotCartItemsForReceipt()
-    captureReceiptPrintContext()
-    applyReceiptEmailAfterSale(selectedCustomer.value)
-    receiptEmail.value = ''
-    emailSent.value = false
-    lastSentEmail.value = ''
-    emailFromProfile.value = false
-    posStore.exitSession()
-    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
-    cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
-    showSuccessModal.value = true
-    document.body.classList.remove('printing-prefactura')
-    prefacturaPrintSnapshot.value = null
+    finalizePendingDeliverySuccess(response.data, {
+      paymentMethod: response.data.payment_method ?? selectedPaymentMethod.value,
+      paymentMethodName: subMethodName ?? null,
+    })
   } catch (error: any) {
     processingError.value = checkoutErrorMessage(error, t('pos.checkout.deliveryCheckout.completePendingError'))
   } finally {
@@ -3476,10 +3474,13 @@ const orderResultChargedAmount = computed(() => {
       - (Number(result.advance_applied) || 0),
   )
 })
-const isCreditOnlyInvoiceBlocked = computed(() =>
-  orderResult.value?.payment_method === 'credit'
-  && splitPaymentsSnapshot.value.length === 0
-)
+const isCreditOnlyInvoiceBlocked = computed(() => {
+  const lines = splitPaymentsSnapshot.value
+  if (lines.length > 0) {
+    return lines.every(p => p.payment_method === 'credit')
+  }
+  return orderResult.value?.payment_method === 'credit'
+})
 
 const receiptPromoBreakdown = computed(() => {
   const breakdown = orderResult.value?.promo_breakdown ?? []
@@ -4225,9 +4226,15 @@ watch(
   { immediate: true },
 )
 
+watch(showSuccessModal, (open) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
 // Clear pending timers on unmount
 onUnmounted(() => {
   if (estimateTimer) clearTimeout(estimateTimer)
+  if (import.meta.client) document.body.style.overflow = ''
 })
 </script>
 
@@ -4261,7 +4268,12 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Grid (cart has items and sync completed) -->
-    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div
+      v-else
+      class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
+      :class="{ 'pointer-events-none select-none': showSuccessModal }"
+      :aria-hidden="showSuccessModal ? 'true' : undefined"
+    >
 
       <!-- Live promotion hint — checkout header (warocol.com#983) -->
       <div
@@ -4892,8 +4904,44 @@ onUnmounted(() => {
           </p>
         </div>
 
+        <!-- Section: Domicilio pendiente (solo lectura — fijado al diferir) -->
+        <div
+          v-if="isPendingDeliveryMode"
+          class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6"
+        >
+          <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+            <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+              <path d="M15 18H9" />
+              <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+              <circle cx="17" cy="18" r="2" />
+              <circle cx="7" cy="18" r="2" />
+            </svg>
+            {{ t('pos.checkout.deliveryCheckout.title') }}
+          </h2>
+          <p class="text-xs text-text-secondary mt-2">
+            {{ t('pos.checkout.deliveryCheckout.pendingLockedHint') }}
+          </p>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div v-if="pendingDeliveryAddressLabel">
+              <dt class="text-xs font-medium text-text-secondary">
+                {{ t('pos.checkout.deliveryCheckout.pendingAddressLabel') }}
+              </dt>
+              <dd class="text-text-primary mt-0.5">{{ pendingDeliveryAddressLabel }}</dd>
+            </div>
+            <div v-if="pendingDeliveryOrder?.delivery_instructions">
+              <dt class="text-xs font-medium text-text-secondary">
+                {{ t('pos.checkout.deliveryCheckout.pendingInstructionsLabel') }}
+              </dt>
+              <dd class="text-text-primary mt-0.5 whitespace-pre-wrap">
+                {{ pendingDeliveryOrder.delivery_instructions }}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
-        <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+        <div v-else-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <div class="flex items-center justify-between gap-3">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -5370,6 +5418,8 @@ onUnmounted(() => {
     <div
       v-if="cartItems.length > 0 && !isSyncingCart && !syncError"
       class="lg:hidden mt-6 pb-4 space-y-3"
+      :class="{ 'pointer-events-none select-none': showSuccessModal }"
+      :aria-hidden="showSuccessModal ? 'true' : undefined"
     >
       <!-- Live promotion hint — checkout footer (warocol.com#983) -->
       <div

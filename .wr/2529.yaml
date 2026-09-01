@@ -1,0 +1,37 @@
+issue: 2529
+title: "fix(pos): lock delivery UI and enable FE on pending delivery checkout completion"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2529-pending-delivery-checkout-polish
+
+paths:
+  - pages/pos/checkout.vue
+  - i18n/locales/es/pos.json
+  - i18n/locales/en/pos.json
+
+ac:
+  - Read-only delivery block on ?pendingOrder= (no toggle/address edits)
+  - Block checkout interaction while success modal open
+  - orderResult status completed + split snapshot for FE after pending collect
+  - Mixed split with credit still shows FE when not all-credit
+
+out_of_scope:
+  - FE on defer pass-1
+  - API/DIAN rule changes
+
+hints:
+  entry: pages/pos/checkout.vue isPendingDeliveryMode
+  pattern: finalizePendingDeliverySuccess + pointer-events-none on main grid
+  tests: none (front-only UX)
+
+risk:
+  sensitive: false
+  areas: [pos checkout, invoicing gate]
+
+skip:
+  audits: []
+
+next:
+  after_pr: manual pending delivery collect + FE button
