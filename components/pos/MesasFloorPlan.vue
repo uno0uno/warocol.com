@@ -10,7 +10,7 @@ import {
   shellHeaderToolButtonActiveClass,
 } from '~/utils/shellHeaderToolClasses'
 
-const { formatCurrency } = useFormatters()
+const { formatCurrency, formatDateTime } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
@@ -257,6 +257,8 @@ const tableListWaiterName = (table: { effective_waiter_member_name?: string | nu
   table.effective_waiter_member_name?.trim() || null
 
 const deliveryListColumns = computed(() => [
+  { key: 'order_number', title: t('pos.floor.colOrderNumber'), sortable: false },
+  { key: 'order_date', title: t('pos.floor.colOrderDate'), sortable: false },
   { key: 'customer', title: t('pos.floor.colCustomer'), sortable: false },
   { key: 'address', title: t('pos.floor.colAddress'), sortable: false },
   { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
@@ -741,17 +743,27 @@ onUnmounted(() => {
             >
               <div class="flex items-center justify-between gap-2">
                 <p class="min-w-0 truncate text-sm font-semibold text-text-primary">
-                  {{ item.customer?.name || t('pos.floor.unknownCustomer') }}
+                  <span class="text-primary tabular-nums">#{{ item.order_number }}</span>
+                  <span class="text-text-secondary font-normal"> · {{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
                 </p>
                 <span class="text-sm font-semibold tabular-nums">{{ formatCurrency(item.total_amount) }}</span>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
+                <span v-if="item.order_date" class="text-xs tabular-nums text-text-secondary">{{ formatDateTime(item.order_date) }}</span>
+                <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noDate') }}</span>
                 <span v-if="item.address_label" class="text-xs text-text-secondary">{{ item.address_label }}</span>
                 <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noAddress') }}</span>
                 <span v-if="item.order_date" class="text-xs tabular-nums text-text-secondary">{{ formatDuration(item.order_date) }}</span>
                 <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
               </div>
             </button>
+          </template>
+          <template #cell-order_number="{ item }">
+            <span class="font-semibold tabular-nums text-primary">#{{ item.order_number }}</span>
+          </template>
+          <template #cell-order_date="{ item }">
+            <span v-if="item.order_date" class="tabular-nums text-text-secondary whitespace-nowrap">{{ formatDateTime(item.order_date) }}</span>
+            <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noDate') }}</span>
           </template>
           <template #cell-customer="{ item }">
             <span class="font-semibold">{{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
