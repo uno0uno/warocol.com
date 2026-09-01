@@ -47,6 +47,8 @@ const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
 
 const router = useRouter()
+const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
+const setBackHandler = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
 const route = useRoute()
 const toast = useToast()
 const queryCache = useQueryCache()
@@ -234,10 +236,30 @@ const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enab
 const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
 const tenantMembers = computed(() => (settingsData.value?.data as any)?.members ?? [])
 
-// Issue #575 — per-order chip in cart (bar + counter only; mesa uses #574 session override)
-const showServedByChip = computed(() =>
-  waiterAttributionEnabled.value && !isMesaMode.value,
+// Issue #2539 — mesero inline in session banner (bar/counter/mesa); cart chip disabled
+const showServedByChip = computed(() => false)
+
+const isCounterMode = computed(() =>
+  !posStore.activeTableSession && !showFloorPlan.value,
 )
+const showCounterBanner = computed(() =>
+  isCounterMode.value && !loadingProducts.value,
+)
+const canClearCounterCart = computed(() =>
+  posStore.cart.length > 0 || storeTabItems.value.length > 0,
+)
+const isCounterClearing = computed(() =>
+  destructiveLoading.value && destructiveFlow.value?.kind === 'clear-cart',
+)
+
+const handleCounterBack = () => {
+  router.back()
+}
+
+const handleChangeCartWaiter = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  posStore.setCartServedBy(target.value || null)
+}
 
 // Effective waiter id for the active session — used by the banner chip.
 const bannerEffectiveWaiterId = computed(() =>
@@ -275,6 +297,9 @@ const handleChangeSessionWaiter = async (event: Event) => {
         capacitySnapshot: s.capacity_snapshot ?? posStore.activeTableSession.capacitySnapshot ?? null,
         customLabel: s.custom_label ?? posStore.activeTableSession.customLabel ?? null,
       })
+      if (posStore.activeTableSession.isBar) {
+        posStore.setCartServedBy(newMemberId)
+      }
     }
     toast.success(
       newMemberId ? t('pos.banner.waiterUpdated', { name: result.data.attended_by_member_name }) : t('pos.banner.noWaiterAssigned'),
@@ -1959,12 +1984,34 @@ onMounted(async () => {
   }
 })
 
+watch(
+  () => posStore.activeTableSession?.isBar && bannerEffectiveWaiterId.value,
+  (id) => {
+    if (!posStore.activeTableSession?.isBar || !id) return
+    posStore.setCartServedBy(id)
+  },
+  { immediate: true },
+)
+
+watchEffect(() => {
+  if (!setShowBackButton) return
+  if (showFloorPlan.value) {
+    setShowBackButton(true)
+    setBackHandler?.(() => router.back())
+  } else {
+    setShowBackButton(false)
+    setBackHandler?.(undefined)
+  }
+})
+
 onUnmounted(() => {
   clearMobileCart()
   setRefreshHandler(undefined)
   stopSessionSyncPolling()
   stopFulfillmentPolling()
   if (readyCountInterval) clearInterval(readyCountInterval)
+  setShowBackButton?.(false)
+  setBackHandler?.(undefined)
 })
 </script>
 
@@ -2058,34 +2105,185 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Bar banner (bar session — behaves as normal POS) -->
-      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-state-warning-border/40 rounded-xl p-3 shadow-sm">
-        <div class="flex items-center gap-2.5">
-          <div class="bg-state-warning-bg p-2 rounded-lg flex-shrink-0">
-            <svg class="h-[1em] w-[1em] text-state-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold text-state-warning-text uppercase tracking-widest flex-shrink-0">{{ t('pos.floor.bar') }}</span>
-            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-            <span class="text-xs text-text-secondary">
-              {{ comandasEnabled ? t('pos.banner.barHintKitchen') : t('pos.banner.barHintDirect') }}
-            </span>
-            <template v-if="comandasEnabled && unfiredCount > 0">
-              <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-              <span class="flex items-center gap-1 text-xs font-semibold text-state-danger-text flex-shrink-0">
+      <!-- Bar banner (bar session — 2-row parity with mesa) -->
+      <div
+        v-else-if="posStore.activeTableSession?.isBar"
+        class="bg-surface border border-state-warning-border/40 rounded-xl p-3 shadow-sm flex flex-col"
+        :class="siblingGapClass"
+      >
+        <div class="flex items-start sm:items-center min-w-0" :class="siblingGapClass">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span class="inline-flex items-center gap-1.5 min-w-0">
+                <span class="text-sm font-semibold text-state-warning-text">{{ t('pos.floor.bar') }}</span>
+                <span class="text-[11px] font-medium text-text-secondary flex-shrink-0">
+                  {{ comandasEnabled ? t('pos.banner.barHintKitchen') : t('pos.banner.barHintDirect') }}
+                </span>
+              </span>
+              <span
+                v-if="comandasEnabled && unfiredCount > 0"
+                class="inline-flex items-center rounded-md border border-state-danger-border/30 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-state-danger-text whitespace-nowrap"
+              >
                 {{ unfiredCount === 1 ? t('pos.banner.unsentOne', { count: unfiredCount }) : t('pos.banner.unsentMany', { count: unfiredCount }) }}
               </span>
-            </template>
+            </div>
+            <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-text-secondary tabular-nums leading-tight">
+              <span>{{ t('pos.banner.accumulated', { amount: formatCurrencyPOS(posStore.activeTableSession.runningTotal) }) }}</span>
+              <span class="text-text-tertiary" aria-hidden="true">·</span>
+              <span>{{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
+            </div>
           </div>
-          <button
-            type="button"
-            class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
-            @click="exitActiveTableSession"
-          >
-            {{ t('pos.banner.exit') }}
-          </button>
+
+          <div class="flex flex-shrink-0 flex-wrap items-center justify-end" :class="siblingGapClass">
+            <button
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              :class="[bannerActionButtonClass, 'text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary px-2 focus-visible:ring-ring/35']"
+              :aria-label="t('pos.banner.backAria', { tables: tablePluralLower, table: tableSingularLower })"
+              @click="exitActiveTableSession"
+            >
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+              </svg>
+              <span class="hidden sm:inline">{{ t('pos.banner.back') }}</span>
+            </button>
+            <button
+              type="button"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              :class="[bannerActionButtonClass, 'text-status-error-text border border-status-error-text/25 hover:bg-status-error-bg px-2 focus-visible:ring-status-error-text']"
+              :aria-label="t('pos.banner.releaseAria', { table: tableSingularLower })"
+              @click="handleReleaseMesa"
+            >
+              <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
+              <template v-else>
+                <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                <span class="hidden sm:inline">{{ t('pos.banner.release') }}</span>
+              </template>
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="waiterAttributionEnabled"
+          class="relative"
+        >
+          <div class="grid grid-cols-2" :class="siblingGapClass">
+            <div :class="[bannerSessionFieldClass, 'relative col-span-2']">
+              <span class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-[11px] font-normal text-text-tertiary z-[1]">
+                {{ t('pos.banner.waiterLabel') }}:
+              </span>
+              <select
+                :value="bannerEffectiveWaiterId || ''"
+                :disabled="isChangingSessionWaiter || isBannerSessionFieldsSaving"
+                :aria-label="t('pos.banner.changeWaiterAria')"
+                class="h-9 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-sm font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
+                :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
+                @change="handleChangeSessionWaiter"
+              >
+                <option value="">{{ t('pos.banner.noWaiter') }}</option>
+                <option
+                  v-for="m in tenantMembers"
+                  :key="m.id"
+                  :value="m.id"
+                >
+                  {{ m.name }}
+                </option>
+              </select>
+              <svg
+                class="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+          </div>
+          <div
+            v-if="isChangingSessionWaiter || isBannerSessionFieldsSaving"
+            class="absolute inset-0 z-[2] rounded-lg bg-surface/35"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <!-- Counter banner (mostrador — parity with mesa/bar) -->
+      <div
+        v-else-if="showCounterBanner"
+        class="bg-surface border border-border rounded-xl p-3 shadow-sm flex flex-col"
+        :class="siblingGapClass"
+      >
+        <div class="flex items-start sm:items-center min-w-0" :class="siblingGapClass">
+          <div class="min-w-0 flex-1">
+            <span class="text-sm font-semibold text-text-primary">{{ t('pos.floor.counter') }}</span>
+          </div>
+          <div class="flex flex-shrink-0 flex-wrap items-center justify-end" :class="siblingGapClass">
+            <button
+              type="button"
+              :class="[bannerActionButtonClass, 'text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary px-2 focus-visible:ring-ring/35']"
+              :aria-label="t('pos.banner.back')"
+              @click="handleCounterBack"
+            >
+              <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+              </svg>
+              <span class="hidden sm:inline">{{ t('pos.banner.back') }}</span>
+            </button>
+            <button
+              type="button"
+              :disabled="!canClearCounterCart || isCounterClearing"
+              :class="[bannerActionButtonClass, 'text-status-error-text border border-status-error-text/25 hover:bg-status-error-bg px-2 focus-visible:ring-status-error-text disabled:opacity-50']"
+              :aria-label="t('pos.cart.clearCart')"
+              @click="clearCart"
+            >
+              <UiLoadingDots v-if="isCounterClearing" size="6px" />
+              <template v-else>
+                <svg class="h-[1em] w-[1em] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                <span class="hidden sm:inline">{{ t('pos.cart.clear') }}</span>
+              </template>
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="waiterAttributionEnabled"
+          class="relative"
+        >
+          <div class="grid grid-cols-2" :class="siblingGapClass">
+            <div :class="[bannerSessionFieldClass, 'relative col-span-2']">
+              <span class="pointer-events-none absolute start-2 top-1/2 -translate-y-1/2 text-[11px] font-normal text-text-tertiary z-[1]">
+                {{ t('pos.banner.waiterLabel') }}:
+              </span>
+              <select
+                :value="posStore.cartServedByMemberId || ''"
+                :aria-label="t('pos.banner.changeWaiterAria')"
+                class="h-9 w-full leading-none ps-[4.25rem] pe-7 rounded-lg border-none bg-transparent text-sm font-medium outline-none shadow-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none appearance-none bg-none cursor-pointer truncate [&::-ms-expand]:hidden"
+                style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
+                :class="posStore.cartServedByMemberId ? 'text-text-primary' : 'text-text-secondary italic'"
+                @change="handleChangeCartWaiter"
+              >
+                <option value="">{{ t('pos.banner.noWaiter') }}</option>
+                <option
+                  v-for="m in tenantMembers"
+                  :key="m.id"
+                  :value="m.id"
+                >
+                  {{ m.name }}
+                </option>
+              </select>
+              <svg
+                class="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 h-[1em] w-[1em] text-text-tertiary"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
