@@ -96,9 +96,194 @@ const handleDeliveryClick = (order: PendingDeliveryRow) => {
 
 const tableListColumns = computed(() => [
   { key: 'name', title: t('pos.floor.colTable'), sortable: false },
+  { key: 'alias', title: t('pos.floor.colAlias'), sortable: false },
+  { key: 'code', title: t('pos.floor.colCode'), sortable: false },
+  { key: 'capacity', title: t('pos.floor.colCapacity'), sortable: false },
+  { key: 'min', title: t('pos.floor.colMin'), sortable: false },
   { key: 'status', title: t('pos.floor.colStatus'), sortable: false },
   { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
+  { key: 'time', title: t('pos.floor.colTime'), sortable: false },
+  ...(props.waiterAttributionEnabled
+    ? [{ key: 'waiter', title: t('pos.floor.colWaiter'), sortable: false }]
+    : []),
 ])
+
+const filterAllLabel = computed(() => t('pos.floor.filterAll'))
+const filterName = ref('')
+const filterAlias = ref('')
+const filterCode = ref('')
+const filterCapacity = ref('')
+const filterMin = ref('')
+const filterStatus = ref('')
+const filterTotalMin = ref('')
+const filterTotalMax = ref('')
+const filterTimeMin = ref('')
+const filterTimeMax = ref('')
+const filterWaiter = ref('')
+
+const uniqueSortedLabels = (values: string[]) =>
+  [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
+
+const nameFilterOptions = computed(() =>
+  uniqueSortedLabels(regularTables.value.map((table: any) => table.name)).map((value) => ({ label: value, value })),
+)
+
+const aliasFilterOptions = computed(() => {
+  const options: { label: string; value: string }[] = [
+    { label: t('pos.floor.filterNoAlias'), value: '__none__' },
+  ]
+  const seen = new Set<string>()
+  for (const table of regularTables.value) {
+    const alias = table.session?.custom_label?.trim()
+    if (!alias || !tableSessionHasAlias(table.name, alias) || seen.has(alias)) continue
+    seen.add(alias)
+    options.push({ label: alias, value: alias })
+  }
+  return options.sort((a, b) => (a.value === '__none__' ? -1 : b.value === '__none__' ? 1 : a.label.localeCompare(b.label, 'es')))
+})
+
+const codeFilterOptions = computed(() =>
+  uniqueSortedLabels(
+    regularTables.value.map((table: any) => tableListCode(table)).filter(Boolean) as string[],
+  ).map((value) => ({ label: value, value })),
+)
+
+const capacityFilterOptions = computed(() =>
+  uniqueSortedLabels(
+    regularTables.value.map((table: any) => tableCardCapacityLabel(table)).filter(Boolean) as string[],
+  ).map((value) => ({ label: value, value })),
+)
+
+const minFilterOptions = computed(() => [
+  { label: t('pos.floor.filterMinNone'), value: '__none__' },
+  { label: t('pos.floor.filterMinPending'), value: 'pending' },
+  { label: t('pos.floor.filterMinCovered'), value: 'covered' },
+])
+
+const statusFilterOptions = computed(() => [
+  { label: t('pos.floor.free'), value: 'free' },
+  { label: t('pos.floor.inService'), value: 'open' },
+  { label: t('pos.floor.bill'), value: 'bill_requested' },
+])
+
+const waiterFilterOptions = computed(() => {
+  const options: { label: string; value: string }[] = [
+    { label: t('pos.floor.filterUnassigned'), value: '__unassigned__' },
+  ]
+  const seen = new Set<string>()
+  for (const table of regularTables.value) {
+    const waiter = tableListWaiterName(table)
+    if (!waiter || seen.has(waiter)) continue
+    seen.add(waiter)
+    options.push({ label: waiter, value: waiter })
+  }
+  return options.sort((a, b) => (a.value === '__unassigned__' ? -1 : b.value === '__unassigned__' ? 1 : a.label.localeCompare(b.label, 'es')))
+})
+
+const tableListTimeMinutes = (table: { status: string; session?: { opened_at?: string } | null }) => {
+  if (table.status === 'free' || !table.session?.opened_at) return null
+  return Math.floor((Date.now() - new Date(table.session.opened_at).getTime()) / 60_000)
+}
+
+const filteredRegularTables = computed(() =>
+  regularTables.value.filter((table: any) => {
+    if (filterName.value && table.name !== filterName.value) return false
+
+    if (filterAlias.value) {
+      const hasAlias = tableSessionHasAlias(table.name, table.session?.custom_label)
+      if (filterAlias.value === '__none__' && hasAlias) return false
+      if (filterAlias.value !== '__none__' && table.session?.custom_label?.trim() !== filterAlias.value) return false
+    }
+
+    if (filterCode.value && tableListCode(table) !== filterCode.value) return false
+    if (filterCapacity.value && tableCardCapacityLabel(table) !== filterCapacity.value) return false
+
+    if (filterMin.value) {
+      const state = table.session?.minimum_consumption
+      const hasMin = Boolean(state?.enabled && Number(state.amount) > 0)
+      const pending = hasMin && Number(state.remaining) > 0 && !state.covered
+      const covered = hasMin && !pending
+      if (filterMin.value === '__none__' && hasMin) return false
+      if (filterMin.value === 'pending' && !pending) return false
+      if (filterMin.value === 'covered' && !covered) return false
+    }
+
+    if (filterStatus.value && table.status !== filterStatus.value) return false
+
+    const total = table.status === 'free' ? 0 : Number(table.session?.running_total ?? 0)
+    if (filterTotalMin.value && total < Number(filterTotalMin.value)) return false
+    if (filterTotalMax.value && total > Number(filterTotalMax.value)) return false
+
+    const minutes = tableListTimeMinutes(table)
+    if (filterTimeMin.value || filterTimeMax.value) {
+      if (minutes == null) return false
+      if (filterTimeMin.value && minutes < Number(filterTimeMin.value)) return false
+      if (filterTimeMax.value && minutes > Number(filterTimeMax.value)) return false
+    }
+
+    if (filterWaiter.value) {
+      const waiter = tableListWaiterName(table)
+      if (filterWaiter.value === '__unassigned__' && waiter) return false
+      if (filterWaiter.value !== '__unassigned__' && waiter !== filterWaiter.value) return false
+    }
+
+    return true
+  }),
+)
+
+const tableListRowClass = (table: { status: string }) => {
+  if (table.status === 'open') return 'floor-list-row floor-list-row--open'
+  if (table.status === 'bill_requested') return 'floor-list-row floor-list-row--bill'
+  return 'floor-list-row floor-list-row--free'
+}
+
+const listChipClass = 'inline-flex max-w-full truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold'
+const listMetaChipClass = `${listChipClass} list-meta-chip`
+const listFilledChipClass = listMetaChipClass
+const listEmptyChipClass = `${listChipClass} bg-badge-neutral-bg text-badge-neutral-text`
+
+const tableListCatalogName = (table: { name: string }) => table.name
+
+const tableListAlias = (table: { name: string; session?: { custom_label?: string | null } | null }) => {
+  const alias = table.session?.custom_label?.trim()
+  if (!alias || !tableSessionHasAlias(table.name, alias)) return null
+  return alias
+}
+
+const tableListCode = (table: { name: string; code?: string | null; session?: { custom_label?: string | null } | null }) => {
+  const code = displayTableCode(table)
+  const title = table.name
+  if (!code || code === title || title.includes(code)) return null
+  return code
+}
+
+const tableListTotalLabel = (table: { status: string; session?: { running_total?: number } | null }) => {
+  if (table.status === 'free') return null
+  return formatCurrency(table.session?.running_total ?? 0)
+}
+
+const tableListTimeLabel = (table: { status: string; session?: { opened_at?: string } | null }) => {
+  if (table.status === 'free' || !table.session?.opened_at) return null
+  return formatDuration(table.session.opened_at)
+}
+
+const tableListStatusChipClass = (status: string) => {
+  if (status === 'open') return `${listChipClass} list-status-chip list-status-chip--open`
+  if (status === 'bill_requested') return `${listChipClass} list-status-chip list-status-chip--bill`
+  return `${listChipClass} list-status-chip list-status-chip--free`
+}
+
+const tableListMinChipClass = (table: any) => {
+  if (!minimumConsumptionLabel(table)) return listEmptyChipClass
+  const state = table.session?.minimum_consumption
+  if (state?.enabled && Number(state.remaining) > 0) {
+    return `${listChipClass} list-status-chip list-status-chip--bill`
+  }
+  return `${listChipClass} list-status-chip list-status-chip--open`
+}
+
+const tableListWaiterName = (table: { effective_waiter_member_name?: string | null }) =>
+  table.effective_waiter_member_name?.trim() || null
 
 const deliveryListColumns = computed(() => [
   { key: 'customer', title: t('pos.floor.colCustomer'), sortable: false },
@@ -107,15 +292,14 @@ const deliveryListColumns = computed(() => [
   { key: 'time', title: t('pos.floor.colTime'), sortable: false },
 ])
 
-const floorSquareButtonClass = [
-  'relative h-9 w-9 min-h-9 min-w-9 px-0 overflow-hidden rounded-lg',
-  'inline-flex items-center justify-center',
-  'text-text-secondary border border-border bg-surface',
-  'hover:text-text-primary hover:bg-surface-secondary',
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1',
-  'active:scale-[0.94] transition-colors',
+const floorHeaderButtonClass = [
+  'relative h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border',
+  'border-shell-action-border bg-shell-action-bg text-shell-action-text',
+  'hover:bg-shell-action-hover-bg',
+  'focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+  'transition-colors',
 ]
-const floorSquareButtonActiveClass = [
+const floorHeaderButtonActiveClass = [
   'text-status-warning-text border-status-warning-text/40 bg-status-warning-bg',
   'hover:text-status-warning-text hover:bg-status-warning-bg',
 ]
@@ -449,6 +633,79 @@ onUnmounted(() => {
 
 <template>
   <div>
+    <ClientOnly>
+      <Teleport to="#dashboard-header-pos-tools">
+        <button
+          v-if="floorView !== 'domicilios'"
+          type="button"
+          :class="floorHeaderButtonClass"
+          :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
+          :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
+          @click="toggleFloorLayout"
+        >
+          <span class="inline-flex h-4 w-4 items-center justify-center">
+            <Transition name="pos-layout-icon" mode="out-in">
+              <svg
+                v-if="floorLayoutToggleTarget === 'list'"
+                key="icon-list"
+                class="h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              <svg
+                v-else
+                key="icon-grid"
+                class="h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+              </svg>
+            </Transition>
+          </span>
+        </button>
+        <button
+          type="button"
+          :class="[floorHeaderButtonClass, floorView === 'domicilios' ? floorHeaderButtonActiveClass : '']"
+          :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
+          :title="t('pos.floor.viewDeliveries')"
+          :aria-pressed="floorView === 'domicilios'"
+          @click="toggleDeliveriesView"
+        >
+          <span class="relative inline-flex h-4 w-4 items-center justify-center">
+            <svg
+              class="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.75"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            <span
+              v-if="pendingDeliveries.length"
+              class="absolute -top-1.5 -end-1.5 min-w-3.5 h-3.5 px-0.5 rounded-full bg-status-warning-text text-white text-[8px] font-bold leading-none flex items-center justify-center tabular-nums"
+            >
+              {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
+            </span>
+          </span>
+        </button>
+      </Teleport>
+    </ClientOnly>
+
     <!-- Loading State -->
     <div v-if="loadingTables || openingTableId" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -459,110 +716,40 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <div class="flex items-stretch gap-2 mb-4">
-        <button
-          v-if="barTable"
-          class="min-w-0 flex-1 flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-          :disabled="isEnteringBar"
-          :aria-label="t('pos.floor.barAlwaysOpenAria')"
-          @click="handleBarClick"
-        >
-          <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-status-warning-text/12 border border-status-warning-text/30">
-            <svg class="w-6 h-6 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0 text-start">
-            <div class="flex items-center gap-2">
-              <span class="text-base font-black uppercase tracking-wide">{{ t('pos.floor.bar') }}</span>
-              <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
-            </div>
-            <p class="text-xs opacity-90 mt-0.5 tabular-nums">
-              <template v-if="barTable.session?.running_total > 0">
-                {{ t('pos.floor.accumulated', { amount: formatCurrency(barTable.session.running_total) }) }} ·
-                {{ formatDuration(barTable.session.opened_at) }}
-              </template>
-              <template v-else>
-                {{ t('pos.floor.noActiveConsumption') }}
-              </template>
-            </p>
-          </div>
-          <svg class="w-5 h-5 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      <button
+        v-if="barTable"
+        class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        :disabled="isEnteringBar"
+        :aria-label="t('pos.floor.barAlwaysOpenAria')"
+        @click="handleBarClick"
+      >
+        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-status-warning-text/12 border border-status-warning-text/30">
+          <svg class="w-6 h-6 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
           </svg>
-        </button>
-
-        <div class="flex flex-col gap-2 justify-center flex-shrink-0" :class="barTable ? '' : 'ms-auto'">
-          <button
-            type="button"
-            :class="floorSquareButtonClass"
-            :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
-            :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
-            @click="toggleFloorLayout"
-          >
-            <span class="inline-flex h-4 w-4 items-center justify-center">
-              <Transition name="pos-layout-icon" mode="out-in">
-                <svg
-                  v-if="floorLayoutToggleTarget === 'list'"
-                  key="icon-list"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                <svg
-                  v-else
-                  key="icon-grid"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                </svg>
-              </Transition>
-            </span>
-          </button>
-          <button
-            type="button"
-            :class="[floorSquareButtonClass, floorView === 'domicilios' ? floorSquareButtonActiveClass : '']"
-            :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
-            :title="t('pos.floor.viewDeliveries')"
-            :aria-pressed="floorView === 'domicilios'"
-            @click="toggleDeliveriesView"
-          >
-            <span class="relative inline-flex h-4 w-4 items-center justify-center">
-              <svg
-                class="h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15m5.25-4.5H21a.75.75 0 0 0 .75-.75V13.5a2.25 2.25 0 0 0-2.25-2.25h-1.5V8.25A2.25 2.25 0 0 0 16.5 6h-3.375m8.25 9.75h-8.25" />
-              </svg>
-              <span
-                v-if="pendingDeliveries.length"
-                class="absolute -top-1.5 -end-1.5 min-w-3.5 h-3.5 px-0.5 rounded-full bg-status-warning-text text-white text-[8px] font-bold leading-none flex items-center justify-center tabular-nums"
-              >
-                {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
-              </span>
-            </span>
-          </button>
         </div>
-      </div>
+        <div class="flex-1 min-w-0 text-start">
+          <div class="flex items-center gap-2">
+            <span class="text-base font-black uppercase tracking-wide">{{ t('pos.floor.bar') }}</span>
+            <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
+          </div>
+          <p class="text-xs opacity-90 mt-0.5 tabular-nums">
+            <template v-if="barTable.session?.running_total > 0">
+              {{ t('pos.floor.accumulated', { amount: formatCurrency(barTable.session.running_total) }) }} ·
+              {{ formatDuration(barTable.session.opened_at) }}
+            </template>
+            <template v-else>
+              {{ t('pos.floor.noActiveConsumption') }}
+            </template>
+          </p>
+        </div>
+        <svg class="w-5 h-5 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
 
-      <div v-if="floorView === 'domicilios'">
+      <Transition name="pos-floor-view" mode="out-in">
+      <div v-if="floorView === 'domicilios'" key="domicilios">
         <div v-if="loadingPendingDeliveries" class="flex items-center justify-center min-h-[40vh]">
           <CommonsTheCustomLoader size="large" />
         </div>
@@ -571,11 +758,17 @@ onUnmounted(() => {
           v-else-if="pendingDeliveries.length === 0"
           class="flex flex-col items-center justify-center min-h-[40vh] text-center px-4"
         >
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-surface-secondary border border-border/60 mb-4">
+            <svg class="w-7 h-7 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+          </div>
           <p class="text-base font-semibold text-text-primary">{{ t('pos.floor.deliveriesEmptyTitle') }}</p>
-          <p class="text-sm text-text-secondary mt-1">{{ t('pos.floor.deliveriesEmptyBody') }}</p>
+          <p class="text-sm text-text-secondary mt-1 max-w-sm">{{ t('pos.floor.deliveriesEmptyBody') }}</p>
         </div>
+        <div v-else class="pos-floor-list">
         <UiResponsiveDataView
-          v-else-if="floorLayout === 'list'"
           :columns="deliveryListColumns"
           :data="pendingDeliveries"
           item-key="id"
@@ -583,67 +776,28 @@ onUnmounted(() => {
           row-size="sm"
           @row-click="handleDeliveryClick"
         >
-          <template #card="{ item }">
-            <button
-              type="button"
-              class="flex w-full flex-col gap-1 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg"
-              @click="handleDeliveryClick(item)"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <p class="min-w-0 truncate text-sm font-semibold text-text-primary">
-                  {{ item.customer?.name || t('pos.floor.unknownCustomer') }}
-                </p>
-                <p class="flex-shrink-0 text-sm font-semibold tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
-              </div>
-              <p class="text-xs text-text-secondary truncate">
-                {{ item.address_label || t('pos.floor.noAddress') }}
-                <span v-if="item.order_date"> · {{ formatDuration(item.order_date) }}</span>
-              </p>
-            </button>
-          </template>
           <template #cell-customer="{ item }">
             <span class="font-semibold">{{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
           </template>
           <template #cell-address="{ item }">
-            <span class="text-text-secondary">{{ item.address_label || t('pos.floor.noAddress') }}</span>
+            <span v-if="item.address_label" class="text-text-secondary">{{ item.address_label }}</span>
+            <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noAddress') }}</span>
           </template>
           <template #cell-total="{ item }">
             <span class="tabular-nums">{{ formatCurrency(item.total_amount) }}</span>
           </template>
           <template #cell-time="{ item }">
-            <span class="text-text-secondary">{{ item.order_date ? formatDuration(item.order_date) : '—' }}</span>
+            <span v-if="item.order_date" class="text-text-secondary">{{ formatDuration(item.order_date) }}</span>
+            <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
           </template>
         </UiResponsiveDataView>
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
-          <button
-            v-for="order in pendingDeliveries"
-            :key="order.id"
-            type="button"
-            class="table-card w-full h-full flex flex-col rounded-xl overflow-hidden border border-status-warning-text/30 bg-surface text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 hover:border-status-warning-text/60"
-            @click="handleDeliveryClick(order)"
-          >
-            <div class="flex-1 p-3">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-status-warning-text mb-1">
-                {{ t('pos.floor.viewDeliveries') }} · #{{ order.order_number }}
-              </p>
-              <p class="font-bold text-text-primary line-clamp-2 min-h-[2.5rem]">
-                {{ order.customer?.name || t('pos.floor.unknownCustomer') }}
-              </p>
-              <p class="text-xs text-text-secondary line-clamp-2 mt-1">
-                {{ order.address_label || t('pos.floor.noAddress') }}
-              </p>
-            </div>
-            <div class="px-3 py-2 bg-status-warning-bg/60 flex items-center justify-between gap-2">
-              <span class="text-sm font-bold tabular-nums text-status-warning-text">{{ formatCurrency(order.total_amount) }}</span>
-              <span class="text-xs text-text-secondary">{{ order.order_date ? formatDuration(order.order_date) : '' }}</span>
-            </div>
-          </button>
         </div>
       </div>
 
-      <template v-else>
+      <div v-else key="mesas">
+      <Transition name="pos-floor-layout" mode="out-in">
       <!-- Table grid -->
-      <div v-if="floorLayout === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
+      <div v-if="floorLayout === 'grid'" key="tables-grid" class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
         <div v-for="table in regularTables" :key="table.id" class="h-full">
 
           <!-- Card — uniform height across grid -->
@@ -728,42 +882,183 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <div v-else key="tables-list" class="pos-floor-list">
       <UiResponsiveDataView
-        v-else
         :columns="tableListColumns"
-        :data="regularTables"
+        :data="filteredRegularTables"
         item-key="id"
         :empty-message="t('pos.floor.free')"
+        :row-class="tableListRowClass"
         row-size="sm"
         @row-click="handleTableClick"
       >
+        <template #header-name>
+          <UiTableHeaderFilter
+            v-model="filterName"
+            :title="t('pos.floor.colTable')"
+            filter-type="select"
+            :options="nameFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
+        <template #header-alias>
+          <UiTableHeaderFilter
+            v-model="filterAlias"
+            :title="t('pos.floor.colAlias')"
+            filter-type="select"
+            :options="aliasFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
+        <template #header-code>
+          <UiTableHeaderFilter
+            v-model="filterCode"
+            :title="t('pos.floor.colCode')"
+            filter-type="select"
+            :options="codeFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
+        <template #header-capacity>
+          <UiTableHeaderFilter
+            v-model="filterCapacity"
+            :title="t('pos.floor.colCapacity')"
+            filter-type="select"
+            :options="capacityFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
+        <template #header-min>
+          <UiTableHeaderFilter
+            v-model="filterMin"
+            :title="t('pos.floor.colMin')"
+            filter-type="select"
+            :options="minFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
+        <template #header-status>
+          <UiTableHeaderFilter
+            v-model="filterStatus"
+            :title="t('pos.floor.colStatus')"
+            filter-type="select"
+            :options="statusFilterOptions"
+            :all-label="filterAllLabel"
+            align="center"
+          />
+        </template>
+        <template #header-total>
+          <UiTableHeaderFilter
+            :title="t('pos.floor.colTotal')"
+            filter-type="number-range"
+            :min-value="filterTotalMin"
+            :max-value="filterTotalMax"
+            align="right"
+            @update:min-value="filterTotalMin = $event"
+            @update:max-value="filterTotalMax = $event"
+          />
+        </template>
+        <template #header-time>
+          <UiTableHeaderFilter
+            :title="t('pos.floor.colTime')"
+            filter-type="number-range"
+            :min-value="filterTimeMin"
+            :max-value="filterTimeMax"
+            align="center"
+            @update:min-value="filterTimeMin = $event"
+            @update:max-value="filterTimeMax = $event"
+          />
+        </template>
+        <template v-if="waiterAttributionEnabled" #header-waiter>
+          <UiTableHeaderFilter
+            v-model="filterWaiter"
+            :title="t('pos.floor.colWaiter')"
+            filter-type="select"
+            :options="waiterFilterOptions"
+            :all-label="filterAllLabel"
+          />
+        </template>
         <template #card="{ item }">
           <button
             type="button"
-            class="flex w-full items-center gap-3 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg disabled:opacity-60"
+            class="flex w-full flex-col gap-2 border-b border-border px-3 py-3 text-left hover:bg-data-table-row-hover-bg disabled:opacity-60"
             :disabled="openingTableId === item.id"
             @click="handleTableClick(item)"
           >
-            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{{ tableCardTitle(item) }}</p>
-            <span class="flex-shrink-0 text-xs font-semibold uppercase text-text-secondary">{{ badgeLabel(item.status) }}</span>
-            <p class="flex-shrink-0 text-sm font-semibold tabular-nums">
-              {{ item.status === 'free' ? '—' : formatCurrency(item.session?.running_total ?? 0) }}
-            </p>
+            <div class="flex items-center justify-between gap-2">
+              <p class="min-w-0 truncate text-sm font-semibold text-text-primary">{{ tableListCatalogName(item) }}</p>
+              <span :class="tableListStatusChipClass(item.status)">{{ badgeLabel(item.status) }}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span :class="tableListAlias(item) ? listFilledChipClass : listEmptyChipClass">
+                {{ tableListAlias(item) || t('pos.floor.noAlias') }}
+              </span>
+              <span :class="tableListCode(item) ? listFilledChipClass : listEmptyChipClass">
+                {{ tableListCode(item) || t('pos.floor.noCode') }}
+              </span>
+              <span :class="tableCardCapacityLabel(item) ? listFilledChipClass : listEmptyChipClass">
+                {{ tableCardCapacityLabel(item) || t('pos.floor.noCapacity') }}
+              </span>
+              <span :class="tableListMinChipClass(item)">
+                {{ minimumConsumptionLabel(item) || t('pos.floor.noMin') }}
+              </span>
+              <span v-if="tableListTotalLabel(item)" class="text-sm font-semibold tabular-nums">{{ tableListTotalLabel(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTotal') }}</span>
+              <span v-if="tableListTimeLabel(item)" class="text-xs tabular-nums text-text-secondary">{{ tableListTimeLabel(item) }}</span>
+              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
+              <span
+                v-if="waiterAttributionEnabled"
+                :class="tableListWaiterName(item) ? listFilledChipClass : listEmptyChipClass"
+              >
+                {{ tableListWaiterName(item) || t('pos.floor.unassigned') }}
+              </span>
+            </div>
           </button>
         </template>
         <template #cell-name="{ item }">
-          <span class="font-semibold">{{ tableCardTitle(item) }}</span>
+          <span class="truncate font-semibold">{{ tableListCatalogName(item) }}</span>
+        </template>
+        <template #cell-alias="{ item }">
+          <span :class="tableListAlias(item) ? listFilledChipClass : listEmptyChipClass">
+            {{ tableListAlias(item) || t('pos.floor.noAlias') }}
+          </span>
+        </template>
+        <template #cell-code="{ item }">
+          <span :class="tableListCode(item) ? listFilledChipClass : listEmptyChipClass">
+            {{ tableListCode(item) || t('pos.floor.noCode') }}
+          </span>
+        </template>
+        <template #cell-capacity="{ item }">
+          <span :class="tableCardCapacityLabel(item) ? listFilledChipClass : listEmptyChipClass">
+            {{ tableCardCapacityLabel(item) || t('pos.floor.noCapacity') }}
+          </span>
+        </template>
+        <template #cell-min="{ item }">
+          <span :class="tableListMinChipClass(item)">
+            {{ minimumConsumptionLabel(item) || t('pos.floor.noMin') }}
+          </span>
         </template>
         <template #cell-status="{ item }">
-          {{ badgeLabel(item.status) }}
+          <span :class="tableListStatusChipClass(item.status)">{{ badgeLabel(item.status) }}</span>
         </template>
         <template #cell-total="{ item }">
-          <span class="tabular-nums">
-            {{ item.status === 'free' ? '—' : formatCurrency(item.session?.running_total ?? 0) }}
+          <span v-if="tableListTotalLabel(item)" class="tabular-nums font-semibold">{{ tableListTotalLabel(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTotal') }}</span>
+        </template>
+        <template #cell-time="{ item }">
+          <span v-if="tableListTimeLabel(item)" class="tabular-nums text-text-secondary">{{ tableListTimeLabel(item) }}</span>
+          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
+        </template>
+        <template #cell-waiter="{ item }">
+          <span :class="tableListWaiterName(item) ? listFilledChipClass : listEmptyChipClass">
+            {{ tableListWaiterName(item) || t('pos.floor.unassigned') }}
           </span>
         </template>
       </UiResponsiveDataView>
-      </template>
+      </div>
+      </Transition>
+      </div>
+      </Transition>
     </div>
 
   </div>
@@ -799,6 +1094,59 @@ onUnmounted(() => {
   background-color: color-mix(in oklch, var(--status-warning-text) 22%, hsl(var(--surface)));
 }
 
+.list-meta-chip {
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  background-color: color-mix(in oklch, hsl(var(--surface-secondary)) 70%, hsl(var(--surface)));
+  color: hsl(var(--text-secondary));
+}
+
+.list-status-chip {
+  border: 1px solid transparent;
+}
+
+.list-status-chip--free {
+  background-color: color-mix(in oklch, var(--status-info-text) 10%, hsl(var(--surface)));
+  color: var(--status-info-text);
+}
+
+.list-status-chip--open {
+  background-color: color-mix(in oklch, var(--status-success-text) 10%, hsl(var(--surface)));
+  color: var(--status-success-text);
+}
+
+.list-status-chip--bill {
+  background-color: color-mix(in oklch, var(--status-warning-text) 11%, hsl(var(--surface)));
+  color: var(--status-warning-text);
+}
+
+:deep(.floor-list-row--free) {
+  background-color: color-mix(in oklch, var(--status-info-text) 7%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row--free:nth-child(even)) {
+  background-color: color-mix(in oklch, var(--status-info-text) 11%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row--open) {
+  background-color: color-mix(in oklch, var(--status-success-text) 7%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row--open:nth-child(even)) {
+  background-color: color-mix(in oklch, var(--status-success-text) 11%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row--bill) {
+  background-color: color-mix(in oklch, var(--status-warning-text) 8%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row--bill:nth-child(even)) {
+  background-color: color-mix(in oklch, var(--status-warning-text) 12%, hsl(var(--surface)));
+}
+
+:deep(.floor-list-row:hover) {
+  filter: brightness(0.98);
+}
+
 .pos-layout-icon-enter-active,
 .pos-layout-icon-leave-active {
   transition:
@@ -816,10 +1164,93 @@ onUnmounted(() => {
   transform: rotate(42deg) scale(0.72);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .pos-floor-view-enter-active,
+  .pos-floor-view-leave-active {
+    transition: opacity 0.2s ease;
+  }
+
+  .pos-floor-view-enter-from,
+  .pos-floor-view-leave-to {
+    opacity: 0;
+  }
+
+  .pos-floor-layout-enter-active,
+  .pos-floor-layout-leave-active {
+    transition: opacity 0.16s ease;
+  }
+
+  .pos-floor-layout-enter-from,
+  .pos-floor-layout-leave-to {
+    opacity: 0;
+  }
+
+  .pos-floor-list :deep(thead th),
+  .pos-floor-list :deep(tbody td) {
+    animation: pos-floor-col-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .pos-floor-list :deep(th:nth-child(1)),
+  .pos-floor-list :deep(td:nth-child(1)) { animation-delay: 0ms; }
+  .pos-floor-list :deep(th:nth-child(2)),
+  .pos-floor-list :deep(td:nth-child(2)) { animation-delay: 28ms; }
+  .pos-floor-list :deep(th:nth-child(3)),
+  .pos-floor-list :deep(td:nth-child(3)) { animation-delay: 56ms; }
+  .pos-floor-list :deep(th:nth-child(4)),
+  .pos-floor-list :deep(td:nth-child(4)) { animation-delay: 84ms; }
+  .pos-floor-list :deep(th:nth-child(5)),
+  .pos-floor-list :deep(td:nth-child(5)) { animation-delay: 112ms; }
+  .pos-floor-list :deep(th:nth-child(6)),
+  .pos-floor-list :deep(td:nth-child(6)) { animation-delay: 140ms; }
+  .pos-floor-list :deep(th:nth-child(7)),
+  .pos-floor-list :deep(td:nth-child(7)) { animation-delay: 168ms; }
+  .pos-floor-list :deep(th:nth-child(8)),
+  .pos-floor-list :deep(td:nth-child(8)) { animation-delay: 196ms; }
+  .pos-floor-list :deep(th:nth-child(9)),
+  .pos-floor-list :deep(td:nth-child(9)) { animation-delay: 224ms; }
+  .pos-floor-list :deep(th:nth-child(10)),
+  .pos-floor-list :deep(td:nth-child(10)) { animation-delay: 252ms; }
+
+  .pos-floor-grid > * {
+    animation: pos-floor-col-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .pos-floor-grid > *:nth-child(1) { animation-delay: 0ms; }
+  .pos-floor-grid > *:nth-child(2) { animation-delay: 24ms; }
+  .pos-floor-grid > *:nth-child(3) { animation-delay: 48ms; }
+  .pos-floor-grid > *:nth-child(4) { animation-delay: 72ms; }
+  .pos-floor-grid > *:nth-child(5) { animation-delay: 96ms; }
+  .pos-floor-grid > *:nth-child(6) { animation-delay: 120ms; }
+  .pos-floor-grid > *:nth-child(7) { animation-delay: 144ms; }
+  .pos-floor-grid > *:nth-child(8) { animation-delay: 168ms; }
+  .pos-floor-grid > *:nth-child(n + 9) { animation-delay: 180ms; }
+
+  @keyframes pos-floor-col-in {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pos-layout-icon-enter-active,
-  .pos-layout-icon-leave-active {
+  .pos-layout-icon-leave-active,
+  .pos-floor-view-enter-active,
+  .pos-floor-view-leave-active,
+  .pos-floor-layout-enter-active,
+  .pos-floor-layout-leave-active {
     transition: none;
+  }
+
+  .pos-floor-list :deep(thead th),
+  .pos-floor-list :deep(tbody td),
+  .pos-floor-grid > * {
+    animation: none;
   }
 }
 </style>

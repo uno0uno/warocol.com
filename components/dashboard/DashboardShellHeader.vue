@@ -43,6 +43,8 @@
           </button>
           <PosCajaPrintThermalChip v-if="forceBrowserPrint" />
 
+          <div id="dashboard-header-pos-tools" class="flex items-center gap-2" />
+
           <NotificationsNotificationBell class="hidden lg:flex shrink-0 [&_button]:!w-9 [&_button]:!h-9 [&_button]:rounded-lg [&_button]:border [&_button]:border-shell-action-border [&_button]:bg-shell-action-bg [&_svg]:!w-4 [&_svg]:!h-4" />
 
           <NuxtLink
@@ -168,15 +170,18 @@ defineEmits<{
 </script>
 
 <style scoped>
-#dashboard-header-actions {
+#dashboard-header-actions,
+#dashboard-header-pos-tools {
   position: relative;
 }
 
-#dashboard-header-actions:empty {
+#dashboard-header-actions:empty,
+#dashboard-header-pos-tools:empty {
   display: none;
 }
 
-#dashboard-header-actions > * {
+#dashboard-header-actions > *,
+#dashboard-header-pos-tools > * {
   animation: dashboard-header-portal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 

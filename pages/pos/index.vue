@@ -155,11 +155,6 @@ const resolvedCatalogLayout = computed<'grid' | 'list'>(() => {
   return catalogLayoutOverride.value ?? tenantCatalogLayoutDefault.value
 })
 const isSavingCatalogLayout = ref(false)
-const showCatalogLayoutInBanner = computed(() => {
-  // Mesa banner has Liberar — put toggle there. Bar/counter use catalog row.
-  return !!posStore.activeTableSession && !posStore.activeTableSession.isBar
-})
-const showCatalogLayoutInControls = computed(() => !showCatalogLayoutInBanner.value)
 
 /** Single control: when grid, offer list (and reverse). Always stores explicit override. */
 const catalogLayoutToggleTarget = computed<'grid' | 'list'>(() =>
@@ -202,10 +197,11 @@ const toggleCatalogLayout = () => {
 }
 
 const catalogLayoutToggleButtonClass = computed(() => [
-  bannerActionButtonClass,
-  'relative w-9 px-0 overflow-hidden text-text-secondary border border-border',
-  'hover:text-text-primary hover:bg-surface-secondary focus-visible:ring-ring/35',
-  'active:scale-[0.94]',
+  'relative h-9 w-9 flex-shrink-0 inline-flex items-center justify-center overflow-hidden rounded-lg border',
+  'border-shell-action-border bg-shell-action-bg text-shell-action-text',
+  'hover:bg-shell-action-hover-bg',
+  'focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
+  'transition-colors',
   isSavingCatalogLayout.value ? 'opacity-50 pointer-events-none' : '',
 ])
 
@@ -2173,46 +2169,6 @@ onUnmounted(() => {
                 <span class="hidden sm:inline">{{ t('pos.banner.release') }}</span>
               </template>
             </button>
-            <button
-              v-if="showCatalogLayoutInBanner"
-              type="button"
-              :class="catalogLayoutToggleButtonClass"
-              :disabled="isSavingCatalogLayout"
-              :aria-label="catalogLayoutToggleAria"
-              :title="catalogLayoutToggleLabel"
-              @click="toggleCatalogLayout"
-            >
-              <span class="inline-flex h-4 w-4 items-center justify-center">
-                <Transition name="pos-layout-icon" mode="out-in">
-                  <svg
-                    v-if="catalogLayoutToggleTarget === 'list'"
-                    key="icon-list"
-                    class="h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                  </svg>
-                  <svg
-                    v-else
-                    key="icon-grid"
-                    class="h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                  </svg>
-                </Transition>
-              </span>
-            </button>
           </div>
         </div>
 
@@ -2403,46 +2359,6 @@ onUnmounted(() => {
               class="flex items-center"
               :class="siblingGapClass"
             >
-              <button
-                v-if="showCatalogLayoutInControls"
-                type="button"
-                :class="catalogLayoutToggleButtonClass"
-                :disabled="isSavingCatalogLayout"
-                :aria-label="catalogLayoutToggleAria"
-                :title="catalogLayoutToggleLabel"
-                @click="toggleCatalogLayout"
-              >
-                <span class="inline-flex h-4 w-4 items-center justify-center">
-                  <Transition name="pos-layout-icon" mode="out-in">
-                    <svg
-                      v-if="catalogLayoutToggleTarget === 'list'"
-                      key="icon-list"
-                      class="h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
-                    <svg
-                      v-else
-                      key="icon-grid"
-                      class="h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                    </svg>
-                  </Transition>
-                </span>
-              </button>
               <UiSearchBar
                 v-if="posShowSearch"
                 v-model="searchQuery"
@@ -2658,6 +2574,47 @@ onUnmounted(() => {
        Sits just left of the refresh button (header-actions portal renders
        before the refresh in the layout). -->
   <ClientOnly>
+    <Teleport v-if="!showFloorPlan" to="#dashboard-header-pos-tools">
+      <button
+        type="button"
+        :class="catalogLayoutToggleButtonClass"
+        :disabled="isSavingCatalogLayout"
+        :aria-label="catalogLayoutToggleAria"
+        :title="catalogLayoutToggleLabel"
+        @click="toggleCatalogLayout"
+      >
+        <span class="inline-flex h-4 w-4 items-center justify-center">
+          <Transition name="pos-layout-icon" mode="out-in">
+            <svg
+              v-if="catalogLayoutToggleTarget === 'list'"
+              key="icon-list"
+              class="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+            <svg
+              v-else
+              key="icon-grid"
+              class="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+            </svg>
+          </Transition>
+        </span>
+      </button>
+    </Teleport>
     <Teleport to="#dashboard-header-actions">
       <button
         v-if="expediterEnabled && comandasEnabled"
