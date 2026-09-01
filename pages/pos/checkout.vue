@@ -1373,7 +1373,13 @@ function finalizePendingDeliverySuccess(
     standard_tax_label: localizedInternalTaxLabel(data.standard_tax_label ?? taxPreview.value?.standard_tax_label),
     liquor_tax_label: localizedInternalTaxLabel(data.liquor_tax_label ?? taxPreview.value?.liquor_tax_label),
     ...promoFieldsFromCloseResponse(promoSource, cartTotal.value),
-    ...orderDiscountFieldsFromCheckout(data, cartTotal.value),
+    ...orderDiscountFieldsFromCheckout(
+      {
+        ...data,
+        discount_amount: data.discount_amount ?? pendingDeliveryOrder.value?.discount_amount,
+      },
+      cartTotal.value,
+    ),
   }
   wasMesaMode.value = false
   cartItemsSnapshot.value = snapshotCartItemsForReceipt()
@@ -5442,7 +5448,7 @@ onUnmounted(() => {
             </div>
             <div
               v-else-if="persistedPendingOrderDiscount > 0"
-              class="flex justify-between text-sm text-state-success-text"
+              class="flex justify-between text-sm text-primary"
             >
               <span>{{ t('pos.checkout.summary.manualDiscount') }}</span>
               <span class="font-medium">- {{ formatCurrency(persistedPendingOrderDiscount) }}</span>
