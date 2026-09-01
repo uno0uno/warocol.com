@@ -153,6 +153,7 @@
         "deferSaleError": "Error al dejar la venta pendiente",
         "completePendingError": "Error al cobrar el domicilio pendiente",
         "pendingLockedHint": "Dirección fijada al diferir el pago. No se puede cambiar al cobrar.",
+        "pendingCustomerLockedHint": "Cliente fijado al diferir el pago. No se puede cambiar al cobrar.",
         "pendingAddressLabel": "Dirección de entrega",
         "pendingInstructionsLabel": "Notas para el repartidor"
       },

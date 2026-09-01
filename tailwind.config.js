@@ -11,6 +11,15 @@ module.exports = {
     "./nuxt.config.{js,ts}",
     "./app.vue",
   ],
+  safelist: [
+    'absolute',
+    '-top-1',
+    '-end-1',
+    'overflow-visible',
+    'ring-shell-header-bg',
+    'bg-badge-danger-bg',
+    'text-badge-danger-text',
+  ],
   theme: {
     container: {
       center: true,

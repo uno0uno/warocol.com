@@ -153,6 +153,7 @@
         "deferSaleError": "Error leaving the sale pending",
         "completePendingError": "Could not collect payment for this pending delivery",
         "pendingLockedHint": "Address was set when payment was deferred. It cannot be changed while collecting.",
+        "pendingCustomerLockedHint": "Customer was set when payment was deferred. It cannot be changed while collecting.",
         "pendingAddressLabel": "Delivery address",
         "pendingInstructionsLabel": "Courier notes"
       },

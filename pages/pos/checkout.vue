@@ -457,6 +457,7 @@ watch(() => posStore.cartServedByMemberId, (memberId) => {
 const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
 const tenantMembers = computed(() => settingsData.value?.data?.members ?? [])
 const showCheckoutWaiterSelector = computed(() => {
+  if (isPendingDeliveryMode.value) return false
   if (!tipEnabled.value) return false
   if (!waiterAttributionEnabled.value) return true
   // Mesa: always show so cashier can confirm/override effective session waiter (#666)
@@ -2932,6 +2933,7 @@ const processOrder = async () => {
 }
 
 const onCustomerIdentified = async (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
+  if (isPendingDeliveryMode.value) return
   posDebugLog('checkout', 'onCustomerIdentified:start', {
     customerId: customer.id,
     phone: customer.phone_number,
@@ -4417,6 +4419,9 @@ onUnmounted(() => {
             </svg>
             {{ t('pos.checkout.customerData') }}
           </h2>
+          <p v-if="isPendingDeliveryMode" class="text-xs text-text-secondary mt-1 mb-3">
+            {{ t('pos.checkout.deliveryCheckout.pendingCustomerLockedHint') }}
+          </p>
 
           <!-- Customer selected: compact horizontal layout (#1999) -->
           <div v-if="selectedCustomer" class="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
@@ -4473,6 +4478,7 @@ onUnmounted(() => {
               </div>
             </div>
             <button
+              v-if="!isPendingDeliveryMode"
               @click="showCustomerModal = true"
               class="min-h-[44px] min-w-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0 self-center"
             >
@@ -4482,7 +4488,7 @@ onUnmounted(() => {
 
           <!-- No customer yet: open modal button -->
           <button
-            v-else
+            v-else-if="!isPendingDeliveryMode"
             @click="showCustomerModal = true"
             class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
           >
@@ -5020,6 +5026,7 @@ onUnmounted(() => {
 
         <!-- Customer Search Modal -->
         <PosCustomerIdentificationModal
+          v-if="!isPendingDeliveryMode"
           v-model="showCustomerModal"
           @customer-identified="onCustomerIdentified"
           @fiscal-updated="onCustomerIdentified"

@@ -1,6 +1,6 @@
 /** Shared 9×9 dashboard header icon buttons (bell, POS floor tools). */
 export const shellHeaderToolButtonClass = [
-  'relative h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border',
+  'relative overflow-visible h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border',
   'border-shell-action-border bg-shell-action-bg text-shell-action-text',
   'hover:bg-shell-action-hover-bg',
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-shell-action-focus-ring',
