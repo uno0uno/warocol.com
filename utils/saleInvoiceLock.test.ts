@@ -51,3 +51,31 @@ test('ignores mismatch when invoice is not locked', () => {
     false,
   )
 })
+
+test('ignores mismatch for legacy single payment on orders row', () => {
+  assert.equal(
+    saleHasLockedInvoiceWithoutRecordedPayments({
+      invoiceStatus: 'accepted',
+      recordedPaidTotal: 0,
+      amountDue: 88000,
+      orderStatus: 'completed',
+      paymentStatus: 'paid',
+      paymentMethod: 'cash',
+    }),
+    false,
+  )
+})
+
+test('still flags true zombie without payment method', () => {
+  assert.equal(
+    saleHasLockedInvoiceWithoutRecordedPayments({
+      invoiceStatus: 'accepted',
+      recordedPaidTotal: 0,
+      amountDue: 71000,
+      orderStatus: 'completed',
+      paymentStatus: 'paid',
+      paymentMethod: null,
+    }),
+    true,
+  )
+})

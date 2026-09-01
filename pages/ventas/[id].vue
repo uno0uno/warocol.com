@@ -769,6 +769,9 @@ const saleInvoicePaymentMismatch = computed(() =>
     invoiceStatus: invoiceData.value?.status,
     recordedPaidTotal: recordedSplitPaid.value,
     amountDue: saleAmountDue.value,
+    orderStatus: order.value?.status,
+    paymentStatus: order.value?.payment_status,
+    paymentMethod: order.value?.payment_method,
   }),
 )
 const canManageSplitTenders = computed(() =>
