@@ -4,6 +4,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
+import {
+  shellHeaderToolBadgeClass,
+  shellHeaderToolButtonClass,
+  shellHeaderToolButtonActiveClass,
+} from '~/utils/shellHeaderToolClasses'
 
 const { formatCurrency } = useFormatters()
 const { singular: tableSingular } = useTableLabel()
@@ -291,18 +296,6 @@ const deliveryListColumns = computed(() => [
   { key: 'total', title: t('pos.floor.colTotal'), sortable: false },
   { key: 'time', title: t('pos.floor.colTime'), sortable: false },
 ])
-
-const floorHeaderButtonClass = [
-  'relative h-9 w-9 flex-shrink-0 inline-flex items-center justify-center rounded-lg border',
-  'border-shell-action-border bg-shell-action-bg text-shell-action-text',
-  'hover:bg-shell-action-hover-bg',
-  'focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring',
-  'transition-colors',
-]
-const floorHeaderButtonActiveClass = [
-  'text-status-warning-text border-status-warning-text/40 bg-status-warning-bg',
-  'hover:text-status-warning-text hover:bg-status-warning-bg',
-]
 
 // Bar tile is always-on — separate from regular tables
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
@@ -638,7 +631,7 @@ onUnmounted(() => {
         <button
           v-if="floorView !== 'domicilios'"
           type="button"
-          :class="floorHeaderButtonClass"
+          :class="shellHeaderToolButtonClass"
           :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
           :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
           @click="toggleFloorLayout"
@@ -676,7 +669,7 @@ onUnmounted(() => {
         </button>
         <button
           type="button"
-          :class="[floorHeaderButtonClass, floorView === 'domicilios' ? floorHeaderButtonActiveClass : '']"
+          :class="[shellHeaderToolButtonClass, floorView === 'domicilios' ? shellHeaderToolButtonActiveClass : '']"
           :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
           :title="t('pos.floor.viewDeliveries')"
           :aria-pressed="floorView === 'domicilios'"
@@ -697,7 +690,7 @@ onUnmounted(() => {
             </svg>
             <span
               v-if="pendingDeliveries.length"
-              class="absolute -top-1.5 -end-1.5 min-w-3.5 h-3.5 px-0.5 rounded-full bg-status-warning-text text-white text-[8px] font-bold leading-none flex items-center justify-center tabular-nums"
+              :class="shellHeaderToolBadgeClass"
             >
               {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
             </span>
