@@ -15,4 +15,4 @@ export const shellHeaderToolButtonActiveClass = [
 ].join(' ')
 
 export const shellHeaderToolBadgeClass =
-  'absolute -top-1.5 -end-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none tabular-nums'
+  'pointer-events-none absolute -top-1 -end-1 z-10 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-badge-danger-bg text-badge-danger-text text-[10px] font-bold leading-none tabular-nums ring-2 ring-shell-header-bg'

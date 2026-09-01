@@ -9,27 +9,49 @@
       aria-label="Notificaciones"
       :class="buttonClass"
     >
-      <!-- Animated bell icon: solid when there are unread notifications -->
-      <BellAlertIcon
-        v-if="unreadCount > 0"
-        :class="[iconClass, shellCompact ? 'text-primary' : 'text-shell-notification-accent']"
-        aria-hidden="true"
-      />
-      <BellIcon
-        v-else
-        :class="[iconClass, shellCompact ? 'text-shell-action-text' : 'text-shell-notification-muted-text']"
-        aria-hidden="true"
-      />
-
-      <!-- Unread count badge -->
       <span
-        v-if="unreadCount > 0"
-        aria-live="polite"
-        aria-atomic="true"
-        :class="badgeClass"
+        v-if="shellCompact"
+        class="relative inline-flex h-4 w-4 shrink-0 items-center justify-center"
       >
-        {{ unreadCount > 99 ? '99+' : unreadCount }}
+        <BellAlertIcon
+          v-if="unreadCount > 0"
+          :class="[iconClass, 'text-primary']"
+          aria-hidden="true"
+        />
+        <BellIcon
+          v-else
+          :class="[iconClass, 'text-shell-action-text']"
+          aria-hidden="true"
+        />
+        <span
+          v-if="unreadCount > 0"
+          aria-live="polite"
+          aria-atomic="true"
+          :class="badgeClass"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
       </span>
+      <template v-else>
+        <BellAlertIcon
+          v-if="unreadCount > 0"
+          :class="[iconClass, 'text-shell-notification-accent']"
+          aria-hidden="true"
+        />
+        <BellIcon
+          v-else
+          :class="[iconClass, 'text-shell-notification-muted-text']"
+          aria-hidden="true"
+        />
+        <span
+          v-if="unreadCount > 0"
+          aria-live="polite"
+          aria-atomic="true"
+          :class="badgeClass"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </template>
     </button>
 
     <!-- Dropdown panel -->

@@ -3,9 +3,11 @@ module.exports = {
   darkMode: ["class"],
   content: [
     "./components/**/*.{js,vue,ts}",
+    "./composables/**/*.{js,ts}",
     "./layouts/**/*.vue",
     "./pages/**/*.vue",
     "./plugins/**/*.{js,ts}",
+    "./utils/**/*.{js,ts}",
     "./nuxt.config.{js,ts}",
     "./app.vue",
   ],
