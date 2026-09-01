@@ -16,7 +16,6 @@ const { formatCurrency } = useFormatters()
 const {
   checkoutSectionCardClass,
   checkoutControlHeightClass,
-  checkoutInlineRowClass,
 } = usePosToolbarControl()
 
 const cashReceivedInput = defineModel<number>('cashReceivedInput', { default: 0 })

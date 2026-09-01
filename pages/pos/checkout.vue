@@ -4347,7 +4347,7 @@ onUnmounted(() => {
           <button
             type="button"
             @click="activeAccordion = activeAccordion === 'order' ? null : 'order'"
-            class="w-full px-4 py-3 flex justify-between items-center bg-surface-secondary/50 text-start hover:bg-surface-secondary/70 transition-colors"
+            :class="[checkoutAccordionTriggerClass, 'justify-between bg-surface-secondary/50 hover:bg-surface-secondary/70']"
           >
             <span class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
                 <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -4437,8 +4437,11 @@ onUnmounted(() => {
 
                 <label
                   v-if="lineShowsPromoToggle(item)"
-                  :class="[checkoutInlineRowClass, 'mt-2 cursor-pointer']"
-                  :class="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') ? 'opacity-60 pointer-events-none' : ''"
+                  :class="[
+                    checkoutInlineRowClass,
+                    'mt-2 cursor-pointer',
+                    togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') && 'opacity-60 pointer-events-none',
+                  ]"
                 >
                   <span class="text-xs font-medium text-text-primary">{{ t('pos.checkout.applyPromo') }}</span>
                   <span class="relative inline-flex items-center flex-shrink-0">
@@ -4572,10 +4575,13 @@ onUnmounted(() => {
               v-if="canDeferDeliveryPayment"
               type="button"
               @click="deferDeliveryPayment"
-              class="cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition h-full min-w-[112px] flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]"
-              :class="isDeferredDeliveryPayment
-                ? 'border-status-warning-text/50 bg-status-warning-bg shadow-sm text-status-warning-text'
-                : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
+              :class="[
+                checkoutControlHeightClass,
+                'cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition min-w-[112px] flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]',
+                isDeferredDeliveryPayment
+                  ? 'border-status-warning-text/50 bg-status-warning-bg shadow-sm text-status-warning-text'
+                  : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary',
+              ]"
             >
               <div class="flex items-center justify-between w-full">
                 <div class="bg-status-warning-bg text-status-warning-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -4827,7 +4833,7 @@ onUnmounted(() => {
         <div :class="checkoutSectionCardClass">
           <!-- Header with toggle -->
           <div class="flex items-center justify-between">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+            <h2 :class="checkoutSectionTitleClass">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
@@ -4961,7 +4967,7 @@ onUnmounted(() => {
           v-if="isPendingDeliveryMode"
           :class="checkoutSectionCardClass"
         >
-          <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+          <h2 :class="checkoutSectionTitleClass">
             <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
               <path d="M15 18H9" />
@@ -4995,7 +5001,7 @@ onUnmounted(() => {
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
         <div v-else-if="canRegisterDelivery" :class="checkoutSectionCardClass">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+            <h2 :class="checkoutSectionTitleClass">
               <svg class="h-[1em] w-[1em] text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
                 <path d="M15 18H9" />
@@ -5139,7 +5145,7 @@ onUnmounted(() => {
         </div>
 
         <!-- ACCORDION 2: Resumen de la Orden -->
-        <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div :class="checkoutSectionCardFlushClass">
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
@@ -5529,7 +5535,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ACCORDION: Resumen de la Orden -->
-      <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
+      <div :class="checkoutSectionCardFlushClass">
         <button
           @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
           :class="[checkoutAccordionTriggerClass, 'justify-between']"
