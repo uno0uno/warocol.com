@@ -45,7 +45,7 @@
 
           <div id="dashboard-header-pos-tools" class="flex items-center gap-2" />
 
-          <NotificationsNotificationBell shell-compact class="hidden lg:flex shrink-0" />
+          <NotificationsNotificationBell :shell-compact="isPosRoute" class="hidden lg:flex shrink-0" />
 
           <NuxtLink
             v-if="!isPosRoute"
