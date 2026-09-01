@@ -528,6 +528,13 @@ type PendingDeliveryDetail = {
     product?: { id?: string | null; name?: string | null }
     modifiers?: Array<{ name: string; price: number; quantity?: number }>
   }>
+  partial_payments?: Array<{
+    id: string
+    amount: number
+    payment_method: string
+    payment_method_id?: string | null
+    payment_method_name?: string | null
+  }>
 }
 
 const {
@@ -1172,7 +1179,7 @@ const canAddSplitPayment = computed(
     && !!splitAmountToCharge.value
     && splitAmountToCharge.value > 0
     && !!selectedCustomer.value
-    && (isKitchenServiceMode.value || !!posStore.cartId)
+    && (isKitchenServiceMode.value || !!posStore.cartId || isPendingDeliveryMode.value)
     && cashIsValid.value
     && manualDiscountIsValid.value
     && !walletTenderValidationMessage.value
@@ -1225,11 +1232,18 @@ function openSplitSuccessModal(completeData: Record<string, any>) {
 }
 
 const addSplitPayment = async () => {
-  if ((!isKitchenServiceMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
+  if (
+    !isKitchenServiceMode.value
+    && !posStore.cartId
+    && !isPendingDeliveryMode.value
+  ) {
     processingError.value = t('pos.checkout.split.selectMethodAndCustomer')
     return
   }
-  if (!manualDiscountIsValid.value) {
+  if (!selectedPaymentMethod.value || !selectedCustomer.value) {
+    processingError.value = t('pos.checkout.split.selectMethodAndCustomer')
+    return
+  }
     processingError.value = discountValidationError.value
     return
   }
@@ -1260,7 +1274,52 @@ const addSplitPayment = async () => {
     let paymentId = ''
     let lastPaymentData: Record<string, any> | null = null
 
-    if (isKitchenServiceMode.value) {
+    if (isPendingDeliveryMode.value && pendingOrderId.value) {
+      const _discountAmtPending = discountAmount.value
+      if (splitPayments.value.length === 0) {
+        const response = await $fetch(`/api/tables/pending-deliveries/${pendingOrderId.value}/complete`, {
+          method: 'POST',
+          body: {
+            payment_method: selectedPaymentMethod.value,
+            customer_id: selectedCustomer.value.id,
+            payment_method_id: selectedPaymentMethodId.value ?? null,
+            split_mode: true,
+            split_first_amount: amountToCharge,
+            ...(isCashMethod.value
+              ? { split_first_cash_received: Number(cashReceivedInput.value) }
+              : {}),
+            ...(discountEnabled.value && _discountAmtPending > 0
+              ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+              : {}),
+            ...checkoutServedByBody.value,
+            ...checkoutTipBody.value,
+            ...checkoutWaroBody.value,
+          },
+        }) as any
+        paidTotal = response.data.paid_total ?? amountToCharge
+        remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
+        isComplete = response.data.is_complete ?? false
+        lastPaymentData = response.data
+        paymentId = response.data.payment_id
+      } else {
+        const response = await $fetch(`/api/tables/pending-deliveries/${pendingOrderId.value}/payments`, {
+          method: 'POST',
+          body: {
+            amount: amountToCharge,
+            payment_method: selectedPaymentMethod.value,
+            payment_method_id: selectedPaymentMethodId.value ?? undefined,
+            ...(isCashMethod.value
+              ? { cash_received: Number(cashReceivedInput.value) }
+              : {}),
+          },
+        }) as any
+        paidTotal = response.data.paid_total
+        remaining = response.data.remaining
+        isComplete = response.data.is_complete
+        lastPaymentData = response.data
+        paymentId = response.data.payment_id
+      }
+    } else if (isKitchenServiceMode.value) {
       const session = posStore.activeTableSession!
       if (splitPayments.value.length === 0) {
         // First payment: close mesa with split_mode=true (marks orders partial, keeps session open)
@@ -1392,9 +1451,50 @@ const addSplitPayment = async () => {
         key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
       })
     }
+    if (isPendingDeliveryMode.value) {
+      cache.invalidateQueries({ key: ['tables', 'pending-deliveries', pendingOrderId.value] })
+    }
 
     if (isComplete || splitRemaining.value <= 0.01) {
-      openSplitSuccessModal(lastPaymentData ?? {})
+      if (isPendingDeliveryMode.value) {
+        const subMethodName = selectedPaymentMethodId.value
+          ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
+          : undefined
+        orderResult.value = {
+          order_id: lastPaymentData?.order_id ?? pendingOrderId.value,
+          order_number: Number(lastPaymentData?.order_number ?? pendingDeliveryOrder.value?.order_number ?? 0),
+          total_amount: Number(lastPaymentData?.total_amount ?? pendingDeliveryOrder.value?.total_amount ?? discountedTotal.value),
+          payment_method: lastPaymentData?.payment_method ?? selectedPaymentMethod.value,
+          payment_method_name: subMethodName,
+          status: lastPaymentData?.status ?? 'completed',
+          payment_status: lastPaymentData?.payment_status ?? 'paid',
+          customer_id: selectedCustomer.value?.id,
+          standard_tax: taxPreview.value?.standard_tax ?? 0,
+          liquor_tax: taxPreview.value?.liquor_tax ?? 0,
+          standard_tax_label: localizedInternalTaxLabel(taxPreview.value?.standard_tax_label),
+          liquor_tax_label: localizedInternalTaxLabel(taxPreview.value?.liquor_tax_label),
+          ...(discountEnabled.value && discountAmount.value > 0
+            ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
+            : {}),
+        }
+        wasMesaMode.value = false
+        cartItemsSnapshot.value = snapshotCartItemsForReceipt()
+        captureReceiptPrintContext()
+        applyReceiptEmailAfterSale(selectedCustomer.value)
+        receiptEmail.value = ''
+        emailSent.value = false
+        lastSentEmail.value = ''
+        emailFromProfile.value = false
+        posStore.exitSession()
+        cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+        cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
+        splitMode.value = false
+        showSuccessModal.value = true
+        document.body.classList.remove('printing-prefactura')
+        prefacturaPrintSnapshot.value = null
+      } else {
+        openSplitSuccessModal(lastPaymentData ?? {})
+      }
     }
   } catch (e: any) {
     processingError.value = checkoutErrorMessage(e, t('pos.checkout.split.partialPaymentError'))
@@ -1427,9 +1527,11 @@ const confirmVoidPayment = async () => {
   isVoidingPayment.value = p.id
   voidPaymentError.value = ''
   try {
-    const endpoint = isKitchenServiceMode.value
-      ? `/api/tables/${posStore.activeTableSession!.tableId}/payments/${p.id}`
-      : `/api/pos/cart/${posStore.cartId}/payments/${p.id}`
+    const endpoint = isPendingDeliveryMode.value && pendingOrderId.value
+      ? `/api/tables/pending-deliveries/${pendingOrderId.value}/payments/${p.id}`
+      : isKitchenServiceMode.value
+        ? `/api/tables/${posStore.activeTableSession!.tableId}/payments/${p.id}`
+        : `/api/pos/cart/${posStore.cartId}/payments/${p.id}`
     const res = await $fetch(endpoint, {
       method: 'DELETE',
       body: { reason: voidPaymentReason.value.trim() || null },
@@ -1442,6 +1544,9 @@ const confirmVoidPayment = async () => {
       cache.invalidateQueries({
         key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
       })
+    }
+    if (isPendingDeliveryMode.value) {
+      cache.invalidateQueries({ key: ['tables', 'pending-deliveries', pendingOrderId.value] })
     }
     voidPaymentTarget.value = null
     voidPaymentReason.value = ''
@@ -2398,7 +2503,7 @@ const processWompiCollection = async () => {
 const completePendingDeliveryPayment = async () => {
   if (!pendingOrderId.value || !selectedCustomer.value) return
   if (splitMode.value) {
-    processingError.value = t('pos.checkout.split.enterAmount')
+    await addSplitPayment()
     return
   }
   try {
@@ -3977,7 +4082,9 @@ const resetSplitPayments = () => {
   splitMode.value = false
 }
 watch(() => mesaCurrentData.value?.data?.session?.partial_payments, hydratePartialsFrom)
+watch(() => pendingDeliveryOrder.value?.partial_payments, hydratePartialsFrom)
 watch(() => selectedCustomer.value?.id, () => {
+  if (isPendingDeliveryMode.value) return
   resetSplitPayments()
 })
 
@@ -5134,7 +5241,7 @@ onUnmounted(() => {
 
         <!-- Section: Split Payment (Cobro Parcial) — only after customer is set -->
         <PosCheckoutSplitPaymentPanel
-          v-if="selectedCustomer && !isPendingDeliveryMode"
+          v-if="selectedCustomer"
           v-model:cash-received-input="cashReceivedInput"
           cash-input-id="cash-received-input"
           :split-mode="splitMode"
@@ -5497,7 +5604,7 @@ onUnmounted(() => {
       </div>
 
       <PosCheckoutSplitPaymentPanel
-        v-if="selectedCustomer && !isPendingDeliveryMode"
+        v-if="selectedCustomer"
         v-model:cash-received-input="cashReceivedInput"
         cash-input-id="cash-received-input-mobile-split"
         :split-mode="splitMode"
