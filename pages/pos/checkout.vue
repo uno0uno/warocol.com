@@ -5319,8 +5319,10 @@ onUnmounted(() => {
                 <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                   <li v-for="reward in activeWaroRewards" :key="reward.id">
                     <label
-                      :class="checkoutInlineRowClass"
-                      :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+                      :class="[
+                        checkoutInlineRowClass,
+                        warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50',
+                      ]"
                     >
                       <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
                       <span class="flex items-center gap-3 flex-shrink-0">
@@ -5686,8 +5688,10 @@ onUnmounted(() => {
               <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                 <li v-for="reward in activeWaroRewards" :key="reward.id">
                   <label
-                    :class="checkoutInlineRowClass"
-                    :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+                    :class="[
+                      checkoutInlineRowClass,
+                      warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50',
+                    ]"
                   >
                     <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
                     <span class="flex items-center gap-3 flex-shrink-0">
