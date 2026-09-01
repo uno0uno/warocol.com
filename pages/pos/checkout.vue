@@ -607,6 +607,13 @@ const cartItems = computed(() => {
   }
   return posStore.cart
 })
+const showKitchenSendOnChargeBanner = computed(
+  () =>
+    comandasEnabled.value
+    && isCounterMode.value
+    && cartItems.value.length > 0
+    && !isPendingDeliveryMode.value,
+)
 const hasOrderLines = computed(
   () =>
     cartItems.value.length > 0
@@ -5176,7 +5183,7 @@ onUnmounted(() => {
 
         <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
         <div
-          v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
+          v-if="showKitchenSendOnChargeBanner"
           role="status"
           class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
         >
@@ -5531,7 +5538,7 @@ onUnmounted(() => {
 
       <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
       <div
-        v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
+        v-if="showKitchenSendOnChargeBanner"
         role="status"
         class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-state-warning-bg border border-state-warning-border rounded-xl"
       >
