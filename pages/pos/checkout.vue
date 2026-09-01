@@ -3040,12 +3040,13 @@ const deferDeliveryPayment = () => {
   }
   deliveryEnabled.value = true
   selectedPaymentMethod.value = ''
+  selectedPaymentMethodId.value = null
 }
 
-// Reset sub-method and search when group changes
 watch(deliveryEnabled, (enabled) => {
   if (!enabled && !selectedPaymentMethod.value) {
     selectedPaymentMethod.value = 'cash'
+    selectedPaymentMethodId.value = null
   }
 })
 
