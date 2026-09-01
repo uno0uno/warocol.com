@@ -5418,6 +5418,8 @@ onUnmounted(() => {
     <div
       v-if="cartItems.length > 0 && !isSyncingCart && !syncError"
       class="lg:hidden mt-6 pb-4 space-y-3"
+      :class="{ 'pointer-events-none select-none': showSuccessModal }"
+      :aria-hidden="showSuccessModal ? 'true' : undefined"
     >
       <!-- Live promotion hint — checkout footer (warocol.com#983) -->
       <div
