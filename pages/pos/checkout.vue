@@ -135,7 +135,6 @@ const selectedPaymentMethod = ref<string>('cash')
 const selectedPaymentMethodId = ref<string | null>(null)
 const posPaymentGroups = ref<PosPaymentGroup[]>(PAYMENT_DEFAULTS)
 const creditDueDate = ref<string>('')
-const methodSearch = ref<string>('')
 const isProcessing = ref(false)
 const processingError = ref('')
 const isSyncingCart = ref(false)
@@ -3002,6 +3001,22 @@ const onCustomerIdentified = async (customer: { id: string; name: string | null;
 const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
+const checkoutVisiblePaymentGroups = computed(() =>
+  posPaymentGroups.value.filter(group => isPaymentGroupVisible(group)),
+)
+const checkoutPaymentSelection = computed({
+  get: () => ({
+    slug: selectedPaymentMethod.value,
+    id: selectedPaymentMethodId.value,
+  }),
+  set: (selection: { slug: string; id: string | null }) => {
+    selectedPaymentMethod.value = selection.slug
+    selectedPaymentMethodId.value = selection.id
+    if (selection.slug) {
+      deliveryEnabled.value = false
+    }
+  },
+})
 const isWompiTender = computed(() => {
   const group = selectedGroup.value
   if (!group) return false
@@ -3025,16 +3040,13 @@ const deferDeliveryPayment = () => {
   }
   deliveryEnabled.value = true
   selectedPaymentMethod.value = ''
+  selectedPaymentMethodId.value = null
 }
 
-// Reset sub-method and search when group changes
-watch(selectedPaymentMethod, () => {
-  selectedPaymentMethodId.value = null
-  methodSearch.value = ''
-})
 watch(deliveryEnabled, (enabled) => {
   if (!enabled && !selectedPaymentMethod.value) {
     selectedPaymentMethod.value = 'cash'
+    selectedPaymentMethodId.value = null
   }
 })
 
@@ -3134,13 +3146,6 @@ watch(
 
 // Issue #524 — thousand-separator formatting lives in CheckoutCashTenderPanel.
 
-const filteredMethods = computed(() => {
-  const methods = selectedGroup.value?.methods ?? []
-  const q = methodSearch.value.trim().toLowerCase()
-  if (!q) return methods
-  return methods.filter(m => m.name.toLowerCase().includes(q))
-})
-
 const getPaymentMethodLabel = (method: string) => {
   if (method === 'table_session_advance') return t('pos.payment.tableAdvance')
   const defaultKey = `pos.payment.defaults.${method}`
@@ -3160,14 +3165,6 @@ const getPaymentGroupLabel = (group: PosPaymentGroup | null | undefined) => {
 const requiresMethodSelection = computed(() =>
   (selectedGroup.value?.methods?.length ?? 0) > 0 && !selectedPaymentMethodId.value
 )
-
-// Dynamic grid class based on group count (excluding hidden cartera groups)
-const paymentGridClass = computed(() => {
-  const visibleCount = posPaymentGroups.value.filter(g => isPaymentGroupVisible(g)).length
-  if (visibleCount <= 2) return 'grid-cols-2'
-  if (visibleCount === 3) return 'grid-cols-3'
-  return 'grid-cols-2 md:grid-cols-4'
-})
 
 /** Template cannot resolve global sessionStorage — bind via this helper. */
 const backToPos = () => {
@@ -4544,158 +4541,47 @@ onUnmounted(() => {
           </h2>
 
           <!-- Skeleton while loading payment methods -->
-          <div v-if="isLoadingPaymentMethods" class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-            <div
-              v-for="i in 4"
-              :key="i"
-              class="rounded-xl border border-border p-2.5 md:p-4 h-[72px] md:h-[88px] flex flex-col items-center md:items-start gap-2 animate-pulse"
-            >
-              <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-border flex-shrink-0" />
-              <div class="h-3 w-14 rounded bg-border" />
-            </div>
+          <div v-if="isLoadingPaymentMethods" class="space-y-2">
+            <div class="h-11 rounded-xl border border-border bg-border/40 animate-pulse" />
+            <div class="h-[11.5rem] rounded-xl border border-border bg-border/20 animate-pulse" />
           </div>
 
-          <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
-          <div v-if="!isLoadingPaymentMethods" class="grid gap-2 md:gap-4 overflow-x-auto pb-1" :class="paymentGridClass">
+          <div v-else class="space-y-3">
             <button
               v-if="canDeferDeliveryPayment"
               type="button"
               @click="deferDeliveryPayment"
-              class="cursor-pointer relative border rounded-xl p-2.5 md:p-4 theme-transition h-full min-w-[112px] flex flex-col items-center gap-1.5 md:gap-3 md:items-start active:scale-[0.99]"
+              class="w-full min-h-[48px] flex items-center gap-3 rounded-xl border px-4 py-3 theme-transition active:scale-[0.99]"
               :class="isDeferredDeliveryPayment
-                ? 'border-status-warning-text/50 bg-status-warning-bg shadow-sm text-status-warning-text'
+                ? 'border-status-warning-text/50 bg-status-warning-bg text-status-warning-text shadow-sm'
                 : 'border-border text-text-secondary hover:border-status-warning-text/40 hover:text-text-primary'"
             >
-              <div class="flex items-center justify-between w-full">
-                <div class="bg-status-warning-bg text-status-warning-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 2.25m6-2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-                <svg
-                  class="h-4 w-4 transition-all hidden md:block text-status-warning-text"
-                  :class="isDeferredDeliveryPayment ? 'opacity-100' : 'opacity-0'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              <div class="bg-status-warning-bg text-status-warning-text w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 2.25m6-2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <div class="text-center md:text-start w-full">
-                <div class="font-semibold text-xs md:text-sm leading-tight">
-                  {{ t('pos.checkout.payOnDelivery') }}
-                </div>
-              </div>
-              <div
+              <span class="font-semibold text-sm">{{ t('pos.checkout.payOnDelivery') }}</span>
+              <svg
                 v-if="isDeferredDeliveryPayment"
-                class="absolute top-1.5 end-1.5 w-2 h-2 rounded-full md:hidden bg-status-warning-text"
-              ></div>
-            </button>
-            <label
-              v-for="group in posPaymentGroups"
-              :key="group.slug"
-              v-show="isPaymentGroupVisible(group)"
-              class="cursor-pointer relative min-w-[112px]"
-            >
-              <input type="radio" name="payment" :value="group.slug" v-model="selectedPaymentMethod" class="sr-only">
-              <div
-                class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
-                :class="selectedPaymentMethod === group.slug
-                  ? (group.triggersCartera ? 'border-state-warning-border bg-state-warning-bg shadow-sm ' : 'border-primary bg-primary/5 shadow-sm')
-                  : (group.triggersCartera ? 'border-border hover:border-state-warning-border/40' : 'border-border hover:border-primary/30')"
+                class="h-5 w-5 ms-auto text-status-warning-text"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                aria-hidden="true"
               >
-                <div class="flex items-center justify-between w-full">
-                  <!-- Icon — cash -->
-                  <div
-                    v-if="group.slug === 'cash'"
-                    class="bg-state-success-bg text-state-success-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-                    </svg>
-                  </div>
-                  <!-- Icon — card -->
-                  <div
-                    v-else-if="group.slug === 'card'"
-                    class="bg-state-info-bg text-state-info-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                    </svg>
-                  </div>
-                  <!-- Icon — digital -->
-                  <div
-                    v-else-if="group.slug === 'digital'"
-                    class="bg-state-info-bg text-state-info-icon w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
-                    </svg>
-                  </div>
-                  <!-- Icon — wallet anticipo -->
-                  <div
-                    v-else-if="group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet"
-                    class="bg-state-success-bg text-state-success-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
-                    </svg>
-                  </div>
-                  <!-- Icon — credit / triggersCartera -->
-                  <div
-                    v-else-if="group.triggersCartera"
-                    class="bg-state-warning-bg text-state-warning-text w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                  </div>
-                  <!-- Icon — custom group fallback -->
-                  <div
-                    v-else
-                    class="bg-primary/10 text-primary w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                    </svg>
-                  </div>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </button>
 
-                  <!-- Checkmark -->
-                  <svg
-                    class="h-4 w-4 transition-all hidden md:block"
-                    :class="[
-                      selectedPaymentMethod === group.slug ? 'opacity-100' : 'opacity-0',
-                      group.triggersCartera ? 'text-state-warning-text' : 'text-primary'
-                    ]"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-
-                <!-- Group name -->
-                <div class="text-center md:text-start w-full">
-                  <div
-                    class="font-semibold text-xs md:text-sm leading-tight"
-                    :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-state-warning-text' : 'text-text-primary'"
-                  >
-                    {{ getPaymentGroupLabel(group) }}
-                  </div>
-                </div>
-
-                <!-- Mobile selected dot -->
-                <div
-                  v-if="selectedPaymentMethod === group.slug"
-                  class="absolute top-1.5 end-1.5 w-2 h-2 rounded-full md:hidden"
-                  :class="group.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
-                ></div>
-              </div>
-            </label>
+            <PaymentsPaymentMethodSelector
+              v-model="checkoutPaymentSelection"
+              :groups="checkoutVisiblePaymentGroups"
+              layout="search"
+              :disabled="isProcessing"
+            />
           </div>
 
           <p
@@ -4710,94 +4596,6 @@ onUnmounted(() => {
           >
             {{ walletTenderValidationMessage }}
           </p>
-
-          <!-- Sub-method selector — shown when selected group has subtypes (e.g. Nequi, Daviplata) -->
-          <div v-if="selectedGroup?.methods?.length" class="mt-3">
-            <p class="text-xs font-semibold mb-2 flex items-center gap-1.5" :class="requiresMethodSelection ? 'text-destructive' : 'text-text-secondary'">
-              <svg class="h-[1em] w-[1em]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-              {{ t('pos.checkout.subMethodQuestion', { group: getPaymentGroupLabel(selectedGroup) }) }}
-            </p>
-
-            <!-- Search — only when > 10 methods -->
-            <div v-if="selectedGroup.methods.length > 10" class="relative mb-2">
-              <svg class="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                v-model="methodSearch"
-                type="text"
-                :placeholder="t('pos.checkout.searchMethod')"
-                class="w-full h-9 ps-9 pe-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <!-- Grid mode — up to 6 methods -->
-            <div
-              v-if="selectedGroup.methods.length <= 6"
-              class="grid gap-2 overflow-x-auto pb-1"
-              :class="selectedGroup.methods.length <= 2
-                ? 'grid-cols-2'
-                : selectedGroup.methods.length === 3
-                  ? 'grid-cols-3'
-                  : 'grid-cols-2 sm:grid-cols-3'"
-            >
-              <button
-                v-for="method in selectedGroup.methods"
-                :key="method.id"
-                type="button"
-                @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
-                class="relative min-h-[48px] min-w-[112px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
-                :class="selectedPaymentMethodId === method.id
-                  ? (selectedGroup.triggersCartera
-                      ? 'border-state-warning-border bg-state-warning-bg text-state-warning-text shadow-sm'
-                      : 'border-primary bg-primary/10 text-primary shadow-sm')
-                  : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
-              >
-                {{ method.name }}
-                <span
-                  v-if="selectedPaymentMethodId === method.id"
-                  class="absolute top-1 end-1.5 w-1.5 h-1.5 rounded-full"
-                  :class="selectedGroup.triggersCartera ? 'bg-action-warning-bg' : 'bg-primary'"
-                />
-              </button>
-            </div>
-
-            <!-- List mode — more than 6 methods (scrollable) -->
-            <div
-              v-else
-              class="rounded-xl border border-border bg-background overflow-x-auto"
-            >
-              <div class="max-h-[220px] min-w-full overflow-y-auto divide-y divide-border">
-                <button
-                  v-for="method in filteredMethods"
-                  :key="method.id"
-                  type="button"
-                  @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
-                  class="w-full flex items-center justify-between px-4 py-3 text-sm transition-colors active:scale-[0.99]"
-                  :class="selectedPaymentMethodId === method.id
-                    ? (selectedGroup.triggersCartera
-                        ? 'bg-state-warning-bg text-state-warning-text font-semibold'
-                        : 'bg-primary/8 text-primary font-semibold')
-                    : 'text-text-primary hover:bg-surface-secondary/50'"
-                >
-                  <span class="min-w-0 truncate pe-3">{{ method.name }}</span>
-                  <svg
-                    v-if="selectedPaymentMethodId === method.id"
-                    class="h-[1em] w-[1em] flex-shrink-0"
-                    :class="selectedGroup.triggersCartera ? 'text-state-warning-text' : 'text-primary'"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-                <div v-if="filteredMethods.length === 0" class="px-4 py-3 text-sm text-text-secondary text-center">
-                  {{ t('pos.checkout.noMethodResults', { query: methodSearch }) }}
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Credit due date (optional) — shown only when a triggersCartera group is selected -->
           <div v-if="selectedGroup?.triggersCartera && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-state-warning-bg  border border-state-warning-border  rounded-xl">
