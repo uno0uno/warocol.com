@@ -120,10 +120,6 @@ const filterCode = ref('')
 const filterCapacity = ref('')
 const filterMin = ref('')
 const filterStatus = ref('')
-const filterTotalMin = ref('')
-const filterTotalMax = ref('')
-const filterTimeMin = ref('')
-const filterTimeMax = ref('')
 const filterWaiter = ref('')
 
 const uniqueSortedLabels = (values: string[]) =>
@@ -185,11 +181,6 @@ const waiterFilterOptions = computed(() => {
   return options.sort((a, b) => (a.value === '__unassigned__' ? -1 : b.value === '__unassigned__' ? 1 : a.label.localeCompare(b.label, 'es')))
 })
 
-const tableListTimeMinutes = (table: { status: string; session?: { opened_at?: string } | null }) => {
-  if (table.status === 'free' || !table.session?.opened_at) return null
-  return Math.floor((Date.now() - new Date(table.session.opened_at).getTime()) / 60_000)
-}
-
 const filteredRegularTables = computed(() =>
   regularTables.value.filter((table: any) => {
     if (filterName.value && table.name !== filterName.value) return false
@@ -215,17 +206,6 @@ const filteredRegularTables = computed(() =>
 
     if (filterStatus.value && table.status !== filterStatus.value) return false
 
-    const total = table.status === 'free' ? 0 : Number(table.session?.running_total ?? 0)
-    if (filterTotalMin.value && total < Number(filterTotalMin.value)) return false
-    if (filterTotalMax.value && total > Number(filterTotalMax.value)) return false
-
-    const minutes = tableListTimeMinutes(table)
-    if (filterTimeMin.value || filterTimeMax.value) {
-      if (minutes == null) return false
-      if (filterTimeMin.value && minutes < Number(filterTimeMin.value)) return false
-      if (filterTimeMax.value && minutes > Number(filterTimeMax.value)) return false
-    }
-
     if (filterWaiter.value) {
       const waiter = tableListWaiterName(table)
       if (filterWaiter.value === '__unassigned__' && waiter) return false
@@ -235,12 +215,6 @@ const filteredRegularTables = computed(() =>
     return true
   }),
 )
-
-const tableListRowClass = (table: { status: string }) => {
-  if (table.status === 'open') return 'floor-list-row floor-list-row--open'
-  if (table.status === 'bill_requested') return 'floor-list-row floor-list-row--bill'
-  return 'floor-list-row floor-list-row--free'
-}
 
 const listChipClass = 'inline-flex max-w-full truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold'
 const listMetaChipClass = `${listChipClass} list-meta-chip`
@@ -263,8 +237,8 @@ const tableListCode = (table: { name: string; code?: string | null; session?: { 
 }
 
 const tableListTotalLabel = (table: { status: string; session?: { running_total?: number } | null }) => {
-  if (table.status === 'free') return null
-  return formatCurrency(table.session?.running_total ?? 0)
+  const amount = table.status === 'free' ? 0 : Number(table.session?.running_total ?? 0)
+  return formatCurrency(amount)
 }
 
 const tableListTimeLabel = (table: { status: string; session?: { opened_at?: string } | null }) => {
@@ -278,14 +252,8 @@ const tableListStatusChipClass = (status: string) => {
   return `${listChipClass} list-status-chip list-status-chip--free`
 }
 
-const tableListMinChipClass = (table: any) => {
-  if (!minimumConsumptionLabel(table)) return listEmptyChipClass
-  const state = table.session?.minimum_consumption
-  if (state?.enabled && Number(state.remaining) > 0) {
-    return `${listChipClass} list-status-chip list-status-chip--bill`
-  }
-  return `${listChipClass} list-status-chip list-status-chip--open`
-}
+const tableListMinChipClass = (table: any) =>
+  minimumConsumptionLabel(table) ? listFilledChipClass : listEmptyChipClass
 
 const tableListWaiterName = (table: { effective_waiter_member_name?: string | null }) =>
   table.effective_waiter_member_name?.trim() || null
@@ -881,7 +849,6 @@ onUnmounted(() => {
         :data="filteredRegularTables"
         item-key="id"
         :empty-message="t('pos.floor.free')"
-        :row-class="tableListRowClass"
         row-size="sm"
         @row-click="handleTableClick"
       >
@@ -940,28 +907,6 @@ onUnmounted(() => {
             align="center"
           />
         </template>
-        <template #header-total>
-          <UiTableHeaderFilter
-            :title="t('pos.floor.colTotal')"
-            filter-type="number-range"
-            :min-value="filterTotalMin"
-            :max-value="filterTotalMax"
-            align="right"
-            @update:min-value="filterTotalMin = $event"
-            @update:max-value="filterTotalMax = $event"
-          />
-        </template>
-        <template #header-time>
-          <UiTableHeaderFilter
-            :title="t('pos.floor.colTime')"
-            filter-type="number-range"
-            :min-value="filterTimeMin"
-            :max-value="filterTimeMax"
-            align="center"
-            @update:min-value="filterTimeMin = $event"
-            @update:max-value="filterTimeMax = $event"
-          />
-        </template>
         <template v-if="waiterAttributionEnabled" #header-waiter>
           <UiTableHeaderFilter
             v-model="filterWaiter"
@@ -995,8 +940,7 @@ onUnmounted(() => {
               <span :class="tableListMinChipClass(item)">
                 {{ minimumConsumptionLabel(item) || t('pos.floor.noMin') }}
               </span>
-              <span v-if="tableListTotalLabel(item)" class="text-sm font-semibold tabular-nums">{{ tableListTotalLabel(item) }}</span>
-              <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTotal') }}</span>
+              <span class="text-sm font-semibold tabular-nums">{{ tableListTotalLabel(item) }}</span>
               <span v-if="tableListTimeLabel(item)" class="text-xs tabular-nums text-text-secondary">{{ tableListTimeLabel(item) }}</span>
               <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTime') }}</span>
               <span
@@ -1035,8 +979,7 @@ onUnmounted(() => {
           <span :class="tableListStatusChipClass(item.status)">{{ badgeLabel(item.status) }}</span>
         </template>
         <template #cell-total="{ item }">
-          <span v-if="tableListTotalLabel(item)" class="tabular-nums font-semibold">{{ tableListTotalLabel(item) }}</span>
-          <span v-else :class="listEmptyChipClass">{{ t('pos.floor.noTotal') }}</span>
+          <span class="tabular-nums font-semibold">{{ tableListTotalLabel(item) }}</span>
         </template>
         <template #cell-time="{ item }">
           <span v-if="tableListTimeLabel(item)" class="tabular-nums text-text-secondary">{{ tableListTimeLabel(item) }}</span>
@@ -1098,46 +1041,21 @@ onUnmounted(() => {
 }
 
 .list-status-chip--free {
-  background-color: color-mix(in oklch, var(--status-info-text) 10%, hsl(var(--surface)));
-  color: var(--status-info-text);
+  background-color: color-mix(in oklch, var(--status-info-text) 8%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-info-text) 14%, transparent);
+  color: color-mix(in oklch, var(--status-info-text) 65%, hsl(var(--text-secondary)));
 }
 
 .list-status-chip--open {
-  background-color: color-mix(in oklch, var(--status-success-text) 10%, hsl(var(--surface)));
-  color: var(--status-success-text);
+  background-color: color-mix(in oklch, var(--status-success-text) 8%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-success-text) 14%, transparent);
+  color: color-mix(in oklch, var(--status-success-text) 65%, hsl(var(--text-secondary)));
 }
 
 .list-status-chip--bill {
-  background-color: color-mix(in oklch, var(--status-warning-text) 11%, hsl(var(--surface)));
-  color: var(--status-warning-text);
-}
-
-:deep(.floor-list-row--free) {
-  background-color: color-mix(in oklch, var(--status-info-text) 7%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row--free:nth-child(even)) {
-  background-color: color-mix(in oklch, var(--status-info-text) 11%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row--open) {
-  background-color: color-mix(in oklch, var(--status-success-text) 7%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row--open:nth-child(even)) {
-  background-color: color-mix(in oklch, var(--status-success-text) 11%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row--bill) {
-  background-color: color-mix(in oklch, var(--status-warning-text) 8%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row--bill:nth-child(even)) {
-  background-color: color-mix(in oklch, var(--status-warning-text) 12%, hsl(var(--surface)));
-}
-
-:deep(.floor-list-row:hover) {
-  filter: brightness(0.98);
+  background-color: color-mix(in oklch, var(--status-warning-text) 9%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-warning-text) 14%, transparent);
+  color: color-mix(in oklch, var(--status-warning-text) 65%, hsl(var(--text-secondary)));
 }
 
 .pos-layout-icon-enter-active,
