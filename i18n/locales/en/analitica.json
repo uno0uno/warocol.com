@@ -413,7 +413,7 @@
           "done": "Done",
           "emailHint": "Send the receipt to the customer or another recipient.",
           "emailLabel": "Email",
-          "emailPlaceholder": "customer@example.com",
+          "emailPlaceholder": "customer{'@'}example.com",
           "send": "Send",
           "sending": "Sending…",
           "sentTo": "Sent to {email}",

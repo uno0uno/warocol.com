@@ -413,7 +413,7 @@
           "done": "Listo",
           "emailHint": "Envía el comprobante al correo del cliente o a otro destinatario.",
           "emailLabel": "Correo electrónico",
-          "emailPlaceholder": "cliente@ejemplo.com",
+          "emailPlaceholder": "cliente{'@'}ejemplo.com",
           "send": "Enviar",
           "sending": "Enviando…",
           "sentTo": "Enviado a {email}",
