@@ -188,6 +188,8 @@
       "periodWindow": "Zeitraumfenster",
       "openingFloat": "Kassenanfangsbestand",
       "netMovementByMethod": "Nettobewegung pro Methode",
+      "filterByType": "Nach Typ filtern",
+      "allPaymentTypes": "Alle Typen",
       "method": "Methode",
       "inflow": "Eingang",
       "outflow": "Ausgang",

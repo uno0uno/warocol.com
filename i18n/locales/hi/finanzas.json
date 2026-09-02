@@ -188,6 +188,8 @@
       "periodWindow": "अवधि विंडो",
       "openingFloat": "प्रारंभिक निधि",
       "netMovementByMethod": "विधि के अनुसार शुद्ध लेनदेन",
+      "filterByType": "प्रकार से फ़िल्टर करें",
+      "allPaymentTypes": "सभी प्रकार",
       "method": "विधि",
       "inflow": "आवक",
       "outflow": "जावक",

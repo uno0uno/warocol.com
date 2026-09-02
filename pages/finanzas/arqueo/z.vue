@@ -244,7 +244,18 @@
           </div>
           <!-- Movimiento neto por método -->
           <div v-if="(xPreviewData.breakdown ?? []).length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.netMovementByMethod') }}</h3></div>
+            <div class="p-3 border-b border-border flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">{{ t('finanzas.arqueo.netMovementByMethod') }}</h3>
+              <select
+                v-if="breakdownTipoOptions.length > 1"
+                v-model="breakdownTipoFilter"
+                :class="filterSelectClass"
+                :aria-label="t('finanzas.arqueo.filterByType')"
+              >
+                <option value="">{{ t('finanzas.arqueo.allPaymentTypes') }}</option>
+                <option v-for="opt in breakdownTipoOptions" :key="opt.slug" :value="opt.slug">{{ opt.label }}</option>
+              </select>
+            </div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
                 <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
@@ -254,7 +265,7 @@
                 <span class="px-3 py-2 text-end">{{ t('finanzas.arqueo.net') }}</span>
               </div>
               <div
-                v-for="(row, index) in (xPreviewData.breakdown ?? [])"
+                v-for="(row, index) in filteredXBreakdown"
                 :key="row.group_slug + row.method_name"
                 class="grid min-w-[680px] grid-cols-[1.35fr_.95fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
                 :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
@@ -627,6 +638,16 @@
       <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
         <h3 class="text-sm font-semibold text-text-primary mb-1">{{ t('finanzas.arqueo.otherMethodsDetail') }}</h3>
         <p class="text-xs text-text-secondary mb-3">{{ t('finanzas.arqueo.counted') }}</p>
+        <div v-if="breakdownTipoOptions.length > 1" class="mb-3 flex justify-end">
+          <select
+            v-model="breakdownTipoFilter"
+            :class="filterSelectClass"
+            :aria-label="t('finanzas.arqueo.filterByType')"
+          >
+            <option value="">{{ t('finanzas.arqueo.allPaymentTypes') }}</option>
+            <option v-for="opt in breakdownTipoOptions" :key="opt.slug" :value="opt.slug">{{ opt.label }}</option>
+          </select>
+        </div>
 
         <div v-if="previewLoading" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[620px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
@@ -651,7 +672,7 @@
             </div>
           </div>
         </div>
-        <div v-else-if="nonCashMethods.length > 0" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
+        <div v-else-if="filteredNonCashMethods.length > 0" class="mb-3 overflow-x-auto rounded-lg border border-border bg-background">
           <div class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
             <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.arqueo.method') }}</span>
             <span class="border-r border-dashed border-data-table-border/60 px-3 py-2">{{ t('finanzas.common.type') }}</span>
@@ -661,7 +682,7 @@
             <span class="px-3 py-2 text-end">{{ t('finanzas.arqueo.counted') }}</span>
           </div>
           <div
-            v-for="(method, index) in nonCashMethods"
+            v-for="(method, index) in filteredNonCashMethods"
             :key="method.key"
             class="grid min-w-[820px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr_1fr] items-center border-b border-data-table-border text-sm last:border-b-0"
             :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
@@ -804,8 +825,17 @@
 
           <!-- Otros métodos (span full si hay) -->
           <div v-if="nonCashMethods.length > 0" class="sm:col-span-2 bg-background rounded-lg border border-border overflow-hidden">
-            <div class="px-3 py-2 bg-surface border-b border-border">
+            <div class="px-3 py-2 bg-surface border-b border-border flex flex-wrap items-center justify-between gap-2">
               <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.otherMethodsDetail') }}</span>
+              <select
+                v-if="breakdownTipoOptions.length > 1"
+                v-model="breakdownTipoFilter"
+                :class="filterSelectClass"
+                :aria-label="t('finanzas.arqueo.filterByType')"
+              >
+                <option value="">{{ t('finanzas.arqueo.allPaymentTypes') }}</option>
+                <option v-for="opt in breakdownTipoOptions" :key="opt.slug" :value="opt.slug">{{ opt.label }}</option>
+              </select>
             </div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[760px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
@@ -816,7 +846,7 @@
                 <span class="px-3 py-2 text-end">{{ t('finanzas.common.difference') }}</span>
               </div>
               <div
-                v-for="(method, index) in nonCashMethods"
+                v-for="(method, index) in filteredNonCashMethods"
                 :key="method.key"
                 class="grid min-w-[760px] grid-cols-[1.2fr_.85fr_1fr_1fr_1fr] border-b border-data-table-border text-sm last:border-b-0"
                 :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
@@ -947,8 +977,17 @@
           </div>
 
           <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border overflow-hidden lg:col-span-1">
-            <div class="px-3 py-2 bg-surface border-b border-border">
+            <div class="px-3 py-2 bg-surface border-b border-border flex flex-wrap items-center justify-between gap-2">
               <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ t('finanzas.arqueo.otherMethodsDetail') }}</span>
+              <select
+                v-if="breakdownTipoOptions.length > 1"
+                v-model="breakdownTipoFilter"
+                :class="filterSelectClass"
+                :aria-label="t('finanzas.arqueo.filterByType')"
+              >
+                <option value="">{{ t('finanzas.arqueo.allPaymentTypes') }}</option>
+                <option v-for="opt in breakdownTipoOptions" :key="opt.slug" :value="opt.slug">{{ opt.label }}</option>
+              </select>
             </div>
             <div class="overflow-x-auto">
               <div class="grid min-w-[620px] grid-cols-[1.15fr_.8fr_1fr_1fr] border-b border-data-table-border bg-data-table-header-bg text-xs font-semibold uppercase tracking-wide text-data-table-header-text">
@@ -958,7 +997,7 @@
                 <span class="px-3 py-2 text-end">{{ t('finanzas.arqueo.counted') }}</span>
               </div>
               <div
-                v-for="(method, index) in nonCashMethods"
+                v-for="(method, index) in filteredNonCashMethods"
                 :key="method.key"
                 class="grid min-w-[620px] grid-cols-[1.15fr_.8fr_1fr_1fr] border-b border-data-table-border text-sm last:border-b-0"
                 :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
@@ -1076,6 +1115,7 @@ import { buildCierreWindowBody, buildCierreWindowParams, isShiftOpen } from '~/c
 import { resolveCashDenominations } from '~/utils/cashDenominations'
 import { useOperationalQuotaGate } from '~/composables/useOperationalQuotaGate'
 import { useQuotaExceeded } from '~/composables/useQuotaExceeded'
+import { filterSelectClass } from '~/composables/useFilterSelectClass'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -1622,6 +1662,30 @@ const nonCashMethods = computed<BreakdownMethod[]>(() => {
     purchaseOutflowsAmount: 0,
     expectedAmount: g.total,
   }))
+})
+
+/** Client-only Tipo filter — does not change counted totals / close payload. */
+const breakdownTipoFilter = ref('')
+const breakdownTipoOptions = computed(() => {
+  const map = new Map<string, string>()
+  for (const row of (xPreviewData.value?.breakdown ?? []) as BreakdownRowRaw[]) {
+    if (row?.group_slug) map.set(row.group_slug, groupLabel(row.group_slug))
+  }
+  for (const m of nonCashMethods.value) {
+    map.set(m.groupSlug, m.groupLabel)
+  }
+  return [...map.entries()]
+    .map(([slug, label]) => ({ slug, label }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+})
+const filteredXBreakdown = computed(() => {
+  const rows = (xPreviewData.value?.breakdown ?? []) as BreakdownRowRaw[]
+  if (!breakdownTipoFilter.value) return rows
+  return rows.filter(r => r.group_slug === breakdownTipoFilter.value)
+})
+const filteredNonCashMethods = computed(() => {
+  if (!breakdownTipoFilter.value) return nonCashMethods.value
+  return nonCashMethods.value.filter(m => m.groupSlug === breakdownTipoFilter.value)
 })
 
 const methodDiff = (method: BreakdownMethod) =>
