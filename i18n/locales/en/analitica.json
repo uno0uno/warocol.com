@@ -399,7 +399,30 @@
         "notesPlaceholder": "Ex: Agreed partial payment...",
         "confirmPayment": "Confirm payment",
         "paymentError": "Error registering payment",
-        "noDueDate": "No date"
+        "noDueDate": "No date",
+        "receipt": {
+          "successTitle": "Payment registered",
+          "successBody": "The payment was applied successfully. You can print the receipt or send it by email.",
+          "close": "Close",
+          "totalPaid": "Total paid",
+          "outstandingAfter": "Outstanding balance",
+          "ordersApplied": "Orders applied",
+          "orderLine": "Order #{order}",
+          "paid": "Paid",
+          "print": "Print receipt",
+          "sendByEmail": "Send by email",
+          "done": "Done",
+          "emailHint": "Send the receipt to the customer or another recipient.",
+          "emailLabel": "Email",
+          "emailPlaceholder": "customer@example.com",
+          "send": "Send",
+          "sending": "Sending…",
+          "sentTo": "Sent to {email}",
+          "sendAnother": "You can send to another email.",
+          "emailError": "Could not send email",
+          "ticketTitle": "CREDIT PAYMENT RECEIPT",
+          "customer": "Customer"
+        }
       },
       "history": {
         "title": "Order history",
