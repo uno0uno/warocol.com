@@ -237,6 +237,7 @@
       "email": "Email",
       "unique": "Unique customers",
       "customer": "Customer",
+      "document": "Document",
       "phone": "Phone",
       "orders": "Orders",
       "orderCountOne": "{count} order",

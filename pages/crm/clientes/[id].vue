@@ -9,6 +9,9 @@ import {
   mergePosPaymentGroupsFromApi,
   type ApiPaymentGroup,
 } from '~/utils/paymentDefaults';
+import {
+  shellHeaderToolTextButtonClass,
+} from '~/utils/shellHeaderToolClasses';
 
 definePageMeta({ layout: 'dashboard', module: 'crm' })
 
@@ -584,7 +587,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <dl class="grid grid-cols-2 lg:grid-cols-5 border-t border-border">
+        <dl class="grid grid-cols-2 lg:grid-cols-4 border-t border-border">
           <div class="px-4 py-3 border-b lg:border-b-0 border-e border-border min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.clientes.phone') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums truncate">
@@ -614,40 +617,41 @@ onUnmounted(() => {
               <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinDatos') }}</span>
             </dd>
           </div>
-          <div class="px-4 py-3 border-b lg:border-b-0 lg:border-e border-border min-w-0">
+          <div class="px-4 py-3 border-b lg:border-b-0 min-w-0">
             <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.lastPurchase') }}</dt>
             <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">
               <span v-if="lastPurchaseLabel">{{ lastPurchaseLabel }}</span>
               <span v-else :class="emptyFieldChipClass">{{ t('ventas.common.sinDatos') }}</span>
             </dd>
           </div>
-          <div class="px-4 py-3 col-span-2 lg:col-span-1 min-w-0">
-            <dt class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.waros.points') }}</dt>
-            <dd class="m-0 flex items-center justify-between gap-2">
-              <span v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</span>
-              <span v-else class="text-sm font-semibold text-text-primary tabular-nums">{{ formatWaros(warosBalance) }}</span>
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <button
-                  v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
-                  type="button"
-                  :aria-label="t('analitica.customerDetail.waros.viewManualAria')"
-                  @click="showManualPanel = true"
-                  class="min-h-[44px] px-2.5 text-xs font-medium rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-                >
-                  {{ t('analitica.customerDetail.waros.viewManual') }}
-                </button>
-                <button
-                  type="button"
-                  :aria-label="t('analitica.customerDetail.waros.assignAria')"
-                  @click="showWarosModal = true"
-                  class="min-h-[44px] px-2.5 text-xs font-semibold rounded-lg bg-state-warning-bg text-state-warning-text border border-state-warning-border hover:opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-                >
-                  {{ t('analitica.customerDetail.waros.assign') }}
-                </button>
-              </div>
-            </dd>
-          </div>
         </dl>
+
+        <div class="border-t border-border px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <p class="text-xs text-text-secondary mb-1">{{ t('analitica.customerDetail.waros.points') }}</p>
+            <p v-if="isLoadingWaros" class="m-0 text-sm font-semibold text-text-secondary">{{ t('common.loading') }}</p>
+            <p v-else class="m-0 text-sm font-semibold text-text-primary tabular-nums">{{ formatWaros(warosBalance) }}</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
+              type="button"
+              :aria-label="t('analitica.customerDetail.waros.viewManualAria')"
+              :class="shellHeaderToolTextButtonClass"
+              @click="showManualPanel = true"
+            >
+              {{ t('analitica.customerDetail.waros.viewManual') }}
+            </button>
+            <button
+              type="button"
+              :aria-label="t('analitica.customerDetail.waros.assignAria')"
+              :class="shellHeaderToolTextButtonClass"
+              @click="showWarosModal = true"
+            >
+              {{ t('analitica.customerDetail.waros.assign') }}
+            </button>
+          </div>
+        </div>
 
         <div v-if="hasFiscalInfo" class="border-t border-border px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div v-if="fiscalDocumentLabel">

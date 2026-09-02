@@ -237,6 +237,7 @@
       "email": "Correo",
       "unique": "Clientes únicos",
       "customer": "Cliente",
+      "document": "Documento",
       "phone": "Teléfono",
       "orders": "Pedidos",
       "orderCountOne": "{count} pedido",

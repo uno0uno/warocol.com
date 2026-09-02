@@ -131,6 +131,7 @@ watch(customers, (list) => {
 // ── Table columns ─────────────────────────────────────────────────────────
 const tableColumns = computed(() => [
   { key: 'name', title: t('analitica.clientes.customer'), sortable: false },
+  { key: 'document', title: t('analitica.clientes.document'), sortable: false },
   { key: 'phone', title: t('analitica.clientes.phone'), sortable: false },
   { key: 'order_count', title: t('analitica.clientes.orders'), sortable: false },
   { key: 'total_spent', title: t('analitica.clientes.totalBought'), sortable: false },
@@ -320,7 +321,7 @@ onUnmounted(() => {
                   {{ item.phone || t('analitica.clientes.noPhone') }} · {{ formatOrderCount(item.order_count) }}<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
                 </p>
                 <p v-if="hasFiscalData(item) && formatFiscalLabel(item)" class="text-xs text-text-secondary mt-0.5 truncate">
-                  {{ t('analitica.clientes.fiscal') }}: {{ formatFiscalLabel(item) }}
+                  {{ formatFiscalLabel(item) }}
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -347,12 +348,14 @@ onUnmounted(() => {
           </template>
 
           <template #cell-name="{ row }">
-            <div class="min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ row.name }}</span>
-              <p v-if="hasFiscalData(row) && formatFiscalLabel(row)" class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ formatFiscalLabel(row) }}
-              </p>
-            </div>
+            <span class="text-sm font-bold text-text-primary">{{ row.name }}</span>
+          </template>
+
+          <template #cell-document="{ row }">
+            <span v-if="hasFiscalData(row) && formatFiscalLabel(row)" class="text-sm text-text-secondary">
+              {{ formatFiscalLabel(row) }}
+            </span>
+            <span v-else class="text-sm text-text-secondary">—</span>
           </template>
 
           <template #cell-phone="{ value }">
