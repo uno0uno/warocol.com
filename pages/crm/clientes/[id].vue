@@ -9,6 +9,9 @@ import {
   mergePosPaymentGroupsFromApi,
   type ApiPaymentGroup,
 } from '~/utils/paymentDefaults';
+import CreditPaymentSuccessPanel, {
+  type CreditPaymentReceiptData,
+} from '~/components/crm/CreditPaymentSuccessPanel.vue';
 
 definePageMeta({ layout: 'dashboard', module: 'crm' })
 
@@ -29,6 +32,22 @@ const { data: paymentGroupsData } = useQuery({
 const paymentGroups = computed(() =>
   mergePosPaymentGroupsFromApi(paymentGroupsData.value?.data ?? []),
 )
+const { data: restaurantContextData } = useQuery({
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/pos/restaurant-context'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const crmReceiptBusiness = computed(() => {
+  const ctx = restaurantContextData.value?.data
+  const fiscal = ctx?.fiscal_data
+  return {
+    display_name: ctx?.display_name ?? null,
+    address: fiscal?.fiscal_address ?? null,
+    city: fiscal?.city ?? null,
+    phone_number: fiscal?.phone ?? null,
+  }
+})
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 const carteraPaymentGroups = computed(() =>
   paymentGroups.value.filter(
@@ -383,6 +402,8 @@ const paymentForm = reactive({
 })
 const isSubmittingPayment = ref(false)
 const paymentError = ref<string | null>(null)
+const showPaymentSuccessPanel = ref(false)
+const paymentReceipt = ref<CreditPaymentReceiptData | null>(null)
 const paymentSelectValue = computed({
   get: () => `${paymentForm.payment_method}:${paymentForm.payment_method_id ?? ''}`,
   set: (value: string) => {
@@ -414,49 +435,96 @@ const openGlobalPaymentPanel = () => {
   showPaymentPanel.value = true
 }
 
+const paymentMethodLabelForForm = () =>
+  resolveLabel(paymentForm.payment_method, paymentForm.payment_method_id)
+
 const submitPayment = async () => {
   if (isSubmittingPayment.value) return
   isSubmittingPayment.value = true
   paymentError.value = null
+  const receiptLines: CreditPaymentReceiptData['lines'] = []
+  let paymentDate = ''
+  const methodLabel = paymentMethodLabelForForm()
   try {
     if (isGlobalPayment.value) {
-      // FIFO: distribute across orders sorted oldest-first
       const orders = [...(carteraData.value?.orders ?? [])]
         .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
       let remaining = paymentForm.amount
       for (const order of orders) {
         if (remaining <= 0) break
         const toPay = Math.min(remaining, order.remaining)
-        await $fetch(`/api/credit/orders/${order.id}/payments`, {
+        const res = await $fetch<any>(`/api/credit/orders/${order.id}/payments`, {
           method: 'POST',
           body: {
             amount: toPay,
             payment_method: paymentForm.payment_method,
             payment_method_id: paymentForm.payment_method_id || undefined,
             notes: paymentForm.notes || undefined,
-          }
+          },
+        })
+        const data = res?.data ?? res
+        paymentDate = data.payment_date || paymentDate
+        receiptLines.push({
+          order_number: order.order_number,
+          order_id: String(data.order_id || order.id),
+          payment_id: String(data.payment_id),
+          amount: Number(data.amount),
+          remaining_amount: Number(data.remaining_amount),
         })
         remaining -= toPay
       }
     } else {
       if (!selectedOrder.value) return
-      await $fetch(`/api/credit/orders/${selectedOrder.value.id}/payments`, {
+      const order = selectedOrder.value
+      const res = await $fetch<any>(`/api/credit/orders/${order.id}/payments`, {
         method: 'POST',
         body: {
           amount: paymentForm.amount,
           payment_method: paymentForm.payment_method,
           payment_method_id: paymentForm.payment_method_id || undefined,
           notes: paymentForm.notes || undefined,
-        }
+        },
+      })
+      const data = res?.data ?? res
+      paymentDate = data.payment_date || ''
+      receiptLines.push({
+        order_number: order.order_number,
+        order_id: String(data.order_id || order.id),
+        payment_id: String(data.payment_id),
+        amount: Number(data.amount),
+        remaining_amount: Number(data.remaining_amount),
       })
     }
+
+    const totalPaid = receiptLines.reduce((sum, line) => sum + line.amount, 0)
+    paymentReceipt.value = {
+      customer_name: customer.value?.name || '',
+      payment_date: paymentDate,
+      payment_method_label: methodLabel,
+      total_amount: totalPaid,
+      notes: paymentForm.notes?.trim() || undefined,
+      lines: receiptLines,
+    }
     showPaymentPanel.value = false
+    showPaymentSuccessPanel.value = true
     await fetchCartera()
+    if (paymentReceipt.value && carteraData.value?.summary?.total_outstanding != null) {
+      paymentReceipt.value = {
+        ...paymentReceipt.value,
+        total_outstanding_after: Number(carteraData.value.summary.total_outstanding),
+      }
+    }
+    await refetch()
   } catch (err: any) {
     paymentError.value = err?.data?.detail || t('analitica.customerDetail.credit.paymentError')
   } finally {
     isSubmittingPayment.value = false
   }
+}
+
+const closePaymentSuccessPanel = () => {
+  showPaymentSuccessPanel.value = false
+  paymentReceipt.value = null
 }
 
 onMounted(() => {
@@ -1411,11 +1479,11 @@ onUnmounted(() => {
           <!-- Form -->
           <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
             <!-- FIFO note -->
-            <div v-if="isGlobalPayment" class="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
-              <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div v-if="isGlobalPayment" class="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5">
+              <svg class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-xs text-blue-700">{{ t('analitica.customerDetail.credit.fifoNote') }}</p>
+              <p class="text-xs text-primary">{{ t('analitica.customerDetail.credit.fifoNote') }}</p>
             </div>
 
             <!-- Amount -->
@@ -1428,7 +1496,8 @@ onUnmounted(() => {
                 min="1"
                 :max="isGlobalPayment ? undefined : selectedOrder?.remaining"
                 step="100"
-                class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                :disabled="isSubmittingPayment"
+                class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors disabled:opacity-50"
                 placeholder="0"
               />
             </div>
@@ -1466,7 +1535,8 @@ onUnmounted(() => {
                 id="payment-notes"
                 v-model="paymentForm.notes"
                 rows="3"
-                class="px-3 py-2 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                :disabled="isSubmittingPayment"
+                class="px-3 py-2 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none disabled:opacity-50"
                 :placeholder="t('analitica.customerDetail.credit.notesPlaceholder')"
               />
             </div>
@@ -1483,19 +1553,31 @@ onUnmounted(() => {
           <!-- Footer -->
           <div class="flex-shrink-0 border-t border-border px-6 py-4">
             <button
+              type="button"
               @click="submitPayment"
               :disabled="isSubmittingPayment || !paymentForm.amount || paymentForm.amount <= 0"
               class="w-full min-h-[44px] px-4 py-3 text-sm font-semibold rounded-lg bg-primary text-primary-foreground
                      hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+                     disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center"
             >
-              <span v-if="isSubmittingPayment">{{ t('analitica.customerDetail.registering') }}</span>
+              <UiLoadingDots v-if="isSubmittingPayment" size="8px" color="currentColor" aria-hidden="true" />
               <span v-else>{{ t('analitica.customerDetail.credit.confirmPayment') }}</span>
             </button>
           </div>
         </div>
       </Transition>
     </Teleport>
+
+    <CreditPaymentSuccessPanel
+      :open="showPaymentSuccessPanel"
+      :receipt="paymentReceipt"
+      :default-email="realEmail"
+      :business-name="crmReceiptBusiness.display_name"
+      :business-address="crmReceiptBusiness.address"
+      :business-city="crmReceiptBusiness.city"
+      :business-phone="crmReceiptBusiness.phone_number"
+      @close="closePaymentSuccessPanel"
+    />
 
     <!-- Invoice Slideover Panel -->
     <Teleport to="body">
