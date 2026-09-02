@@ -27,6 +27,7 @@
       "save": "Guardar",
       "saved": "Asignaciones guardadas",
       "savedTitle": "Listo",
+
       "saveError": "No se pudieron guardar las impresoras",
       "error": "Error",
       "loadError": "No se pudieron cargar las asignaciones de impresoras",
@@ -307,6 +308,12 @@
       "searchOff": "Buscador oculto",
       "enableSearch": "Mostrar buscador",
       "disableSearch": "Ocultar buscador",
+      "deductInventory": "Descontar inventario al comandar",
+      "deductInventoryHelp": "Baja el stock al enviar a cocina. El costo de ventas se registra al cobrar.",
+      "deductInventoryOn": "Inventario se descuenta al comandar",
+      "deductInventoryOff": "Inventario se descuenta al cobrar",
+      "enableDeductInventory": "Activar descuento al comandar",
+      "disableDeductInventory": "Desactivar descuento al comandar",
       "saveError": "No se pudo guardar"
     },
     "propinas": {

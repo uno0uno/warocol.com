@@ -161,6 +161,7 @@
       "endAfterStart": "A hora de fim deve ser posterior ao início (ou ative \"Cruza meia-noite\")",
       "nameExists": "Já existe um turno com esse nome",
       "invalidSchedule": "Horário inválido",
+
       "saveError": "Não foi possível salvar o turno. Tente novamente.",
       "nextDay": "dia seguinte",
       "deactivateMessage": "Desativar \"{name}\"? Não aparecerá ao fechar o caixa, mas os conferências de caixa anteriores não são modificados.",
@@ -247,6 +248,12 @@
       "searchOff": "Busca oculta",
       "enableSearch": "Mostrar busca",
       "disableSearch": "Ocultar busca",
+      "deductInventory": "Descontar estoque ao comandar",
+      "deductInventoryHelp": "O estoque baixa ao enviar para a cozinha. O CMV ainda é lançado no checkout.",
+      "deductInventoryOn": "Estoque desconta ao comandar",
+      "deductInventoryOff": "Estoque desconta no pagamento",
+      "enableDeductInventory": "Ativar desconto ao comandar",
+      "disableDeductInventory": "Desativar desconto ao comandar",
       "saveError": "Não foi possível salvar"
     },
     "propinas": {

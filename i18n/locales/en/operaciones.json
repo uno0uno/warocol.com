@@ -27,6 +27,7 @@
       "save": "Save",
       "saved": "Assignments saved",
       "savedTitle": "Done",
+
       "saveError": "Could not save printer assignments",
       "error": "Error",
       "loadError": "Could not load printer assignments",
@@ -307,6 +308,12 @@
       "searchOff": "Search hidden",
       "enableSearch": "Show search",
       "disableSearch": "Hide search",
+      "deductInventory": "Deduct inventory when sending",
+      "deductInventoryHelp": "Stock drops when items are sent to the kitchen. Cost of goods still posts at checkout.",
+      "deductInventoryOn": "Inventory deducts on send",
+      "deductInventoryOff": "Inventory deducts at checkout",
+      "enableDeductInventory": "Enable deduct on send",
+      "disableDeductInventory": "Disable deduct on send",
       "saveError": "Could not save"
     },
     "propinas": {
