@@ -372,7 +372,28 @@
         "colType": "Type",
         "colBalanceAfter": "Balance",
         "empty": "No wallet movements",
-        "colAmount": "Amount"
+        "colAmount": "Amount",
+        "receipt": {
+          "successTitle": "Recharge recorded",
+          "successBody": "The recharge was recorded successfully. You can print the receipt or send it by email.",
+          "close": "Close",
+          "amount": "Recharged amount",
+          "balanceAfter": "Balance after",
+          "print": "Print",
+          "printAria": "Print recharge receipt",
+          "sendByEmail": "Send by email",
+          "done": "Done",
+          "emailHint": "Send the receipt to the customer or another recipient.",
+          "emailLabel": "Email",
+          "emailPlaceholder": "customer{'@'}example.com",
+          "send": "Send",
+          "sending": "Sending…",
+          "sentTo": "Sent to {email}",
+          "sendAnother": "You can send to another email.",
+          "emailError": "Could not send email",
+          "ticketTitle": "WALLET RECHARGE RECEIPT",
+          "customer": "Customer"
+        }
       },
       "credit": {
         "title": "Accounts receivable",

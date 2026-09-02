@@ -372,7 +372,28 @@
         "colType": "Tipo",
         "colBalanceAfter": "Saldo",
         "empty": "Sin movimientos de billetera",
-        "colAmount": "Monto"
+        "colAmount": "Monto",
+        "receipt": {
+          "successTitle": "Recarga registrada",
+          "successBody": "La recarga se registró correctamente. Puedes imprimir el comprobante o enviarlo por correo.",
+          "close": "Cerrar",
+          "amount": "Monto recargado",
+          "balanceAfter": "Saldo después",
+          "print": "Imprimir",
+          "printAria": "Imprimir comprobante de recarga",
+          "sendByEmail": "Enviar por correo",
+          "done": "Listo",
+          "emailHint": "Envía el comprobante al correo del cliente o a otro destinatario.",
+          "emailLabel": "Correo electrónico",
+          "emailPlaceholder": "cliente{'@'}ejemplo.com",
+          "send": "Enviar",
+          "sending": "Enviando…",
+          "sentTo": "Enviado a {email}",
+          "sendAnother": "Puedes enviar a otro correo.",
+          "emailError": "No se pudo enviar el correo",
+          "ticketTitle": "COMPROBANTE DE RECARGA",
+          "customer": "Cliente"
+        }
       },
       "credit": {
         "title": "Cartera",
