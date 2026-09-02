@@ -506,14 +506,19 @@ const submitPayment = async () => {
       lines: receiptLines,
     }
     showPaymentPanel.value = false
-    showPaymentSuccessPanel.value = true
     await fetchCartera()
-    if (paymentReceipt.value && carteraData.value?.summary?.total_outstanding != null) {
-      paymentReceipt.value = {
-        ...paymentReceipt.value,
-        total_outstanding_after: Number(carteraData.value.summary.total_outstanding),
-      }
+    paymentReceipt.value = {
+      customer_name: customer.value?.name || '',
+      payment_date: paymentDate,
+      payment_method_label: methodLabel,
+      total_amount: totalPaid,
+      notes: paymentForm.notes?.trim() || undefined,
+      lines: receiptLines,
+      total_outstanding_after: carteraData.value?.summary?.total_outstanding != null
+        ? Number(carteraData.value.summary.total_outstanding)
+        : undefined,
     }
+    showPaymentSuccessPanel.value = true
     await refetch()
   } catch (err: any) {
     paymentError.value = err?.data?.detail || t('analitica.customerDetail.credit.paymentError')

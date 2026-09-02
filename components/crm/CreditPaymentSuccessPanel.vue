@@ -61,7 +61,7 @@ const paymentDateLabel = computed(() => {
 })
 
 const orderLinesForTicket = computed(() => {
-  if (!props.receipt || props.receipt.lines.length <= 1) return undefined
+  if (!props.receipt?.lines.length) return undefined
   return props.receipt.lines.map(line => ({
     orderLabel: t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }),
     paidLabel: t('analitica.customerDetail.credit.receipt.paid'),
@@ -183,12 +183,12 @@ const sendReceiptEmail = async () => {
   if (!email || !props.receipt || isSendingEmail.value) return
   isSendingEmail.value = true
   try {
-    await $fetch('/api/credit/receipt-email', {
+    const res = await $fetch<{ success: boolean }>('/api/credit/receipt-email', {
       method: 'POST',
       body: {
         email,
         customer_name: props.receipt.customer_name,
-        payment_date: props.receipt.payment_date,
+        payment_date: paymentDateLabel.value || props.receipt.payment_date,
         payment_method_label: props.receipt.payment_method_label,
         total_amount: props.receipt.total_amount,
         lines: props.receipt.lines.map(line => ({
@@ -204,6 +204,9 @@ const sendReceiptEmail = async () => {
         business_phone: props.businessPhone || undefined,
       },
     })
+    if (!res?.success) {
+      throw new Error(t('analitica.customerDetail.credit.receipt.emailError'))
+    }
     lastSentEmail.value = email
     emailSent.value = true
     receiptEmail.value = ''
@@ -496,6 +499,48 @@ watch(showEmailPanel, (open) => {
     :order-lines="orderLinesForTicket"
   />
 </template>
+
+<style>
+@media print {
+  html,
+  body.printing-receipt-ticket {
+    margin: 0;
+    padding: 0;
+  }
+
+  body.printing-receipt-ticket * {
+    visibility: hidden;
+  }
+
+  body.printing-receipt-ticket > :not(.receipt-print-ticket) {
+    display: none !important;
+  }
+
+  body.printing-receipt-ticket #credit-payment-print-ticket,
+  body.printing-receipt-ticket #credit-payment-print-ticket * {
+    visibility: visible !important;
+  }
+
+  body.printing-receipt-ticket #credit-payment-print-ticket {
+    display: block !important;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9.5pt;
+    line-height: 1.2;
+    width: 64mm;
+    color: #000;
+    background: #fff;
+    box-sizing: border-box;
+    padding: 0 1.5mm 14mm;
+    position: static !important;
+    margin: 0 auto !important;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
+</style>
 
 <style>
 .checkout-success-panel-enter-active,
