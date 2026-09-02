@@ -431,6 +431,19 @@
         "total": "({total} total)",
         "showingRange": "Showing {start} to {end} of {total} orders",
         "noWaros": "No Waros"
+      },
+      "subNav": {
+        "aria": "Customer sections",
+        "orders": "Order history",
+        "cartera": "Accounts receivable",
+        "paymentHistory": "Payment history",
+        "wallet": "COP wallet"
+      },
+      "paymentHistory": {
+        "empty": "No payments recorded",
+        "detailTitle": "Payment detail",
+        "printAria": "Print payment receipt",
+        "print": "Print"
       }
     },
     "ingredientes": {

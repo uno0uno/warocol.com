@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import CreditPaymentPrintTicket from '~/components/crm/CreditPaymentPrintTicket.vue'
-import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCajaTicketPrint'
-import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
+import CreditPaymentReceiptHost from '~/components/crm/CreditPaymentReceiptHost.vue'
 
 export interface CreditPaymentReceiptLine {
   order_number: number
@@ -39,7 +37,7 @@ const emit = defineEmits<{
 const { t } = useI18n({ useScope: 'global' })
 const toast = useToast()
 const { formatCurrency, formatTenantDate } = useFormatters()
-const { printElement: printTicketElement, getCachedCajaPrinterName } = useCajaTicketPrint()
+const receiptHostRef = ref<InstanceType<typeof CreditPaymentReceiptHost> | null>(null)
 
 const showEmailPanel = ref(false)
 const receiptEmail = ref('')
@@ -58,17 +56,6 @@ const paymentDateLabel = computed(() => {
   catch {
     return raw
   }
-})
-
-const orderLinesForTicket = computed(() => {
-  if (!props.receipt?.lines.length) return undefined
-  return props.receipt.lines.map(line => ({
-    orderLabel: t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }),
-    paidLabel: t('analitica.customerDetail.credit.receipt.paid'),
-    paidValue: formatCurrency(line.amount),
-    remainingLabel: t('analitica.customerDetail.credit.remaining'),
-    remainingValue: formatCurrency(line.remaining_amount),
-  }))
 })
 
 const singleRemainingValue = computed(() => {
@@ -105,77 +92,7 @@ const openEmailPanel = () => {
 }
 
 const printReceipt = async (options?: { auto?: boolean }) => {
-  if (!props.receipt) return
-
-  const cachedCaja = getCachedCajaPrinterName()
-  if (options?.auto && !String(cachedCaja || '').trim()) {
-    return
-  }
-
-  if (options?.auto === false && typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
-    document.body.classList.add('printing-receipt-ticket')
-    await nextTick()
-    const earlyCleanup = () => {
-      document.body.classList.remove('printing-receipt-ticket')
-      window.removeEventListener('afterprint', earlyCleanup)
-    }
-    window.addEventListener('afterprint', earlyCleanup)
-    window.print()
-    window.setTimeout(earlyCleanup, 1500)
-    return
-  }
-
-  document.body.classList.add('printing-receipt-ticket')
-  await nextTick()
-  const cleanup = () => {
-    document.body.classList.remove('printing-receipt-ticket')
-    window.removeEventListener('afterprint', cleanup)
-  }
-  const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
-  let browserPrintFiredSync = false
-  const skipBrowserFallback = options?.auto === true
-
-  const printResult = await printTicketElement('credit-payment-print-ticket', {
-    browserPrint: () => {
-      if (skipBrowserFallback) return
-      browserPrintFiredSync = true
-      syncBrowserPrint()
-    },
-    getElementHtml: () => {
-      if (typeof document === 'undefined') return null
-      return collectThermalTicketText(document.querySelector('#credit-payment-print-ticket')) || null
-    },
-  })
-
-  if (printResult.mode === 'bridge') {
-    cleanup()
-    if (!options?.auto) {
-      notifyCajaPrintResult(printResult, {
-        t,
-        toast,
-        onRetry: () => { void printReceipt() },
-        onBrowserPrint: () => {
-          document.body.classList.add('printing-receipt-ticket')
-          window.addEventListener('afterprint', cleanup)
-          window.setTimeout(cleanup, 1500)
-          syncBrowserPrint()
-        },
-      })
-    }
-    return
-  }
-  if (printResult.mode === 'skipped') {
-    cleanup()
-    return
-  }
-  if (!skipBrowserFallback) {
-    window.addEventListener('afterprint', cleanup)
-    if (!browserPrintFiredSync) syncBrowserPrint()
-    window.setTimeout(cleanup, 1500)
-  }
-  else {
-    cleanup()
-  }
+  await receiptHostRef.value?.printReceipt(options)
 }
 
 const sendReceiptEmail = async () => {
@@ -477,70 +394,15 @@ watch(showEmailPanel, (open) => {
   </Transition>
   </Teleport>
 
-  <CreditPaymentPrintTicket
-    v-if="receipt"
-    :title="t('analitica.customerDetail.credit.receipt.ticketTitle')"
+  <CreditPaymentReceiptHost
+    ref="receiptHostRef"
+    :receipt="receipt"
     :business-name="businessName"
     :business-address="businessAddress"
     :business-city="businessCity"
     :business-phone="businessPhone"
-    :customer-label="t('analitica.customerDetail.credit.receipt.customer')"
-    :customer-value="receipt.customer_name"
-    :date-label="t('analitica.common.date')"
-    :date-value="paymentDateLabel"
-    :method-label="t('analitica.customerDetail.paymentMethod')"
-    :method-value="receipt.payment_method_label"
-    :total-label="t('analitica.customerDetail.credit.receipt.totalPaid')"
-    :total-value="formatCurrency(receipt.total_amount)"
-    :outstanding-label="outstandingFormatted ? t('analitica.customerDetail.credit.receipt.outstandingAfter') : undefined"
-    :outstanding-value="outstandingFormatted"
-    :notes-label="receipt.notes ? t('analitica.customerDetail.notes') : undefined"
-    :notes-value="receipt.notes || undefined"
-    :order-lines="orderLinesForTicket"
   />
 </template>
-
-<style>
-@media print {
-  html,
-  body.printing-receipt-ticket {
-    margin: 0;
-    padding: 0;
-  }
-
-  body.printing-receipt-ticket * {
-    visibility: hidden;
-  }
-
-  body.printing-receipt-ticket > :not(.receipt-print-ticket) {
-    display: none !important;
-  }
-
-  body.printing-receipt-ticket #credit-payment-print-ticket,
-  body.printing-receipt-ticket #credit-payment-print-ticket * {
-    visibility: visible !important;
-  }
-
-  body.printing-receipt-ticket #credit-payment-print-ticket {
-    display: block !important;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 9.5pt;
-    line-height: 1.2;
-    width: 64mm;
-    color: #000;
-    background: #fff;
-    box-sizing: border-box;
-    padding: 0 1.5mm 14mm;
-    position: static !important;
-    margin: 0 auto !important;
-  }
-
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
-}
-</style>
 
 <style>
 .checkout-success-panel-enter-active,

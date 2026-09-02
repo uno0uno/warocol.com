@@ -71,21 +71,42 @@ defineProps<{
 .credit-payment-print-ticket {
   display: none;
 }
+</style>
+
+<style>
 @media print {
-  .credit-payment-print-ticket {
+  body.printing-receipt-ticket * {
+    visibility: hidden !important;
+  }
+
+  body.printing-receipt-ticket #credit-payment-print-ticket,
+  body.printing-receipt-ticket #credit-payment-print-ticket * {
+    visibility: visible !important;
+  }
+
+  body.printing-receipt-ticket #credit-payment-print-ticket {
     display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 72mm;
-    margin: 0 auto;
+    margin: 0;
     color: #000;
     background: #fff;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
     line-height: 1.35;
   }
-  .receipt-plain-pre {
+
+  body.printing-receipt-ticket #credit-payment-print-ticket .receipt-plain-pre {
     margin: 0;
     white-space: pre-wrap;
     font: inherit;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
   }
 }
 </style>
