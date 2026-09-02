@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, inject, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, reactive, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { enUS, es } from 'date-fns/locale';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import { resolvePaymentSelection } from '~/composables/usePaymentSelectValue';
@@ -15,6 +15,13 @@ import {
 import CreditPaymentSuccessPanel, {
   type CreditPaymentReceiptData,
 } from '~/components/crm/CreditPaymentSuccessPanel.vue';
+import CustomerDetailSubNav, {
+  type CustomerDetailSection,
+} from '~/components/crm/CustomerDetailSubNav.vue';
+import CreditPaymentHistoryPanel, {
+  type CustomerCreditPaymentRow,
+} from '~/components/crm/CreditPaymentHistoryPanel.vue';
+import CreditPaymentReceiptHost from '~/components/crm/CreditPaymentReceiptHost.vue';
 
 definePageMeta({ layout: 'dashboard', module: 'crm' })
 
@@ -75,11 +82,9 @@ const TABLE_PAGE_SIZE = 10
 const ordersPage = ref(1)
 const walletPage = ref(1)
 const carteraPage = ref(1)
+const creditPaymentsPage = ref(1)
 
-// Accordion panels — sales open on entry; cartera/wallet closed
-const ordersOpen = ref(true)
-const carteraOpen = ref(false)
-const walletOpen = ref(false)
+const activeSection = ref<CustomerDetailSection>('orders')
 
 // ── Data fetch (progressive / optimistic — #2230) ─────────────────────────
 const {
@@ -229,6 +234,14 @@ const walletColumns = computed(() => [
   { key: 'created_at', title: t('analitica.common.date'), sortable: false },
   { key: 'amount_cop', title: t('analitica.customerDetail.wallet.colAmount'), sortable: false, align: 'right' as const },
   { key: 'balance_after_cop', title: t('analitica.customerDetail.wallet.colBalanceAfter'), sortable: false, align: 'right' as const },
+])
+
+const creditPaymentColumns = computed(() => [
+  { key: 'payment_date', title: t('analitica.common.date'), sortable: false },
+  { key: 'order_number', title: t('analitica.customerDetail.orderNumber'), sortable: false },
+  { key: 'amount', title: t('analitica.customerDetail.credit.receipt.paid'), sortable: false, align: 'right' as const },
+  { key: 'payment_method', title: t('analitica.customerDetail.paymentMethod'), sortable: false },
+  { key: 'history_actions', title: '', sortable: false, align: 'right' as const },
 ])
 
 // Invoice slideover state
@@ -394,6 +407,85 @@ const goToCarteraPage = (page: number) => {
   if (next !== carteraPage.value) carteraPage.value = next
 }
 
+const {
+  data: creditPaymentsApiData,
+  asyncStatus: creditPaymentsAsyncStatus,
+  refetch: refetchCreditPayments,
+} = useQuery({
+  key: () => ['crm', 'customer-credit-payments', currentTenant.value?.id, customerId.value, creditPaymentsPage.value],
+  query: () => $fetch(`/api/cartera/customers/${customerId.value}/payments`, {
+    params: {
+      page: creditPaymentsPage.value,
+      per_page: TABLE_PAGE_SIZE,
+    },
+  }),
+  enabled: () => !!currentTenant.value && !!customerId.value && activeSection.value === 'paymentHistory',
+  staleTime: 30_000,
+  placeholderData: (previousData) => previousData,
+})
+
+const creditPaymentsData = computed(() => (creditPaymentsApiData.value as any)?.data || { items: [], total: 0, page: 1, per_page: TABLE_PAGE_SIZE })
+const creditPayments = computed(() => creditPaymentsData.value?.items || [])
+const creditPaymentsTotal = computed(() => creditPaymentsData.value?.total || 0)
+const creditPaymentsTotalPages = computed(() => Math.max(1, Math.ceil(creditPaymentsTotal.value / TABLE_PAGE_SIZE)))
+const isLoadingCreditPayments = computed(() => creditPaymentsAsyncStatus.value === 'loading' && !creditPaymentsApiData.value)
+const goToCreditPaymentsPage = (page: number) => {
+  const next = Math.min(Math.max(1, page), creditPaymentsTotalPages.value)
+  if (next !== creditPaymentsPage.value) creditPaymentsPage.value = next
+}
+
+const showHistoryPanel = ref(false)
+const selectedHistoryPayment = ref<CustomerCreditPaymentRow | null>(null)
+const selectedHistoryMethodLabel = computed(() => {
+  if (!selectedHistoryPayment.value) return ''
+  return resolveLabel(
+    selectedHistoryPayment.value.payment_method,
+    selectedHistoryPayment.value.payment_method_id,
+  )
+})
+const historyReceiptHostRef = ref<InstanceType<typeof CreditPaymentReceiptHost> | null>(null)
+const historyReceipt = ref<CreditPaymentReceiptData | null>(null)
+
+const buildReceiptFromPayment = (row: CustomerCreditPaymentRow): CreditPaymentReceiptData => ({
+  customer_name: customer.value?.name || '',
+  payment_date: row.payment_date,
+  payment_method_label: resolveLabel(row.payment_method, row.payment_method_id),
+  total_amount: row.amount,
+  notes: row.notes?.trim() || undefined,
+  lines: [{
+    order_number: row.order_number,
+    order_id: row.order_id,
+    payment_id: row.payment_id,
+    amount: row.amount,
+    remaining_amount: row.remaining_amount_after,
+  }],
+})
+
+const openHistoryPanel = (row: CustomerCreditPaymentRow) => {
+  selectedHistoryPayment.value = row
+  showHistoryPanel.value = true
+}
+
+const closeHistoryPanel = () => {
+  showHistoryPanel.value = false
+  selectedHistoryPayment.value = null
+}
+
+const printHistoryPayment = async (row: CustomerCreditPaymentRow) => {
+  historyReceipt.value = buildReceiptFromPayment(row)
+  await nextTick()
+  await historyReceiptHostRef.value?.printReceipt()
+}
+
+const printHistoryFromPanel = async () => {
+  if (!selectedHistoryPayment.value) return
+  await printHistoryPayment(selectedHistoryPayment.value)
+}
+
+watch(activeSection, (section) => {
+  if (section === 'paymentHistory') creditPaymentsPage.value = 1
+})
+
 const showPaymentPanel = ref(false)
 const selectedOrder = ref<any>(null)
 const isGlobalPayment = ref(false)
@@ -510,6 +602,7 @@ const submitPayment = async () => {
     }
     showPaymentPanel.value = false
     await fetchCartera()
+    await refetchCreditPayments()
     paymentReceipt.value = {
       customer_name: customer.value?.name || '',
       payment_date: paymentDate,
@@ -747,33 +840,19 @@ onUnmounted(() => {
         <MetricCard size="compact" :title="t('analitica.clientes.avgTicket')" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
-      <!-- 1. Historial de pedidos (open by default) -->
-      <div class="bg-white border border-border rounded-xl overflow-hidden">
-        <button
-          type="button"
-          class="w-full px-5 py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-secondary/40 transition-colors"
-          :aria-expanded="ordersOpen ? 'true' : 'false'"
-          @click="ordersOpen = !ordersOpen"
-        >
-          <div class="min-w-0">
-            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
-              {{ t('analitica.customerDetail.history.title') }}
-              <span
-                v-if="totalOrders > 0"
-                class="ms-2 text-sm font-normal normal-case tracking-normal text-text-secondary"
-              >{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
-            </h3>
-          </div>
-            <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
-              :class="{ 'rotate-180': !ordersOpen }"
-              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-        </button>
-        <div v-show="ordersOpen" class="border-t border-border px-4 pb-3 pt-3 space-y-3">
+      <CustomerDetailSubNav v-model="activeSection" />
+
+      <div v-show="activeSection === 'orders'" class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+          <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
+            {{ t('analitica.customerDetail.history.title') }}
+            <span
+              v-if="totalOrders > 0"
+              class="ms-2 text-sm font-normal normal-case tracking-normal text-text-secondary"
+            >{{ t('analitica.customerDetail.history.total', { total: totalOrders }) }}</span>
+          </h3>
+        </div>
+        <div class="px-4 pb-3 pt-3 space-y-3">
       <!-- Date Filter -->
       <ClientOnly>
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
@@ -995,35 +1074,20 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 2. Cartera -->
-      <div class="bg-white border border-border rounded-xl overflow-hidden">
+      <!-- Cartera -->
+      <div v-show="activeSection === 'cartera'" class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
-          <button
-            type="button"
-            class="flex-1 min-w-0 flex items-center justify-between gap-3 text-start"
-            :aria-expanded="carteraOpen ? 'true' : 'false'"
-            @click="carteraOpen = !carteraOpen"
-          >
-            <div class="flex items-center gap-2 min-w-0">
-              <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div class="min-w-0">
-                <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
-                <p class="text-lg font-bold text-red-600 tabular-nums mt-0.5">
-                  {{ formatCurrency(carteraData?.summary?.total_outstanding || 0) }}
-                </p>
-              </div>
-            </div>
-            <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
-              :class="{ 'rotate-180': !carteraOpen }"
-              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </button>
+            <div class="min-w-0">
+              <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">{{ t('analitica.customerDetail.credit.title') }}</h3>
+              <p class="text-lg font-bold text-red-600 tabular-nums mt-0.5">
+                {{ formatCurrency(carteraData?.summary?.total_outstanding || 0) }}
+              </p>
+            </div>
+          </div>
           <button
             v-if="(carteraData?.summary?.total_outstanding || 0) > 0"
             type="button"
@@ -1034,7 +1098,7 @@ onUnmounted(() => {
             {{ t('analitica.customerDetail.credit.payAll') }}
           </button>
         </div>
-        <div v-show="carteraOpen">
+        <div>
           <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
             <div class="px-4 py-3">
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">{{ t('analitica.customerDetail.credit.orders') }}</p>
@@ -1174,32 +1238,121 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 3. Billetera COP movements -->
-      <div class="bg-white border border-border rounded-xl overflow-hidden">
-        <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
-          <button
-            type="button"
-            class="flex-1 min-w-0 flex items-center justify-between gap-3 text-start"
-            :aria-expanded="walletOpen ? 'true' : 'false'"
-            @click="walletOpen = !walletOpen"
-          >
-            <div class="min-w-0">
-              <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
-                {{ t('analitica.customerDetail.wallet.title') }}
-              </h3>
-              <p v-if="isLoadingWallet" class="text-sm text-text-secondary mt-0.5">{{ t('common.loading') }}</p>
-              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600 mt-0.5">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
-              <p v-else class="text-lg font-bold text-primary mt-0.5 tabular-nums">{{ formatCurrency(walletBalance) }}</p>
-            </div>
-            <svg
-              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
-              :class="{ 'rotate-180': !walletOpen }"
-              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-              aria-hidden="true"
+      <!-- Historial cartera -->
+      <div v-show="activeSection === 'paymentHistory'" class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+          <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
+            {{ t('analitica.customerDetail.subNav.paymentHistory') }}
+          </h3>
+        </div>
+        <div class="px-4 pb-3 pt-3 space-y-3">
+          <div v-if="isLoadingCreditPayments" class="flex items-center justify-center py-12">
+            <CommonsTheCustomLoader size="medium" />
+          </div>
+          <template v-else>
+            <UiResponsiveDataView
+              row-size="sm"
+              :columns="creditPaymentColumns"
+              :data="creditPayments"
+              :empty-message="t('analitica.customerDetail.paymentHistory.empty')"
+              variant="default"
+              @row-click="openHistoryPanel"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
+              <template #card="{ item }">
+                <button
+                  type="button"
+                  class="w-full p-4 border-b border-border text-left hover:bg-surface-secondary/40 transition-colors"
+                  @click="openHistoryPanel(item)"
+                >
+                  <div class="flex justify-between items-start gap-3">
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-text-primary">#{{ item.order_number }}</p>
+                      <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.payment_date) }}</p>
+                    </div>
+                    <span class="text-sm font-semibold text-primary tabular-nums flex-shrink-0">{{ formatCurrency(item.amount) }}</span>
+                  </div>
+                  <p class="text-xs text-text-secondary mt-2">{{ resolveLabel(item.payment_method, item.payment_method_id) }}</p>
+                </button>
+              </template>
+              <template #cell-payment_date="{ value }">
+                <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+              </template>
+              <template #cell-order_number="{ value }">
+                <span class="text-sm font-medium text-text-primary">#{{ value }}</span>
+              </template>
+              <template #cell-amount="{ value }">
+                <span class="text-sm font-semibold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+              </template>
+              <template #cell-payment_method="{ row }">
+                <span class="text-sm text-text-secondary">{{ resolveLabel(row.payment_method, row.payment_method_id) }}</span>
+              </template>
+              <template #cell-history_actions="{ row }">
+                <button
+                  type="button"
+                  class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+                  :aria-label="t('analitica.customerDetail.paymentHistory.printAria')"
+                  @click.stop="printHistoryPayment(row)"
+                >
+                  {{ t('analitica.customerDetail.paymentHistory.print') }}
+                </button>
+              </template>
+            </UiResponsiveDataView>
+            <div v-if="creditPaymentsTotal > 0" class="flex items-center justify-end px-1 py-2">
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  :disabled="creditPaymentsPage <= 1"
+                  @click="goToCreditPaymentsPage(1)"
+                  class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  :aria-label="t('ventas.common.primeraPagina')"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                </button>
+                <button
+                  type="button"
+                  :disabled="creditPaymentsPage <= 1"
+                  @click="goToCreditPaymentsPage(creditPaymentsPage - 1)"
+                  class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  :aria-label="t('ventas.common.paginaAnterior')"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ creditPaymentsPage }}</span>
+                <button
+                  type="button"
+                  :disabled="creditPaymentsPage >= creditPaymentsTotalPages"
+                  @click="goToCreditPaymentsPage(creditPaymentsPage + 1)"
+                  class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  :aria-label="t('ventas.common.paginaSiguiente')"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <button
+                  type="button"
+                  :disabled="creditPaymentsPage >= creditPaymentsTotalPages"
+                  @click="goToCreditPaymentsPage(creditPaymentsTotalPages)"
+                  class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  :aria-label="t('ventas.common.ultimaPagina')"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Billetera COP -->
+      <div v-show="activeSection === 'wallet'" class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
+          <div class="min-w-0">
+            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
+              {{ t('analitica.customerDetail.wallet.title') }}
+            </h3>
+            <p v-if="isLoadingWallet" class="text-sm text-text-secondary mt-0.5">{{ t('common.loading') }}</p>
+            <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600 mt-0.5">{{ t('analitica.customerDetail.wallet.loadError') }}</p>
+            <p v-else class="text-lg font-bold text-primary mt-0.5 tabular-nums">{{ formatCurrency(walletBalance) }}</p>
+          </div>
           <button
             type="button"
             :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
@@ -1209,7 +1362,7 @@ onUnmounted(() => {
             {{ t('analitica.customerDetail.wallet.recharge') }}
           </button>
         </div>
-        <div v-show="walletOpen">
+        <div>
         <UiResponsiveDataView
           v-if="!isLoadingWallet"
           row-size="sm"
@@ -1586,6 +1739,24 @@ onUnmounted(() => {
       :business-city="crmReceiptBusiness.city"
       :business-phone="crmReceiptBusiness.phone_number"
       @close="closePaymentSuccessPanel"
+    />
+
+    <CreditPaymentHistoryPanel
+      :open="showHistoryPanel"
+      :payment="selectedHistoryPayment"
+      :customer-name="customer?.name"
+      :method-label="selectedHistoryMethodLabel"
+      @close="closeHistoryPanel"
+      @print="printHistoryFromPanel"
+    />
+
+    <CreditPaymentReceiptHost
+      ref="historyReceiptHostRef"
+      :receipt="historyReceipt"
+      :business-name="crmReceiptBusiness.display_name"
+      :business-address="crmReceiptBusiness.address"
+      :business-city="crmReceiptBusiness.city"
+      :business-phone="crmReceiptBusiness.phone_number"
     />
 
     <!-- Invoice Slideover Panel -->
