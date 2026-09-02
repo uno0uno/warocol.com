@@ -72,7 +72,7 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     />
 
     <div class="receipt-plain-line">{{ strongDivider }}</div>
-    <div class="receipt-row receipt-small" style="font-weight:bold;">
+    <div class="receipt-row receipt-row--center receipt-small" style="font-weight:bold;">
       {{ documentLabel }}
     </div>
 
@@ -100,17 +100,17 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     <div class="receipt-plain-line">{{ strongDivider }}</div>
     <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
     <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
-    <div class="receipt-row receipt-small" style="font-weight:bold;">
+    <div class="receipt-footer receipt-small" style="font-weight:bold;">
       {{ t('pos.receipt.saleReceipt') }}
     </div>
-    <div class="receipt-row receipt-small">
+    <div class="receipt-footer receipt-small">
       {{ matiasDian
         ? t('pos.receipt.notDianInvoice')
         : t('pos.receipt.notElectronicInvoice') }}
     </div>
     <div
       v-if="fallbackIssuerLabel"
-      class="receipt-row receipt-small"
+      class="receipt-footer receipt-small"
     >
       {{ t('pos.receipt.seller', { label: fallbackIssuerLabel }) }}
     </div>
@@ -135,9 +135,13 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
 }
 
 .crm-staff-receipt-print-ticket.receipt-print-ticket .receipt-row {
-  text-align: center;
+  text-align: start;
   margin: 1px 0;
   overflow-wrap: anywhere;
+}
+
+.crm-staff-receipt-print-ticket.receipt-print-ticket .receipt-row--center {
+  text-align: center;
 }
 
 .crm-staff-receipt-print-ticket.receipt-print-ticket .receipt-plain-line,
@@ -216,7 +220,25 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     position: static !important;
     max-height: none !important;
     overflow: visible !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
+  }
+
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-plain-line,
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-plain-pre,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-plain-line,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-plain-pre,
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-row,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-row {
+    text-align: left !important;
+  }
+
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-row--center,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-row--center,
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-header,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-header,
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket .receipt-footer,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket .receipt-footer {
+    text-align: center !important;
   }
 
   @page {
