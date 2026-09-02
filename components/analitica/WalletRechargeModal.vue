@@ -142,6 +142,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { PosPaymentGroup } from '~/utils/paymentDefaults'
+import type { WalletRechargeReceiptData } from '~/components/crm/WalletRechargeSuccessPanel.vue'
 
 interface Props {
   modelValue: boolean
@@ -160,7 +161,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'recharged'): void
+  (e: 'recharged', payload: WalletRechargeReceiptData): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -168,9 +169,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 const emit = defineEmits<Emits>()
 
-const { show: showToast } = useToast()
 const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency, currencyCode } = useFormatters()
+const { resolveLabel } = usePaymentLabel(computed(() => props.paymentGroups))
 
 const open = computed({
   get: () => props.modelValue,
@@ -251,14 +252,21 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   const { slug, payment_method_id } = resolvePaymentSelection(paymentSelection.value)
   try {
-    await props.recharge(
+    const res = await props.recharge(
       amount.value,
       slug,
       notes.value.trim() || undefined,
       payment_method_id,
-    )
-    showToast(t('analitica.customerDetail.wallet.success'), 'success')
-    emit('recharged')
+    ) as { data?: { movement_id?: string; balance_cop?: number } }
+    emit('recharged', {
+      movement_id: String(res?.data?.movement_id || ''),
+      customer_name: props.customerName,
+      recharge_date: new Date().toISOString(),
+      payment_method_label: resolveLabel(slug, payment_method_id),
+      amount_cop: amount.value,
+      balance_after_cop: Number(res?.data?.balance_cop ?? 0),
+      notes: notes.value.trim() || undefined,
+    })
     close()
   } catch (e: any) {
     localError.value = e?.data?.detail || e?.message || t('analitica.customerDetail.wallet.error')

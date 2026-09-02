@@ -22,6 +22,11 @@ import CreditPaymentHistoryPanel, {
   type CustomerCreditPaymentRow,
 } from '~/components/crm/CreditPaymentHistoryPanel.vue';
 import CreditPaymentReceiptHost from '~/components/crm/CreditPaymentReceiptHost.vue';
+import WalletRechargeSuccessPanel, {
+  type WalletRechargeReceiptData,
+} from '~/components/crm/WalletRechargeSuccessPanel.vue';
+import WalletRechargeReceiptHost from '~/components/crm/WalletRechargeReceiptHost.vue';
+import type { WalletMovement } from '~/composables/useCustomerWallet';
 
 definePageMeta({ layout: 'dashboard', module: 'crm' })
 
@@ -234,6 +239,7 @@ const walletColumns = computed(() => [
   { key: 'created_at', title: t('analitica.common.date'), sortable: false },
   { key: 'amount_cop', title: t('analitica.customerDetail.wallet.colAmount'), sortable: false, align: 'right' as const },
   { key: 'balance_after_cop', title: t('analitica.customerDetail.wallet.colBalanceAfter'), sortable: false, align: 'right' as const },
+  { key: 'wallet_actions', title: '', sortable: false, align: 'right' as const },
 ])
 
 const creditPaymentColumns = computed(() => [
@@ -357,8 +363,37 @@ const walletPaymentGroups = computed(() => {
   )
 })
 
-const onWalletRecharged = async () => {
+const onWalletRecharged = async (receipt: WalletRechargeReceiptData) => {
+  walletReceipt.value = receipt
+  showWalletSuccessPanel.value = true
   await refetchWallet()
+}
+
+const showWalletSuccessPanel = ref(false)
+const walletReceipt = ref<WalletRechargeReceiptData | null>(null)
+const walletListReceiptHostRef = ref<InstanceType<typeof WalletRechargeReceiptHost> | null>(null)
+const walletListReceipt = ref<WalletRechargeReceiptData | null>(null)
+
+const buildWalletReceiptFromMovement = (movement: WalletMovement): WalletRechargeReceiptData => ({
+  movement_id: movement.id,
+  customer_name: customer.value?.name || '',
+  recharge_date: movement.created_at,
+  payment_method_label: resolveLabel(movement.payment_method || 'cash'),
+  amount_cop: Math.abs(movement.amount_cop),
+  balance_after_cop: movement.balance_after_cop,
+  notes: movement.notes?.trim() || undefined,
+})
+
+const printWalletMovement = async (movement: WalletMovement) => {
+  if (movement.movement_type !== 'receive') return
+  walletListReceipt.value = buildWalletReceiptFromMovement(movement)
+  await nextTick()
+  await walletListReceiptHostRef.value?.printReceipt()
+}
+
+const closeWalletSuccessPanel = () => {
+  showWalletSuccessPanel.value = false
+  walletReceipt.value = null
 }
 
 // Waros data comes from the main apiData response (no separate call)
@@ -1391,6 +1426,15 @@ onUnmounted(() => {
                 {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
                 {{ formatCurrency(item.balance_after_cop) }}
               </p>
+              <button
+                v-if="item.movement_type === 'receive'"
+                type="button"
+                class="mt-3 min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+                :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
+                @click="printWalletMovement(item)"
+              >
+                {{ t('analitica.customerDetail.wallet.receipt.print') }}
+              </button>
             </div>
           </template>
           <template #cell-movement_type="{ value }">
@@ -1411,6 +1455,17 @@ onUnmounted(() => {
           </template>
           <template #cell-balance_after_cop="{ value }">
             <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+          </template>
+          <template #cell-wallet_actions="{ row }">
+            <button
+              v-if="row.movement_type === 'receive'"
+              type="button"
+              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+              :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
+              @click.stop="printWalletMovement(row)"
+            >
+              {{ t('analitica.customerDetail.wallet.receipt.print') }}
+            </button>
           </template>
         </UiResponsiveDataView>
         <div v-if="walletTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
@@ -1479,6 +1534,27 @@ onUnmounted(() => {
       :recharge="recharge"
       :on-open="resetRecharge"
       @recharged="onWalletRecharged"
+    />
+
+    <WalletRechargeSuccessPanel
+      :open="showWalletSuccessPanel"
+      :receipt="walletReceipt"
+      :customer-id="customerId"
+      :default-email="realEmail"
+      :business-name="crmReceiptBusiness.display_name"
+      :business-address="crmReceiptBusiness.address"
+      :business-city="crmReceiptBusiness.city"
+      :business-phone="crmReceiptBusiness.phone_number"
+      @close="closeWalletSuccessPanel"
+    />
+
+    <WalletRechargeReceiptHost
+      ref="walletListReceiptHostRef"
+      :receipt="walletListReceipt"
+      :business-name="crmReceiptBusiness.display_name"
+      :business-address="crmReceiptBusiness.address"
+      :business-city="crmReceiptBusiness.city"
+      :business-phone="crmReceiptBusiness.phone_number"
     />
 
     <!-- Slide-over: asignaciones manuales -->
