@@ -559,6 +559,15 @@ const pendingOrderId = computed(() => {
   return typeof q === 'string' && q.length > 0 ? q : null
 })
 const isPendingDeliveryMode = computed(() => !!pendingOrderId.value)
+/** After pending delivery is paid/completed, freeze checkout shell errors until leave. */
+const pendingDeliveryPaidShell = ref(false)
+
+function clearPendingOrderQuery() {
+  if (!route.query.pendingOrder) return
+  const nextQuery = { ...route.query }
+  delete nextQuery.pendingOrder
+  void router.replace({ path: route.path, query: nextQuery })
+}
 
 type PendingDeliveryDetail = {
   id: string
@@ -1390,10 +1399,12 @@ function finalizePendingDeliverySuccess(
   lastSentEmail.value = ''
   emailFromProfile.value = false
   posStore.exitSession()
+  pendingDeliveryPaidShell.value = true
+  showSuccessModal.value = true
+  clearPendingOrderQuery()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
   cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
   splitMode.value = false
-  showSuccessModal.value = true
   document.body.classList.remove('printing-prefactura')
   prefacturaPrintSnapshot.value = null
 }
@@ -2503,7 +2514,9 @@ const finishWompiSale = async () => {
     cartItemsSnapshot.value = snapshotCartItemsForReceipt()
     applyReceiptEmailAfterSale(selectedCustomer.value)
     posStore.clearAll()
+    pendingDeliveryPaidShell.value = true
     showSuccessModal.value = true
+    clearPendingOrderQuery()
   } catch (error: any) {
     processingError.value = checkoutErrorMessage(error, 'El pago Wompi se aprobó, pero no se pudo cerrar la mesa')
   } finally {
@@ -2569,6 +2582,7 @@ const processWompiCollection = async () => {
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
           : {}),
       }
+      pendingDeliveryPaidShell.value = true
       cache.invalidateQueries({ key: ['tables', 'pending-deliveries'] })
       openWompiSlideover(response.data.order_id, Number(response.data.total_amount || amount), false)
       return
@@ -4138,6 +4152,9 @@ const syncCart = async () => {
 // isRefreshing: a refetch is in-flight while we already have data. Surfaced
 // in the layout header via registerProgressiveLoading — content stays visible.
 const isLoading = computed(() => {
+  if (showSuccessModal.value || pendingDeliveryPaidShell.value) {
+    return false
+  }
   if (isPendingDeliveryMode.value) {
     return pendingDeliveryStatus.value === 'pending' && !pendingDeliveryPayload.value
   }
@@ -4163,6 +4180,9 @@ const isRefreshing = computed(() => {
   return false
 })
 const checkoutError = computed(() => {
+  if (showSuccessModal.value || showWompiSlideover.value || pendingDeliveryPaidShell.value) {
+    return null
+  }
   if (isPendingDeliveryMode.value) return pendingDeliveryError.value
   return isKitchenServiceMode.value ? mesaCurrentError.value : null
 })
