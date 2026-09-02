@@ -1,15 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import CreditPaymentPrintTicket from '~/components/crm/CreditPaymentPrintTicket.vue'
+import CrmStaffReceiptPrintTicket from '~/components/crm/CrmStaffReceiptPrintTicket.vue'
 import type { CreditPaymentReceiptData } from '~/components/crm/CreditPaymentSuccessPanel.vue'
 import { useCreditPaymentReceiptPrint } from '~/composables/useCreditPaymentReceiptPrint'
+import type { PlatformLegalPrint } from '~/constants/waroLegalEntity'
+import { padReceiptLine, receiptDivider } from '~/utils/receiptTicketPlainText'
 
 const props = defineProps<{
   receipt: CreditPaymentReceiptData | null
-  businessName?: string | null
-  businessAddress?: string | null
-  businessCity?: string | null
-  businessPhone?: string | null
+  fiscalData?: {
+    business_name?: string | null
+    nit?: string | null
+    fiscal_address?: string | null
+    city?: string | null
+    phone?: string | null
+    email?: string | null
+  } | null
+  displayName?: string | null
+  address?: string | null
+  city?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  platformLegal?: PlatformLegalPrint | null
+  matiasDian?: boolean
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
@@ -27,20 +40,53 @@ const paymentDateLabel = computed(() => {
   }
 })
 
-const orderLinesForTicket = computed(() => {
-  if (!props.receipt?.lines.length) return undefined
-  return props.receipt.lines.map(line => ({
-    orderLabel: t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }),
-    paidLabel: t('analitica.customerDetail.credit.receipt.paid'),
-    paidValue: formatCurrency(line.amount),
-    remainingLabel: t('analitica.customerDetail.credit.remaining'),
-    remainingValue: formatCurrency(line.remaining_amount),
-  }))
+const receiptLines = computed(() => {
+  if (!props.receipt) return []
+  return [
+    {
+      label: t('analitica.customerDetail.credit.receipt.customer'),
+      value: props.receipt.customer_name,
+    },
+    {
+      label: t('analitica.common.date'),
+      value: paymentDateLabel.value,
+    },
+    {
+      label: t('analitica.customerDetail.paymentMethod'),
+      value: props.receipt.payment_method_label,
+    },
+  ]
 })
 
-const outstandingFormatted = computed(() => {
-  if (props.receipt?.total_outstanding_after == null) return undefined
-  return formatCurrency(props.receipt.total_outstanding_after)
+const extraPreBlocks = computed(() => {
+  if (!props.receipt) return []
+  const blocks: string[] = []
+  if (props.receipt.lines.length) {
+    blocks.push(receiptDivider())
+    for (const line of props.receipt.lines) {
+      blocks.push(t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }))
+      blocks.push(padReceiptLine(
+        t('analitica.customerDetail.credit.receipt.paid'),
+        formatCurrency(line.amount),
+      ))
+      blocks.push(padReceiptLine(
+        t('analitica.customerDetail.credit.remaining'),
+        formatCurrency(line.remaining_amount),
+      ))
+    }
+  }
+  blocks.push(receiptDivider())
+  blocks.push(padReceiptLine(
+    t('analitica.customerDetail.credit.receipt.totalPaid'),
+    formatCurrency(props.receipt.total_amount),
+  ))
+  if (props.receipt.total_outstanding_after != null) {
+    blocks.push(padReceiptLine(
+      t('analitica.customerDetail.credit.receipt.outstandingAfter'),
+      formatCurrency(props.receipt.total_outstanding_after),
+    ))
+  }
+  return blocks
 })
 
 const printReceipt = async (options?: { auto?: boolean }) => {
@@ -53,26 +99,22 @@ defineExpose({ printReceipt })
 
 <template>
   <Teleport to="body">
-    <CreditPaymentPrintTicket
+    <CrmStaffReceiptPrintTicket
       v-if="receipt"
-      :title="t('analitica.customerDetail.credit.receipt.ticketTitle')"
-      :business-name="businessName"
-      :business-address="businessAddress"
-      :business-city="businessCity"
-      :business-phone="businessPhone"
-      :customer-label="t('analitica.customerDetail.credit.receipt.customer')"
-      :customer-value="receipt.customer_name"
-      :date-label="t('analitica.common.date')"
-      :date-value="paymentDateLabel"
-      :method-label="t('analitica.customerDetail.paymentMethod')"
-      :method-value="receipt.payment_method_label"
-      :total-label="t('analitica.customerDetail.credit.receipt.totalPaid')"
-      :total-value="formatCurrency(receipt.total_amount)"
-      :outstanding-label="outstandingFormatted ? t('analitica.customerDetail.credit.receipt.outstandingAfter') : undefined"
-      :outstanding-value="outstandingFormatted"
+      ticket-id="credit-payment-print-ticket"
+      :document-label="t('analitica.customerDetail.credit.receipt.ticketTitle')"
+      :fiscal-data="fiscalData"
+      :display-name="displayName"
+      :address="address"
+      :city="city"
+      :phone="phone"
+      :logo-url="logoUrl"
+      :platform-legal="platformLegal"
+      :matias-dian="matiasDian"
+      :lines="receiptLines"
+      :extra-pre-blocks="extraPreBlocks"
       :notes-label="receipt.notes ? t('analitica.customerDetail.notes') : undefined"
       :notes-value="receipt.notes || undefined"
-      :order-lines="orderLinesForTicket"
     />
   </Teleport>
 </template>

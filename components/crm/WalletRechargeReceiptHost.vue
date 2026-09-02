@@ -1,15 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import WalletRechargePrintTicket from '~/components/crm/WalletRechargePrintTicket.vue'
+import CrmStaffReceiptPrintTicket from '~/components/crm/CrmStaffReceiptPrintTicket.vue'
 import type { WalletRechargeReceiptData } from '~/components/crm/WalletRechargeSuccessPanel.vue'
 import { useWalletRechargeReceiptPrint } from '~/composables/useWalletRechargeReceiptPrint'
+import type { PlatformLegalPrint } from '~/constants/waroLegalEntity'
+import { padReceiptLine, receiptDivider } from '~/utils/receiptTicketPlainText'
 
 const props = defineProps<{
   receipt: WalletRechargeReceiptData | null
-  businessName?: string | null
-  businessAddress?: string | null
-  businessCity?: string | null
-  businessPhone?: string | null
+  fiscalData?: {
+    business_name?: string | null
+    nit?: string | null
+    fiscal_address?: string | null
+    city?: string | null
+    phone?: string | null
+    email?: string | null
+  } | null
+  displayName?: string | null
+  address?: string | null
+  city?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  platformLegal?: PlatformLegalPrint | null
+  matiasDian?: boolean
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
@@ -27,6 +40,39 @@ const rechargeDateLabel = computed(() => {
   }
 })
 
+const receiptLines = computed(() => {
+  if (!props.receipt) return []
+  return [
+    {
+      label: t('analitica.customerDetail.wallet.receipt.customer'),
+      value: props.receipt.customer_name,
+    },
+    {
+      label: t('analitica.common.date'),
+      value: rechargeDateLabel.value,
+    },
+    {
+      label: t('analitica.customerDetail.paymentMethod'),
+      value: props.receipt.payment_method_label,
+    },
+  ]
+})
+
+const extraPreBlocks = computed(() => {
+  if (!props.receipt) return []
+  return [
+    receiptDivider(),
+    padReceiptLine(
+      t('analitica.customerDetail.wallet.receipt.amount'),
+      formatCurrency(props.receipt.amount_cop),
+    ),
+    padReceiptLine(
+      t('analitica.customerDetail.wallet.receipt.balanceAfter'),
+      formatCurrency(props.receipt.balance_after_cop),
+    ),
+  ]
+})
+
 const printReceipt = async (options?: { auto?: boolean }) => {
   if (!props.receipt) return
   await printWalletRechargeTicket(options)
@@ -37,23 +83,20 @@ defineExpose({ printReceipt })
 
 <template>
   <Teleport to="body">
-    <WalletRechargePrintTicket
+    <CrmStaffReceiptPrintTicket
       v-if="receipt"
-      :title="t('analitica.customerDetail.wallet.receipt.ticketTitle')"
-      :business-name="businessName"
-      :business-address="businessAddress"
-      :business-city="businessCity"
-      :business-phone="businessPhone"
-      :customer-label="t('analitica.customerDetail.wallet.receipt.customer')"
-      :customer-value="receipt.customer_name"
-      :date-label="t('analitica.common.date')"
-      :date-value="rechargeDateLabel"
-      :method-label="t('analitica.customerDetail.paymentMethod')"
-      :method-value="receipt.payment_method_label"
-      :amount-label="t('analitica.customerDetail.wallet.receipt.amount')"
-      :amount-value="formatCurrency(receipt.amount_cop)"
-      :balance-label="t('analitica.customerDetail.wallet.receipt.balanceAfter')"
-      :balance-value="formatCurrency(receipt.balance_after_cop)"
+      ticket-id="wallet-recharge-print-ticket"
+      :document-label="t('analitica.customerDetail.wallet.receipt.ticketTitle')"
+      :fiscal-data="fiscalData"
+      :display-name="displayName"
+      :address="address"
+      :city="city"
+      :phone="phone"
+      :logo-url="logoUrl"
+      :platform-legal="platformLegal"
+      :matias-dian="matiasDian"
+      :lines="receiptLines"
+      :extra-pre-blocks="extraPreBlocks"
       :notes-label="receipt.notes ? t('analitica.customerDetail.notes') : undefined"
       :notes-value="receipt.notes || undefined"
     />

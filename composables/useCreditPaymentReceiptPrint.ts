@@ -4,6 +4,14 @@ import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 const TICKET_ELEMENT_ID = 'credit-payment-print-ticket'
 
+function setActivePrintTicket(id: string) {
+  document.body.dataset.printTicket = id
+}
+
+function clearActivePrintTicket() {
+  delete document.body.dataset.printTicket
+}
+
 export function useCreditPaymentReceiptPrint() {
   const { t } = useI18n({ useScope: 'global' })
   const toast = useToast()
@@ -17,9 +25,11 @@ export function useCreditPaymentReceiptPrint() {
 
     if (options?.auto === false && typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
       document.body.classList.add('printing-receipt-ticket')
+    setActivePrintTicket(TICKET_ELEMENT_ID)
       await nextTick()
       const earlyCleanup = () => {
         document.body.classList.remove('printing-receipt-ticket')
+        clearActivePrintTicket()
         window.removeEventListener('afterprint', earlyCleanup)
       }
       window.addEventListener('afterprint', earlyCleanup)
@@ -29,9 +39,11 @@ export function useCreditPaymentReceiptPrint() {
     }
 
     document.body.classList.add('printing-receipt-ticket')
+    setActivePrintTicket(TICKET_ELEMENT_ID)
     await nextTick()
     const cleanup = () => {
       document.body.classList.remove('printing-receipt-ticket')
+      clearActivePrintTicket()
       window.removeEventListener('afterprint', cleanup)
     }
     const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
@@ -59,6 +71,7 @@ export function useCreditPaymentReceiptPrint() {
           onRetry: () => { void printCreditPaymentTicket() },
           onBrowserPrint: () => {
             document.body.classList.add('printing-receipt-ticket')
+            setActivePrintTicket(TICKET_ELEMENT_ID)
             window.addEventListener('afterprint', cleanup)
             window.setTimeout(cleanup, 1500)
             syncBrowserPrint()

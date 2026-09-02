@@ -53,14 +53,18 @@ const { data: restaurantContextData } = useQuery({
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const crmReceiptBusiness = computed(() => {
+const { isMatiasDian } = useTenantFinancialProfile()
+const { receiptLogoUrl } = useReceiptPrintSettings()
+const crmReceiptPrint = computed(() => {
   const ctx = restaurantContextData.value?.data
   const fiscal = ctx?.fiscal_data
   return {
-    display_name: ctx?.display_name ?? null,
+    fiscalData: fiscal ?? null,
+    displayName: ctx?.display_name ?? null,
     address: fiscal?.fiscal_address ?? null,
     city: fiscal?.city ?? null,
-    phone_number: fiscal?.phone ?? null,
+    phone: fiscal?.phone ?? null,
+    platformLegal: ctx?.platform_legal ?? null,
   }
 })
 const { resolveLabel } = usePaymentLabel(paymentGroups)
@@ -389,6 +393,7 @@ const printWalletMovement = async (movement: WalletMovement) => {
   walletListReceipt.value = buildWalletReceiptFromMovement(movement)
   await nextTick()
   await walletListReceiptHostRef.value?.printReceipt()
+  walletListReceipt.value = null
 }
 
 const closeWalletSuccessPanel = () => {
@@ -510,6 +515,7 @@ const printHistoryPayment = async (row: CustomerCreditPaymentRow) => {
   historyReceipt.value = buildReceiptFromPayment(row)
   await nextTick()
   await historyReceiptHostRef.value?.printReceipt()
+  historyReceipt.value = null
 }
 
 const printHistoryFromPanel = async () => {
@@ -1541,20 +1547,28 @@ onUnmounted(() => {
       :receipt="walletReceipt"
       :customer-id="customerId"
       :default-email="realEmail"
-      :business-name="crmReceiptBusiness.display_name"
-      :business-address="crmReceiptBusiness.address"
-      :business-city="crmReceiptBusiness.city"
-      :business-phone="crmReceiptBusiness.phone_number"
+      :fiscal-data="crmReceiptPrint.fiscalData"
+      :display-name="crmReceiptPrint.displayName"
+      :address="crmReceiptPrint.address"
+      :city="crmReceiptPrint.city"
+      :phone="crmReceiptPrint.phone"
+      :logo-url="receiptLogoUrl"
+      :platform-legal="crmReceiptPrint.platformLegal"
+      :matias-dian="isMatiasDian"
       @close="closeWalletSuccessPanel"
     />
 
     <WalletRechargeReceiptHost
       ref="walletListReceiptHostRef"
       :receipt="walletListReceipt"
-      :business-name="crmReceiptBusiness.display_name"
-      :business-address="crmReceiptBusiness.address"
-      :business-city="crmReceiptBusiness.city"
-      :business-phone="crmReceiptBusiness.phone_number"
+      :fiscal-data="crmReceiptPrint.fiscalData"
+      :display-name="crmReceiptPrint.displayName"
+      :address="crmReceiptPrint.address"
+      :city="crmReceiptPrint.city"
+      :phone="crmReceiptPrint.phone"
+      :logo-url="receiptLogoUrl"
+      :platform-legal="crmReceiptPrint.platformLegal"
+      :matias-dian="isMatiasDian"
     />
 
     <!-- Slide-over: asignaciones manuales -->
@@ -1810,10 +1824,14 @@ onUnmounted(() => {
       :open="showPaymentSuccessPanel"
       :receipt="paymentReceipt"
       :default-email="realEmail"
-      :business-name="crmReceiptBusiness.display_name"
-      :business-address="crmReceiptBusiness.address"
-      :business-city="crmReceiptBusiness.city"
-      :business-phone="crmReceiptBusiness.phone_number"
+      :fiscal-data="crmReceiptPrint.fiscalData"
+      :display-name="crmReceiptPrint.displayName"
+      :address="crmReceiptPrint.address"
+      :city="crmReceiptPrint.city"
+      :phone="crmReceiptPrint.phone"
+      :logo-url="receiptLogoUrl"
+      :platform-legal="crmReceiptPrint.platformLegal"
+      :matias-dian="isMatiasDian"
       @close="closePaymentSuccessPanel"
     />
 
@@ -1829,10 +1847,14 @@ onUnmounted(() => {
     <CreditPaymentReceiptHost
       ref="historyReceiptHostRef"
       :receipt="historyReceipt"
-      :business-name="crmReceiptBusiness.display_name"
-      :business-address="crmReceiptBusiness.address"
-      :business-city="crmReceiptBusiness.city"
-      :business-phone="crmReceiptBusiness.phone_number"
+      :fiscal-data="crmReceiptPrint.fiscalData"
+      :display-name="crmReceiptPrint.displayName"
+      :address="crmReceiptPrint.address"
+      :city="crmReceiptPrint.city"
+      :phone="crmReceiptPrint.phone"
+      :logo-url="receiptLogoUrl"
+      :platform-legal="crmReceiptPrint.platformLegal"
+      :matias-dian="isMatiasDian"
     />
 
     <!-- Invoice Slideover Panel -->
