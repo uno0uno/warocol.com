@@ -4972,10 +4972,15 @@ onUnmounted(() => {
               {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary text-sm leading-tight truncate">
-                {{ selectedCustomer?.name || 'Cliente' }}
+              <p class="font-bold text-text-primary text-sm leading-tight truncate">
+                {{ t('pos.checkout.customerData') }}
               </p>
-              <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
+              <p class="text-xs text-text-secondary leading-tight mt-0.5 truncate">
+                {{ selectedCustomer?.name || t('pos.checkout.customerNoData') }}
+                <template v-if="selectedCustomer?.phone_number">
+                  · {{ selectedCustomer.phone_number }}
+                </template>
+              </p>
             </div>
             <svg
               class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
@@ -5377,10 +5382,15 @@ onUnmounted(() => {
             {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-text-primary text-sm leading-tight truncate">
-              {{ selectedCustomer?.name || 'Cliente' }}
+            <p class="font-bold text-text-primary text-sm leading-tight truncate">
+              {{ t('pos.checkout.customerData') }}
             </p>
-            <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
+            <p class="text-xs text-text-secondary leading-tight mt-0.5 truncate">
+              {{ selectedCustomer?.name || t('pos.checkout.customerNoData') }}
+              <template v-if="selectedCustomer?.phone_number">
+                · {{ selectedCustomer.phone_number }}
+              </template>
+            </p>
           </div>
           <svg
             class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"

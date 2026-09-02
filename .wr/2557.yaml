@@ -1,0 +1,37 @@
+issue: 2557
+title: "fix(pos): label checkout insights accordion as customer data, not bare name"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2557-checkout-insights-label
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Insights accordion primary label is section title (customerData), not bare name
+  - Name/phone remain as secondary subtitle
+  - Desktop and mobile triggers updated; insights body unchanged
+  - Left-column customer block unchanged
+  - Reuse existing pos.checkout.customerData / customerNoData i18n
+
+out_of_scope:
+  - API insights
+  - Payment methods / order summary
+  - Barra & domicilios manuales copy (separate local WIP)
+
+hints:
+  entry: "checkout.vue ACCORDION 1 Customer Insights triggers (desktop ~4961, mobile ~5367)"
+  pattern: "pos.checkout.summary.title section pattern"
+  tests: "none — UI copy only; no front unit test target"
+
+risk:
+  sensitive: false
+  areas: [pos-ui]
+
+skip:
+  audits: [ux]
+
+next:
+  after_pr: "/wr-review"
