@@ -22,18 +22,17 @@ const props = defineProps<{
   phone?: string | null
   logoUrl?: string | null
   platformLegal?: PlatformLegalPrint | null
-  matiasDian?: boolean
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
-const { formatCurrency, formatTenantDate } = useFormatters()
+const { formatCurrency, formatDateTime } = useFormatters()
 const { printWalletRechargeTicket } = useWalletRechargeReceiptPrint()
 
 const rechargeDateLabel = computed(() => {
   const raw = props.receipt?.recharge_date
   if (!raw) return ''
   try {
-    return formatTenantDate(raw)
+    return formatDateTime(raw)
   }
   catch {
     return raw
@@ -48,7 +47,7 @@ const receiptLines = computed(() => {
       value: props.receipt.customer_name,
     },
     {
-      label: t('analitica.common.date'),
+      label: t('analitica.customerDetail.wallet.receipt.ticketDateTime'),
       value: rechargeDateLabel.value,
     },
     {
@@ -86,7 +85,11 @@ defineExpose({ printReceipt })
     <CrmStaffReceiptPrintTicket
       v-if="receipt"
       ticket-id="wallet-recharge-print-ticket"
+      document-kind="crm-wallet"
       :document-label="t('analitica.customerDetail.wallet.receipt.ticketTitle')"
+      :header-role-label="t('analitica.customerDetail.wallet.receipt.establishmentRole')"
+      :footer-banner="t('analitica.customerDetail.wallet.receipt.ticketFooterBanner')"
+      :footer-note="t('analitica.customerDetail.wallet.receipt.ticketFooterNote')"
       :fiscal-data="fiscalData"
       :display-name="displayName"
       :address="address"
@@ -94,7 +97,6 @@ defineExpose({ printReceipt })
       :phone="phone"
       :logo-url="logoUrl"
       :platform-legal="platformLegal"
-      :matias-dian="matiasDian"
       :lines="receiptLines"
       :extra-pre-blocks="extraPreBlocks"
       :notes-label="receipt.notes ? t('analitica.customerDetail.notes') : undefined"

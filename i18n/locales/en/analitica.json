@@ -391,7 +391,12 @@
           "sentTo": "Sent to {email}",
           "sendAnother": "You can send to another email.",
           "emailError": "Could not send email",
-          "ticketTitle": "WALLET RECHARGE RECEIPT",
+          "ticketTitle": "COP WALLET RECHARGE",
+          "ticketDateTime": "Date and time",
+          "establishmentRole": "Establishment",
+          "ticketFooterBanner": "COP WALLET RECHARGE",
+          "ticketFooterNote": "COP wallet balance recharge receipt. Not a sales invoice or tax document.",
+          "ticketEstablishmentFooter": "Establishment wallet recharge receipt",
           "customer": "Customer"
         }
       },
@@ -441,7 +446,12 @@
           "sentTo": "Sent to {email}",
           "sendAnother": "You can send to another email.",
           "emailError": "Could not send email",
-          "ticketTitle": "CREDIT PAYMENT RECEIPT",
+          "ticketTitle": "CREDIT BALANCE PAYMENT",
+          "ticketDateTime": "Date and time",
+          "establishmentRole": "Establishment",
+          "ticketFooterBanner": "CREDIT BALANCE PAYMENT",
+          "ticketFooterNote": "Customer credit balance payment receipt. Not a sales invoice or tax document.",
+          "ticketEstablishmentFooter": "Establishment credit payment receipt",
           "customer": "Customer"
         }
       },
