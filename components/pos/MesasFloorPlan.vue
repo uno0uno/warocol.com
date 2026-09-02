@@ -5,9 +5,9 @@ import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
-  shellHeaderToolBadgeClass,
   shellHeaderToolButtonClass,
   shellHeaderToolButtonActiveClass,
+  shellHeaderToolTextButtonClass,
 } from '~/utils/shellHeaderToolClasses'
 
 const { formatCurrency, formatDateTime } = useFormatters()
@@ -26,7 +26,7 @@ const emit = defineEmits<{
   (e: 'move-table', ctx: { tableId: string; sessionId: string; tableName: string }): void
 }>()
 
-type FloorView = 'mesas' | 'domicilios'
+type FloorView = 'mesas' | 'barra' | 'domicilios'
 type FloorLayout = 'grid' | 'list'
 
 interface PendingDeliveryRow {
@@ -66,9 +66,9 @@ const floorLayoutToggleTarget = computed<FloorLayout>(() =>
 const toggleFloorLayout = () => {
   floorLayout.value = floorLayoutToggleTarget.value
 }
-const toggleDeliveriesView = (event: MouseEvent) => {
-  floorView.value = floorView.value === 'domicilios' ? 'mesas' : 'domicilios'
-  ;(event.currentTarget as HTMLButtonElement).blur()
+
+const setFloorView = (view: FloorView) => {
+  floorView.value = view
 }
 
 const {
@@ -269,10 +269,51 @@ const deliveryListColumns = computed(() => [
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
 const regularTables = computed(() => tables.value.filter((t: any) => !t.is_bar))
 
-// When data loads and there are 0 *regular* tables, tell the parent to fall back to POS view.
-// The bar alone does not count as a configured table for this purpose.
+type FloorTab = { id: FloorView; label: string; badge?: number }
+
+const hasMesas = computed(() => regularTables.value.length > 0)
+
+const floorTabs = computed((): FloorTab[] => {
+  const deliveriesTab: FloorTab = {
+    id: 'domicilios',
+    label: t('pos.floor.viewDeliveries'),
+    badge: pendingDeliveries.value.length || undefined,
+  }
+  if (hasMesas.value) {
+    return [
+      { id: 'mesas', label: t('pos.floor.viewTables') },
+      deliveriesTab,
+    ]
+  }
+  if (barTable.value) {
+    return [
+      { id: 'barra', label: t('pos.floor.bar') },
+      deliveriesTab,
+    ]
+  }
+  return [
+    { id: 'mesas', label: t('pos.floor.viewTables') },
+    deliveriesTab,
+  ]
+})
+
+const showBarEntryCard = computed(
+  () => !!barTable.value && (floorView.value === 'mesas' || floorView.value === 'barra'),
+)
+
+// When data loads and there are 0 *regular* tables and no bar, tell the parent to fall back to POS view.
 watch(tablesStatus, (status) => {
-  if (status === 'success' && regularTables.value.length === 0) emit('no-tables')
+  if (status === 'success' && regularTables.value.length === 0 && !barTable.value) {
+    emit('no-tables')
+  }
+}, { immediate: true })
+
+watch(hasMesas, (has) => {
+  if (!has && barTable.value && floorView.value === 'mesas') {
+    floorView.value = 'barra'
+  } else if (has && floorView.value === 'barra') {
+    floorView.value = 'mesas'
+  }
 }, { immediate: true })
 
 watch(() => currentTenant.value?.id, () => { refetch() })
@@ -418,41 +459,41 @@ const tableStatusTheme = (status: string) => {
 
   if (status === 'open') {
     return {
-      card: 'border-2 border-border/50 hover:border-status-success-text hover:shadow-sm',
+      card: 'border border-border/60 hover:border-border hover:shadow-sm',
       bodyPanel: 'table-card-body table-card-body--open',
       footerPanel: 'table-card-footer table-card-footer--open',
-      focus: 'focus-visible:ring-status-success-text/30 focus-visible:ring-offset-surface',
+      focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
       panel,
-      divider: 'border-border/50',
-      statusLabel: 'text-status-success-text',
-      dot: 'bg-status-success-text',
+      divider: 'border-border/40',
+      statusLabel: 'text-text-secondary',
+      dot: 'bg-status-success-text/55',
       moveHover,
       ...text,
     }
   }
   if (status === 'bill_requested') {
     return {
-      card: 'border-2 border-border/50 hover:border-status-warning-text hover:shadow-sm',
+      card: 'border border-border/60 hover:border-border hover:shadow-sm',
       bodyPanel: 'table-card-body table-card-body--bill',
       footerPanel: 'table-card-footer table-card-footer--bill',
-      focus: 'focus-visible:ring-status-warning-text/30 focus-visible:ring-offset-surface',
+      focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
       panel,
-      divider: 'border-border/50',
-      statusLabel: 'text-status-warning-text',
-      dot: 'bg-status-warning-text',
+      divider: 'border-border/40',
+      statusLabel: 'text-text-secondary',
+      dot: 'bg-status-warning-text/55',
       moveHover,
       ...text,
     }
   }
   return {
-    card: 'border-2 border-border/50 hover:border-status-info-text hover:shadow-sm',
+    card: 'border border-border/60 hover:border-border hover:shadow-sm',
     bodyPanel: 'table-card-body table-card-body--free',
     footerPanel: 'table-card-footer table-card-footer--free',
-    focus: 'focus-visible:ring-status-info-text/30 focus-visible:ring-offset-surface',
+    focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
     panel,
-    divider: 'border-border/50',
-    statusLabel: 'text-status-info-text',
-    dot: 'bg-status-info-text',
+    divider: 'border-border/40',
+    statusLabel: 'text-text-tertiary',
+    dot: 'bg-status-info-text/45',
     moveHover,
     ...text,
   }
@@ -597,7 +638,7 @@ onUnmounted(() => {
     <ClientOnly>
       <Teleport to="#dashboard-header-pos-tools">
         <button
-          v-if="floorView !== 'domicilios'"
+          v-if="floorView === 'mesas'"
           type="button"
           :class="shellHeaderToolButtonClass"
           :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
@@ -635,33 +676,6 @@ onUnmounted(() => {
             </Transition>
           </span>
         </button>
-        <button
-          type="button"
-          :class="[shellHeaderToolButtonClass, floorView === 'domicilios' ? shellHeaderToolButtonActiveClass : '']"
-          :aria-label="t('pos.floor.viewDeliveriesAria', { count: pendingDeliveries.length })"
-          :title="t('pos.floor.viewDeliveries')"
-          :aria-pressed="floorView === 'domicilios'"
-          @click="toggleDeliveriesView"
-        >
-          <svg
-            :class="['h-4 w-4 shrink-0', pendingDeliveries.length ? 'text-primary' : '']"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.75"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-          </svg>
-          <span
-            v-if="pendingDeliveries.length"
-            :class="shellHeaderToolBadgeClass"
-          >
-            {{ pendingDeliveries.length > 9 ? '9+' : pendingDeliveries.length }}
-          </span>
-        </button>
       </Teleport>
     </ClientOnly>
 
@@ -675,30 +689,55 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
+      <div
+        v-if="floorTabs.length > 1"
+        class="mb-4 flex flex-wrap items-center gap-2"
+        role="tablist"
+        :aria-label="t('pos.floor.mainPlan')"
+      >
+        <button
+          v-for="tab in floorTabs"
+          :key="tab.id"
+          type="button"
+          role="tab"
+          :class="[
+            shellHeaderToolTextButtonClass,
+            floorView === tab.id ? shellHeaderToolButtonActiveClass : '',
+          ]"
+          :aria-selected="floorView === tab.id"
+          @click="setFloorView(tab.id)"
+        >
+          <span>{{ tab.label }}</span>
+          <span
+            v-if="tab.badge"
+            class="inline-flex min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-shell-action-hover-bg text-[10px] font-bold tabular-nums leading-none"
+          >
+            {{ tab.badge > 9 ? '9+' : tab.badge }}
+          </span>
+        </button>
+      </div>
+
       <button
-        v-if="barTable"
-        class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        v-if="showBarEntryCard"
+        class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-border bg-surface shadow-sm text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-border/50 focus-visible:ring-offset-2 hover:bg-surface-secondary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         :disabled="isEnteringBar"
-        :aria-label="t('pos.floor.barAlwaysOpenAria')"
+        :aria-label="t('pos.floor.barEnterAria')"
         @click="handleBarClick"
       >
-        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-status-warning-text/12 border border-status-warning-text/30">
-          <svg class="w-6 h-6 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-surface-secondary border border-border/70 text-text-secondary">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
           </svg>
         </div>
         <div class="flex-1 min-w-0 text-start">
-          <div class="flex items-center gap-2">
-            <span class="text-base font-black uppercase tracking-wide">{{ t('pos.floor.bar') }}</span>
-            <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">{{ t('pos.floor.alwaysOpen') }}</span>
-          </div>
-          <p class="text-xs opacity-90 mt-0.5 tabular-nums">
+          <p class="text-base font-semibold">{{ t('pos.floor.bar') }}</p>
+          <p class="text-xs text-text-secondary mt-0.5 tabular-nums">
             <template v-if="barTable.session?.running_total > 0">
               {{ t('pos.floor.accumulated', { amount: formatCurrency(barTable.session.running_total) }) }} ·
               {{ formatDuration(barTable.session.opened_at) }}
             </template>
             <template v-else>
-              {{ t('pos.floor.noActiveConsumption') }}
+              {{ t('pos.banner.barHintDirect') }}
             </template>
           </p>
         </div>
@@ -707,7 +746,7 @@ onUnmounted(() => {
         </svg>
       </button>
 
-      <Transition name="pos-floor-view" mode="out-in">
+      <Transition v-if="floorView !== 'barra'" name="pos-floor-view" mode="out-in">
       <div v-if="floorView === 'domicilios'" key="domicilios">
         <div v-if="loadingPendingDeliveries" class="flex items-center justify-center min-h-[40vh]">
           <CommonsTheCustomLoader size="large" />
@@ -743,7 +782,7 @@ onUnmounted(() => {
             >
               <div class="flex items-center justify-between gap-2">
                 <p class="min-w-0 truncate text-sm font-semibold text-text-primary">
-                  <span class="text-primary tabular-nums">#{{ item.order_number }}</span>
+                  <span class="text-text-primary tabular-nums">#{{ item.order_number }}</span>
                   <span class="text-text-secondary font-normal"> · {{ item.customer?.name || t('pos.floor.unknownCustomer') }}</span>
                 </p>
                 <span class="text-sm font-semibold tabular-nums">{{ formatCurrency(item.total_amount) }}</span>
@@ -759,7 +798,7 @@ onUnmounted(() => {
             </button>
           </template>
           <template #cell-order_number="{ item }">
-            <span class="font-semibold tabular-nums text-primary">#{{ item.order_number }}</span>
+            <span class="font-semibold tabular-nums text-text-primary">#{{ item.order_number }}</span>
           </template>
           <template #cell-order_date="{ item }">
             <span v-if="item.order_date" class="tabular-nums text-text-secondary whitespace-nowrap">{{ formatDateTime(item.order_date) }}</span>
@@ -1027,27 +1066,27 @@ onUnmounted(() => {
 
 /* status-bg tokens are too faint + Tailwind /opacity doesn't apply to var() colors */
 .table-card-body--free {
-  background-color: color-mix(in oklch, var(--status-info-text) 9%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-info-text) 5%, hsl(var(--surface)));
 }
 
 .table-card-footer--free {
-  background-color: color-mix(in oklch, var(--status-info-text) 20%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-info-text) 10%, hsl(var(--surface)));
 }
 
 .table-card-body--open {
-  background-color: color-mix(in oklch, var(--status-success-text) 9%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-success-text) 5%, hsl(var(--surface)));
 }
 
 .table-card-footer--open {
-  background-color: color-mix(in oklch, var(--status-success-text) 20%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-success-text) 10%, hsl(var(--surface)));
 }
 
 .table-card-body--bill {
-  background-color: color-mix(in oklch, var(--status-warning-text) 10%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-warning-text) 6%, hsl(var(--surface)));
 }
 
 .table-card-footer--bill {
-  background-color: color-mix(in oklch, var(--status-warning-text) 22%, hsl(var(--surface)));
+  background-color: color-mix(in oklch, var(--status-warning-text) 12%, hsl(var(--surface)));
 }
 
 .list-meta-chip {
@@ -1061,21 +1100,21 @@ onUnmounted(() => {
 }
 
 .list-status-chip--free {
-  background-color: color-mix(in oklch, var(--status-info-text) 8%, hsl(var(--surface)));
-  border-color: color-mix(in oklch, var(--status-info-text) 14%, transparent);
-  color: color-mix(in oklch, var(--status-info-text) 65%, hsl(var(--text-secondary)));
+  background-color: color-mix(in oklch, var(--status-info-text) 5%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-info-text) 10%, transparent);
+  color: color-mix(in oklch, var(--status-info-text) 45%, hsl(var(--text-secondary)));
 }
 
 .list-status-chip--open {
-  background-color: color-mix(in oklch, var(--status-success-text) 8%, hsl(var(--surface)));
-  border-color: color-mix(in oklch, var(--status-success-text) 14%, transparent);
-  color: color-mix(in oklch, var(--status-success-text) 65%, hsl(var(--text-secondary)));
+  background-color: color-mix(in oklch, var(--status-success-text) 5%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-success-text) 10%, transparent);
+  color: color-mix(in oklch, var(--status-success-text) 45%, hsl(var(--text-secondary)));
 }
 
 .list-status-chip--bill {
-  background-color: color-mix(in oklch, var(--status-warning-text) 9%, hsl(var(--surface)));
-  border-color: color-mix(in oklch, var(--status-warning-text) 14%, transparent);
-  color: color-mix(in oklch, var(--status-warning-text) 65%, hsl(var(--text-secondary)));
+  background-color: color-mix(in oklch, var(--status-warning-text) 6%, hsl(var(--surface)));
+  border-color: color-mix(in oklch, var(--status-warning-text) 10%, transparent);
+  color: color-mix(in oklch, var(--status-warning-text) 45%, hsl(var(--text-secondary)));
 }
 
 .pos-layout-icon-enter-active,
@@ -1098,7 +1137,7 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: no-preference) {
   .pos-floor-view-enter-active,
   .pos-floor-view-leave-active {
-    transition: opacity 0.2s ease;
+    transition: opacity 0.14s ease;
   }
 
   .pos-floor-view-enter-from,
@@ -1108,7 +1147,7 @@ onUnmounted(() => {
 
   .pos-floor-layout-enter-active,
   .pos-floor-layout-leave-active {
-    transition: opacity 0.16s ease;
+    transition: opacity 0.12s ease;
   }
 
   .pos-floor-layout-enter-from,
@@ -1118,52 +1157,52 @@ onUnmounted(() => {
 
   .pos-floor-list :deep(thead th),
   .pos-floor-list :deep(tbody td) {
-    animation: pos-floor-col-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pos-floor-col-in 0.2s ease-out both;
   }
 
   .pos-floor-list :deep(th:nth-child(1)),
   .pos-floor-list :deep(td:nth-child(1)) { animation-delay: 0ms; }
   .pos-floor-list :deep(th:nth-child(2)),
-  .pos-floor-list :deep(td:nth-child(2)) { animation-delay: 28ms; }
+  .pos-floor-list :deep(td:nth-child(2)) { animation-delay: 12ms; }
   .pos-floor-list :deep(th:nth-child(3)),
-  .pos-floor-list :deep(td:nth-child(3)) { animation-delay: 56ms; }
+  .pos-floor-list :deep(td:nth-child(3)) { animation-delay: 24ms; }
   .pos-floor-list :deep(th:nth-child(4)),
-  .pos-floor-list :deep(td:nth-child(4)) { animation-delay: 84ms; }
+  .pos-floor-list :deep(td:nth-child(4)) { animation-delay: 36ms; }
   .pos-floor-list :deep(th:nth-child(5)),
-  .pos-floor-list :deep(td:nth-child(5)) { animation-delay: 112ms; }
+  .pos-floor-list :deep(td:nth-child(5)) { animation-delay: 48ms; }
   .pos-floor-list :deep(th:nth-child(6)),
-  .pos-floor-list :deep(td:nth-child(6)) { animation-delay: 140ms; }
+  .pos-floor-list :deep(td:nth-child(6)) { animation-delay: 60ms; }
   .pos-floor-list :deep(th:nth-child(7)),
-  .pos-floor-list :deep(td:nth-child(7)) { animation-delay: 168ms; }
+  .pos-floor-list :deep(td:nth-child(7)) { animation-delay: 72ms; }
   .pos-floor-list :deep(th:nth-child(8)),
-  .pos-floor-list :deep(td:nth-child(8)) { animation-delay: 196ms; }
+  .pos-floor-list :deep(td:nth-child(8)) { animation-delay: 84ms; }
   .pos-floor-list :deep(th:nth-child(9)),
-  .pos-floor-list :deep(td:nth-child(9)) { animation-delay: 224ms; }
+  .pos-floor-list :deep(td:nth-child(9)) { animation-delay: 96ms; }
   .pos-floor-list :deep(th:nth-child(10)),
-  .pos-floor-list :deep(td:nth-child(10)) { animation-delay: 252ms; }
+  .pos-floor-list :deep(td:nth-child(10)) { animation-delay: 108ms; }
 
   .pos-floor-grid > * {
-    animation: pos-floor-col-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pos-floor-col-in 0.18s ease-out both;
   }
 
   .pos-floor-grid > *:nth-child(1) { animation-delay: 0ms; }
-  .pos-floor-grid > *:nth-child(2) { animation-delay: 24ms; }
-  .pos-floor-grid > *:nth-child(3) { animation-delay: 48ms; }
-  .pos-floor-grid > *:nth-child(4) { animation-delay: 72ms; }
-  .pos-floor-grid > *:nth-child(5) { animation-delay: 96ms; }
-  .pos-floor-grid > *:nth-child(6) { animation-delay: 120ms; }
-  .pos-floor-grid > *:nth-child(7) { animation-delay: 144ms; }
-  .pos-floor-grid > *:nth-child(8) { animation-delay: 168ms; }
-  .pos-floor-grid > *:nth-child(n + 9) { animation-delay: 180ms; }
+  .pos-floor-grid > *:nth-child(2) { animation-delay: 10ms; }
+  .pos-floor-grid > *:nth-child(3) { animation-delay: 20ms; }
+  .pos-floor-grid > *:nth-child(4) { animation-delay: 30ms; }
+  .pos-floor-grid > *:nth-child(5) { animation-delay: 40ms; }
+  .pos-floor-grid > *:nth-child(6) { animation-delay: 50ms; }
+  .pos-floor-grid > *:nth-child(7) { animation-delay: 60ms; }
+  .pos-floor-grid > *:nth-child(8) { animation-delay: 70ms; }
+  .pos-floor-grid > *:nth-child(n + 9) { animation-delay: 80ms; }
 
   @keyframes pos-floor-col-in {
     from {
-      opacity: 0;
-      transform: translateX(-10px);
+      opacity: 0.88;
+      transform: translateY(3px);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateY(0);
     }
   }
 }

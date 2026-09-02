@@ -7,6 +7,14 @@ export const shellHeaderToolButtonClass = [
   'transition-colors',
 ].join(' ')
 
+/** Header-style text chip (POS nav, floor Mesas/Domicilios tabs). */
+export const shellHeaderToolTextButtonClass = [
+  'relative inline-flex flex-shrink-0 items-center justify-center gap-1.5 h-9 px-3 rounded-lg border text-sm font-medium transition-colors',
+  'border-shell-action-border bg-shell-action-bg text-shell-action-text',
+  'hover:bg-shell-action-hover-bg',
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-shell-action-focus-ring',
+].join(' ')
+
 /** Selected toggle — same border as default, hover tint as persistent background (no primary ring). */
 export const shellHeaderToolButtonActiveClass = [
   'border-shell-action-border bg-shell-action-hover-bg',
