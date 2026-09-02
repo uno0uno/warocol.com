@@ -398,7 +398,30 @@
         "notesPlaceholder": "Ej: Pago parcial acordado...",
         "confirmPayment": "Confirmar pago",
         "paymentError": "Error al registrar el pago",
-        "noDueDate": "Sin fecha"
+        "noDueDate": "Sin fecha",
+        "receipt": {
+          "successTitle": "Pago registrado",
+          "successBody": "El abono se aplicó correctamente. Puedes imprimir el comprobante o enviarlo por correo.",
+          "close": "Cerrar",
+          "totalPaid": "Total abonado",
+          "outstandingAfter": "Cartera pendiente",
+          "ordersApplied": "Órdenes aplicadas",
+          "orderLine": "Orden #{order}",
+          "paid": "Abonado",
+          "print": "Imprimir comprobante",
+          "sendByEmail": "Enviar por correo",
+          "done": "Listo",
+          "emailHint": "Envía el comprobante al correo del cliente o a otro destinatario.",
+          "emailLabel": "Correo electrónico",
+          "emailPlaceholder": "cliente@ejemplo.com",
+          "send": "Enviar",
+          "sending": "Enviando…",
+          "sentTo": "Enviado a {email}",
+          "sendAnother": "Puedes enviar a otro correo.",
+          "emailError": "No se pudo enviar el correo",
+          "ticketTitle": "COMPROBANTE DE ABONO",
+          "customer": "Cliente"
+        }
       },
       "history": {
         "title": "Historial de pedidos",
