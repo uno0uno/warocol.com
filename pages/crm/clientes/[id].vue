@@ -657,7 +657,7 @@ const submitPayment = async () => {
     showPaymentSuccessPanel.value = true
     await refetch()
   } catch (err: any) {
-    paymentError.value = err?.data?.detail || t('analitica.customerDetail.credit.paymentError')
+    paymentError.value = err?.data?.message || err?.data?.detail || t('analitica.customerDetail.credit.paymentError')
   } finally {
     isSubmittingPayment.value = false
   }

@@ -4986,22 +4986,9 @@ onUnmounted(() => {
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-            :class="checkoutAccordionTriggerClass"
+            :class="[checkoutAccordionTriggerClass, 'justify-between']"
           >
-            <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
-              {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-bold text-text-primary text-sm leading-tight truncate">
-                {{ t('pos.checkout.customerData') }}
-              </p>
-              <p class="text-xs text-text-secondary leading-tight mt-0.5 truncate">
-                {{ selectedCustomer?.name || t('pos.checkout.customerNoData') }}
-                <template v-if="selectedCustomer?.phone_number">
-                  · {{ selectedCustomer.phone_number }}
-                </template>
-              </p>
-            </div>
+            <h3 class="font-bold text-text-primary">{{ t('pos.checkout.customerStats') }}</h3>
             <svg
               class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"
@@ -5396,22 +5383,9 @@ onUnmounted(() => {
       >
         <button
           @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
-          :class="checkoutAccordionTriggerClass"
+          :class="[checkoutAccordionTriggerClass, 'justify-between']"
         >
-          <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
-            {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-text-primary text-sm leading-tight truncate">
-              {{ t('pos.checkout.customerData') }}
-            </p>
-            <p class="text-xs text-text-secondary leading-tight mt-0.5 truncate">
-              {{ selectedCustomer?.name || t('pos.checkout.customerNoData') }}
-              <template v-if="selectedCustomer?.phone_number">
-                · {{ selectedCustomer.phone_number }}
-              </template>
-            </p>
-          </div>
+          <h3 class="font-bold text-text-primary">{{ t('pos.checkout.customerStats') }}</h3>
           <svg
             class="h-[1em] w-[1em] text-text-tertiary flex-shrink-0 transition-transform duration-200"
             :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"

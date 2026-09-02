@@ -277,7 +277,7 @@ const hasAnyDiscount = computed(() => orders.value.some((o: any) => o.discount_a
 const ordersTableColumns = computed<Column[]>(() => [
   { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
   { key: 'order_number', title: t('ventas.ordenes.colOrder'), sortable: true },
-  { key: 'order_date', title: t('ventas.common.fecha'), sortable: true },
+  { key: 'order_date', title: t('ventas.common.fecha'), sortable: true, width: '180px' },
   { key: 'invoice', title: t('ventas.common.factura'), sortable: false },
   { key: 'items_count', title: t('ventas.ordenes.colItems'), sortable: false },
   { key: 'source', title: t('ventas.ordenes.colSource'), sortable: false },
@@ -688,7 +688,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-bold text-text-primary">#{{ item.order_number }}</span>
-                <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
+                <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDateCompact(item.order_date) }}</span>
                 <!-- Lock icon for closed accounting period -->
                 <span
                   v-if="isOrderLocked(item)"
@@ -803,7 +803,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-order_date="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-invoice="{ row }">

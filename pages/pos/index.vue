@@ -109,12 +109,20 @@ watch(settingsAsyncStatus, (status) => {
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
 // Fetching here (parent) ensures data is ready before MesasFloorPlan mounts,
 // eliminating the empty-grid flash caused by the child's query starting cold.
-const { status: tablesStatus, data: tablesData } = useQuery({
+const { status: tablesStatus, data: tablesData, error: tablesQueryError } = useQuery({
   key: () => ['tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
   enabled: () => posStore.tablesEnabled === true && !!currentTenant.value,
   staleTime: 0,
 })
+
+/** First tables fetch finished — do not mount floor on idle/empty (tabs flash then loader). */
+const tablesSettled = computed(() =>
+  tablesStatus.value === 'success'
+  || tablesStatus.value === 'error'
+  || !!tablesQueryError.value
+  || tablesData.value != null,
+)
 
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
 // (prevents the floor plan from remounting between clearAll() and setTableSession())
@@ -129,7 +137,7 @@ const showFloorPlan = computed(() =>
   !noTablesConfigured.value &&
   !posStore.activeTableSession &&
   !isEnteringTable.value &&
-  tablesStatus.value !== 'pending'
+  tablesSettled.value,
 )
 const isResolvingSettings = computed(() => {
   if (!currentTenant.value) return false
@@ -137,7 +145,7 @@ const isResolvingSettings = computed(() => {
   // Initial fetch only — background refetches must not unmount POS (that retriggers
   // restaurant-context from CartPanel/useActivePromotions and loops forever).
   if (settingsAsyncStatus.value === 'loading' && !settingsData.value) return true
-  if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
+  if (posStore.tablesEnabled === true && !tablesSettled.value && !posStore.activeTableSession) return true
   return false
 })
 
@@ -2016,35 +2024,33 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- Settings resolving — show loader while we don't know if tables are enabled -->
-  <div v-if="isResolvingSettings" class="flex items-center justify-center min-h-[70vh]">
-    <CommonsTheCustomLoader size="large" />
-  </div>
+  <!-- Single out-in transition: settings/tables resolve → floor or catalog (no tabs flash + second loader) -->
+  <Transition name="pos-view" mode="out-in">
+    <div v-if="isResolvingSettings" key="pos-resolving" class="flex items-center justify-center min-h-[70vh]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
 
-  <!-- Floor plan ↔ catalog transition (#2483) -->
-  <template v-else>
-    <Transition name="pos-view" mode="out-in">
-      <div v-if="showFloorPlan" key="pos-floor">
-        <PosMesasFloorPlan
-          :comandas-enabled="comandasEnabled"
-          :waiter-attribution-enabled="waiterAttributionEnabled"
-          @enter-table="handleEnterTable"
-          @no-tables="noTablesConfigured = true"
-          @move-table="handleMoveTable"
-        />
-        <!-- Modal uses Teleport to="body" internally — safe to nest here -->
-        <PosMoveTableModal
-          v-if="showMoveModal && moveTableSource"
-          :show="showMoveModal"
-          :source-table="moveTableSource"
-          :tables="tablesForModal"
-          @close="showMoveModal = false; moveTableSource = null"
-          @moved="handleMoveDone"
-        />
-      </div>
+    <div v-else-if="showFloorPlan" key="pos-floor">
+      <PosMesasFloorPlan
+        :comandas-enabled="comandasEnabled"
+        :waiter-attribution-enabled="waiterAttributionEnabled"
+        @enter-table="handleEnterTable"
+        @no-tables="noTablesConfigured = true"
+        @move-table="handleMoveTable"
+      />
+      <!-- Modal uses Teleport to="body" internally — safe to nest here -->
+      <PosMoveTableModal
+        v-if="showMoveModal && moveTableSource"
+        :show="showMoveModal"
+        :source-table="moveTableSource"
+        :tables="tablesForModal"
+        @close="showMoveModal = false; moveTableSource = null"
+        @moved="handleMoveDone"
+      />
+    </div>
 
-      <!-- POS sales view -->
-      <div v-else key="pos-catalog">
+    <!-- POS sales view -->
+    <div v-else key="pos-catalog">
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -2737,7 +2743,6 @@ onUnmounted(() => {
     </div>
       </div>
     </Transition>
-  </template>
 
   <!-- Issue #956 — destructive POS actions (motivo required) -->
   <PosDestructiveReasonModal
