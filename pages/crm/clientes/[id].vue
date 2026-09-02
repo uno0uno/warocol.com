@@ -69,7 +69,7 @@ const crmReceiptPrint = computed(() => {
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 const carteraPaymentGroups = computed(() =>
   paymentGroups.value.filter(
-    group => group.slug !== 'credit' && group.slug !== WALLET_PAYMENT_SLUG,
+    group => group.slug !== 'credit',
   ),
 )
 
