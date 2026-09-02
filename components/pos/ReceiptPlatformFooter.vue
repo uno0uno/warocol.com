@@ -11,7 +11,7 @@ import {
 import { joinReceiptParts, receiptSectionSeparator } from '~/utils/receiptTicketPlainText'
 
 const props = withDefaults(defineProps<{
-  documentKind?: 'prefactura' | 'sale' | 'fe'
+  documentKind?: 'prefactura' | 'sale' | 'fe' | 'crm-credit' | 'crm-wallet'
   platformLegal?: PlatformLegalPrint | null
   /** When true, show DIAN-specific footers (CO FE tenants). */
   matiasDian?: boolean
@@ -114,6 +114,18 @@ const facturadorLine = computed(() => joinReceiptParts([
       class="receipt-row receipt-small"
     >
       {{ t('pos.receipt.saleReceiptEstablishment') }}
+    </div>
+    <div
+      v-else-if="documentKind === 'crm-credit'"
+      class="receipt-row receipt-small"
+    >
+      {{ t('analitica.customerDetail.credit.receipt.ticketEstablishmentFooter') }}
+    </div>
+    <div
+      v-else-if="documentKind === 'crm-wallet'"
+      class="receipt-row receipt-small"
+    >
+      {{ t('analitica.customerDetail.wallet.receipt.ticketEstablishmentFooter') }}
     </div>
   </div>
 </template>

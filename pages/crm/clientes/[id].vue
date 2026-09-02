@@ -53,7 +53,6 @@ const { data: restaurantContextData } = useQuery({
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const { isMatiasDian } = useTenantFinancialProfile()
 const { receiptLogoUrl } = useReceiptPrintSettings()
 const crmReceiptPrint = computed(() => {
   const ctx = restaurantContextData.value?.data
@@ -883,7 +882,8 @@ onUnmounted(() => {
 
       <CustomerDetailSubNav v-model="activeSection" />
 
-      <div v-show="activeSection === 'orders'" class="bg-white border border-border rounded-xl overflow-hidden">
+      <Transition name="crm-detail-section" mode="out-in">
+      <div v-if="activeSection === 'orders'" key="orders" class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 border-b border-border">
           <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
             {{ t('analitica.customerDetail.history.title') }}
@@ -926,29 +926,30 @@ onUnmounted(() => {
       </ClientOnly>
 
       <!-- Order History Table -->
+      <div class="crm-detail-section-table">
       <UiResponsiveDataView
-        row-size="sm"
+        row-size="xs"
         :columns="tableColumns"
         :data="orders"
         :empty-message="t('analitica.customerDetail.history.empty')"
         :empty-sub-message="t('analitica.customerDetail.history.emptySub')"
-        variant="default"
+        variant="compact"
       >
         <!-- Mobile Card -->
         <template #card="{ item }">
-          <div class="bg-white border border-border rounded-lg p-4">
-            <div class="flex justify-between items-start mb-2">
-              <div>
+          <div class="crm-detail-list-row">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
                 <NuxtLink
                   v-if="item.order_id"
                   :to="`/ventas/${item.order_id}`"
-                  class="font-medium text-primary hover:underline"
+                  class="text-sm font-semibold text-primary hover:underline"
                   :aria-label="`#${item.order_number}`"
                 >
-                  # {{ item.order_number }}
+                  #{{ item.order_number }}
                 </NuxtLink>
-                <p v-else class="font-medium text-text-primary"># {{ item.order_number }}</p>
-                <p class="text-sm text-text-secondary">{{ formatDate(item.date) }}</p>
+                <p v-else class="text-sm font-semibold text-text-primary">#{{ item.order_number }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
               </div>
               <UiStatusBadge
                 :value="statusLabel(item.status)"
@@ -957,9 +958,9 @@ onUnmounted(() => {
                 size="sm"
               />
             </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">{{ formatProductCount(item.items_count) }} · {{ resolveLabel(item.payment_method) }}</span>
-              <span class="font-bold text-text-primary">{{ formatCurrency(item.total) }}</span>
+            <div class="flex justify-between items-center gap-2 mt-1 text-xs text-text-secondary">
+              <span class="min-w-0 truncate">{{ formatProductCount(item.items_count) }} · {{ resolveLabel(item.payment_method) }}</span>
+              <span class="font-semibold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(item.total) }}</span>
             </div>
           </div>
         </template>
@@ -1069,9 +1070,10 @@ onUnmounted(() => {
           />
         </template>
       </UiResponsiveDataView>
+      </div>
 
       <!-- Pagination (match ventas/ordenes) -->
-      <div v-if="totalOrders > 0" class="flex items-center justify-end px-1 py-2">
+      <div v-if="totalOrders > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
         <div class="flex items-center gap-1">
           <button
             type="button"
@@ -1116,7 +1118,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Cartera -->
-      <div v-show="activeSection === 'cartera'" class="bg-white border border-border rounded-xl overflow-hidden">
+      <div v-else-if="activeSection === 'cartera'" key="cartera" class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
           <div class="flex items-center gap-2 min-w-0">
             <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1132,9 +1134,9 @@ onUnmounted(() => {
           <button
             v-if="(carteraData?.summary?.total_outstanding || 0) > 0"
             type="button"
-            @click.stop="openGlobalPaymentPanel"
-            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
+            :class="shellHeaderToolTextButtonClass"
             :aria-label="t('analitica.customerDetail.credit.payAllAria')"
+            @click.stop="openGlobalPaymentPanel"
           >
             {{ t('analitica.customerDetail.credit.payAll') }}
           </button>
@@ -1158,39 +1160,40 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
+        <div class="crm-detail-section-table">
         <UiResponsiveDataView
-          row-size="sm"
+          row-size="xs"
           :columns="carteraColumns"
           :data="carteraPageItems"
           :empty-message="t('analitica.customerDetail.credit.empty')"
-          variant="default"
+          variant="compact"
         >
           <!-- Mobile card -->
           <template #card="{ item }">
-            <div class="p-4 border-b border-border">
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <p class="text-sm font-semibold text-text-primary"># {{ item.order_number }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
+            <div class="crm-detail-list-row">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-text-primary">#{{ item.order_number }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">
+                    {{ formatDate(item.date) }}
+                    · {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
+                    <span v-if="item.due_date"> · {{ t('analitica.customerDetail.credit.dueOn', { date: formatDate(item.due_date) }) }}</span>
+                  </p>
                 </div>
-                <UiStatusBadge
-                  :value="creditStatusLabel(item.is_overdue)"
-                  format="text"
-                  :variant="item.is_overdue ? 'destructive' : 'success'"
-                  size="sm"
-                />
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <UiStatusBadge
+                    :value="creditStatusLabel(item.is_overdue)"
+                    format="text"
+                    :variant="item.is_overdue ? 'destructive' : 'success'"
+                    size="sm"
+                  />
+                  <CrmDetailIconActionButton
+                    kind="pay"
+                    :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: item.order_number })"
+                    @click="openPaymentPanel(item)"
+                  />
+                </div>
               </div>
-              <div class="text-sm text-text-secondary mb-3">
-                {{ t('analitica.customerDetail.credit.remainingOf', { remaining: formatCurrency(item.remaining), total: formatCurrency(item.total_amount) }) }}
-                <span v-if="item.due_date"> · {{ t('analitica.customerDetail.credit.dueOn', { date: formatDate(item.due_date) }) }}</span>
-              </div>
-              <button
-                @click="openPaymentPanel(item)"
-                class="w-full min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-                :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: item.order_number })"
-              >
-                {{ t('analitica.customerDetail.credit.registerPayment') }}
-              </button>
             </div>
           </template>
           <!-- Desktop cells -->
@@ -1207,14 +1210,8 @@ onUnmounted(() => {
           </template>
           <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(value) }}</span></template>
           <template #cell-due_date="{ value }">
-            <span v-if="value" class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
-            <UiStatusBadge
-              v-else
-              :value="t('analitica.customerDetail.credit.noDueDate')"
-              format="text"
-              variant="secondary"
-              size="sm"
-            />
+            <span v-if="value" class="text-xs text-text-secondary">{{ formatDate(value) }}</span>
+            <span v-else class="text-xs text-text-secondary">{{ t('analitica.customerDetail.credit.noDueDate') }}</span>
           </template>
           <template #cell-status_badge="{ row }">
             <UiStatusBadge
@@ -1225,15 +1222,16 @@ onUnmounted(() => {
             />
           </template>
           <template #cell-cartera_actions="{ row }">
-            <button
-              @click="openPaymentPanel(row)"
-              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: row.order_number })"
-            >
-              {{ t('analitica.customerDetail.credit.pay') }}
-            </button>
+            <div class="flex justify-end">
+              <CrmDetailIconActionButton
+                kind="pay"
+                :aria-label="t('analitica.customerDetail.credit.registerPaymentFor', { order: row.order_number })"
+                @click="openPaymentPanel(row)"
+              />
+            </div>
           </template>
         </UiResponsiveDataView>
+        </div>
         <div v-if="carteraTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
           <div class="flex items-center gap-1">
             <button
@@ -1280,40 +1278,48 @@ onUnmounted(() => {
       </div>
 
       <!-- Historial cartera -->
-      <div v-show="activeSection === 'paymentHistory'" class="bg-white border border-border rounded-xl overflow-hidden">
+      <div v-else-if="activeSection === 'paymentHistory'" key="paymentHistory" class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 border-b border-border">
           <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
             {{ t('analitica.customerDetail.subNav.paymentHistory') }}
           </h3>
         </div>
-        <div class="px-4 pb-3 pt-3 space-y-3">
-          <div v-if="isLoadingCreditPayments" class="flex items-center justify-center py-12">
+        <div v-if="isLoadingCreditPayments" class="flex items-center justify-center py-8 px-4">
             <CommonsTheCustomLoader size="medium" />
           </div>
           <template v-else>
+            <div class="crm-detail-section-table">
             <UiResponsiveDataView
-              row-size="sm"
+              row-size="xs"
               :columns="creditPaymentColumns"
               :data="creditPayments"
               :empty-message="t('analitica.customerDetail.paymentHistory.empty')"
-              variant="default"
+              variant="compact"
               @row-click="openHistoryPanel"
             >
               <template #card="{ item }">
-                <button
-                  type="button"
-                  class="w-full p-4 border-b border-border text-left hover:bg-surface-secondary/40 transition-colors"
-                  @click="openHistoryPanel(item)"
-                >
-                  <div class="flex justify-between items-start gap-3">
-                    <div class="min-w-0">
+                <div class="crm-detail-list-row">
+                  <div class="flex items-start justify-between gap-2">
+                    <button
+                      type="button"
+                      class="min-w-0 flex-1 text-left"
+                      @click="openHistoryPanel(item)"
+                    >
                       <p class="text-sm font-semibold text-text-primary">#{{ item.order_number }}</p>
-                      <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.payment_date) }}</p>
+                      <p class="text-xs text-text-secondary mt-0.5">
+                        {{ formatDate(item.payment_date) }} · {{ resolveLabel(item.payment_method, item.payment_method_id) }}
+                      </p>
+                    </button>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <span class="text-sm font-semibold text-primary tabular-nums">{{ formatCurrency(item.amount) }}</span>
+                      <CrmDetailIconActionButton
+                        kind="print"
+                        :aria-label="t('analitica.customerDetail.paymentHistory.printAria')"
+                        @click="printHistoryPayment(item)"
+                      />
                     </div>
-                    <span class="text-sm font-semibold text-primary tabular-nums flex-shrink-0">{{ formatCurrency(item.amount) }}</span>
                   </div>
-                  <p class="text-xs text-text-secondary mt-2">{{ resolveLabel(item.payment_method, item.payment_method_id) }}</p>
-                </button>
+                </div>
               </template>
               <template #cell-payment_date="{ value }">
                 <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
@@ -1328,17 +1334,17 @@ onUnmounted(() => {
                 <span class="text-sm text-text-secondary">{{ resolveLabel(row.payment_method, row.payment_method_id) }}</span>
               </template>
               <template #cell-history_actions="{ row }">
-                <button
-                  type="button"
-                  class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-                  :aria-label="t('analitica.customerDetail.paymentHistory.printAria')"
-                  @click.stop="printHistoryPayment(row)"
-                >
-                  {{ t('analitica.customerDetail.paymentHistory.print') }}
-                </button>
+                <div class="flex justify-end">
+                  <CrmDetailIconActionButton
+                    kind="print"
+                    :aria-label="t('analitica.customerDetail.paymentHistory.printAria')"
+                    @click="printHistoryPayment(row)"
+                  />
+                </div>
               </template>
             </UiResponsiveDataView>
-            <div v-if="creditPaymentsTotal > 0" class="flex items-center justify-end px-1 py-2">
+            </div>
+            <div v-if="creditPaymentsTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
               <div class="flex items-center gap-1">
                 <button
                   type="button"
@@ -1380,11 +1386,10 @@ onUnmounted(() => {
               </div>
             </div>
           </template>
-        </div>
       </div>
 
       <!-- Billetera COP -->
-      <div v-show="activeSection === 'wallet'" class="bg-white border border-border rounded-xl overflow-hidden">
+      <div v-else-if="activeSection === 'wallet'" key="wallet" class="bg-white border border-border rounded-xl overflow-hidden">
         <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-border">
           <div class="min-w-0">
             <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">
@@ -1396,51 +1401,50 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
+            :class="shellHeaderToolTextButtonClass"
             :aria-label="t('analitica.customerDetail.wallet.rechargeAria')"
             @click.stop="showWalletRechargeModal = true"
-            class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
           >
             {{ t('analitica.customerDetail.wallet.recharge') }}
           </button>
         </div>
         <div>
+        <div class="crm-detail-section-table">
         <UiResponsiveDataView
           v-if="!isLoadingWallet"
-          row-size="sm"
+          row-size="xs"
           :columns="walletColumns"
           :data="walletPageItems"
           :empty-message="t('analitica.customerDetail.wallet.empty')"
-          variant="default"
+          variant="compact"
         >
           <template #card="{ item }">
-            <div class="p-4 border-b border-border">
-              <div class="flex justify-between items-start gap-3">
+            <div class="crm-detail-list-row">
+              <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
                   <p class="text-sm font-semibold text-text-primary">{{ walletMovementLabel(item.movement_type) }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">
+                    {{ formatDate(item.created_at) }}
+                    · {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}: {{ formatCurrency(item.balance_after_cop) }}
+                  </p>
                 </div>
-                <span
-                  :class="[
-                    'text-sm font-semibold flex-shrink-0 tabular-nums',
-                    item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
-                  ]"
-                >
-                  {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
-                </span>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <span
+                    :class="[
+                      'text-sm font-semibold tabular-nums',
+                      item.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
+                    ]"
+                  >
+                    {{ item.amount_cop >= 0 ? '+' : '−' }}{{ formatCurrency(Math.abs(item.amount_cop)) }}
+                  </span>
+                  <CrmDetailIconActionButton
+                    v-if="item.movement_type === 'receive'"
+                    kind="print"
+                    :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
+                    @click="printWalletMovement(item)"
+                  />
+                </div>
               </div>
-              <p class="text-xs text-text-secondary mt-2 tabular-nums">
-                {{ t('analitica.customerDetail.wallet.colBalanceAfter') }}:
-                {{ formatCurrency(item.balance_after_cop) }}
-              </p>
-              <button
-                v-if="item.movement_type === 'receive'"
-                type="button"
-                class="mt-3 min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-                :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
-                @click="printWalletMovement(item)"
-              >
-                {{ t('analitica.customerDetail.wallet.receipt.print') }}
-              </button>
             </div>
           </template>
           <template #cell-movement_type="{ value }">
@@ -1463,17 +1467,17 @@ onUnmounted(() => {
             <span class="text-sm text-text-primary tabular-nums">{{ formatCurrency(value) }}</span>
           </template>
           <template #cell-wallet_actions="{ row }">
-            <button
-              v-if="row.movement_type === 'receive'"
-              type="button"
-              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
-              @click.stop="printWalletMovement(row)"
-            >
-              {{ t('analitica.customerDetail.wallet.receipt.print') }}
-            </button>
+            <div class="flex justify-end">
+              <CrmDetailIconActionButton
+                v-if="row.movement_type === 'receive'"
+                kind="print"
+                :aria-label="t('analitica.customerDetail.wallet.receipt.printAria')"
+                @click="printWalletMovement(row)"
+              />
+            </div>
           </template>
         </UiResponsiveDataView>
+        </div>
         <div v-if="walletTotal > 0" class="flex items-center justify-end px-4 py-2 border-t border-border">
           <div class="flex items-center gap-1">
             <button
@@ -1517,6 +1521,7 @@ onUnmounted(() => {
         </div>
         </div>
       </div>
+      </Transition>
 
     </div>
 
@@ -1554,7 +1559,6 @@ onUnmounted(() => {
       :phone="crmReceiptPrint.phone"
       :logo-url="receiptLogoUrl"
       :platform-legal="crmReceiptPrint.platformLegal"
-      :matias-dian="isMatiasDian"
       @close="closeWalletSuccessPanel"
     />
 
@@ -1568,7 +1572,6 @@ onUnmounted(() => {
       :phone="crmReceiptPrint.phone"
       :logo-url="receiptLogoUrl"
       :platform-legal="crmReceiptPrint.platformLegal"
-      :matias-dian="isMatiasDian"
     />
 
     <!-- Slide-over: asignaciones manuales -->
@@ -1831,7 +1834,6 @@ onUnmounted(() => {
       :phone="crmReceiptPrint.phone"
       :logo-url="receiptLogoUrl"
       :platform-legal="crmReceiptPrint.platformLegal"
-      :matias-dian="isMatiasDian"
       @close="closePaymentSuccessPanel"
     />
 
@@ -1854,7 +1856,6 @@ onUnmounted(() => {
       :phone="crmReceiptPrint.phone"
       :logo-url="receiptLogoUrl"
       :platform-legal="crmReceiptPrint.platformLegal"
-      :matias-dian="isMatiasDian"
     />
 
     <!-- Invoice Slideover Panel -->
@@ -1989,5 +1990,38 @@ onUnmounted(() => {
 .dp-custom-menu {
   border-radius: 0.75rem !important;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+.crm-detail-list-row {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border, rgb(226 232 240));
+}
+
+.crm-detail-section-table :deep(.md\:hidden .grid) {
+  gap: 0;
+}
+
+.crm-detail-section-enter-active,
+.crm-detail-section-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.crm-detail-section-enter-from,
+.crm-detail-section-leave-to {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-detail-section-enter-active,
+  .crm-detail-section-leave-active {
+    transition: none;
+  }
+
+  .crm-detail-section-enter-from,
+  .crm-detail-section-leave-to {
+    opacity: 1;
+    transform: none;
+  }
 }
 </style>

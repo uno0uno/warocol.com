@@ -391,7 +391,12 @@
           "sentTo": "Enviado a {email}",
           "sendAnother": "Puedes enviar a otro correo.",
           "emailError": "No se pudo enviar el correo",
-          "ticketTitle": "COMPROBANTE DE RECARGA",
+          "ticketTitle": "RECARGA BILLETERA COP",
+          "ticketDateTime": "Fecha y hora",
+          "establishmentRole": "Establecimiento",
+          "ticketFooterBanner": "RECARGA BILLETERA COP",
+          "ticketFooterNote": "Comprobante de recarga de saldo en billetera COP. No constituye factura de venta ni documento fiscal.",
+          "ticketEstablishmentFooter": "Comprobante de recarga billetera del establecimiento",
           "customer": "Cliente"
         }
       },
@@ -441,7 +446,12 @@
           "sentTo": "Enviado a {email}",
           "sendAnother": "Puedes enviar a otro correo.",
           "emailError": "No se pudo enviar el correo",
-          "ticketTitle": "COMPROBANTE DE ABONO",
+          "ticketTitle": "ABONO A CARTERA",
+          "ticketDateTime": "Fecha y hora",
+          "establishmentRole": "Establecimiento",
+          "ticketFooterBanner": "ABONO A CARTERA",
+          "ticketFooterNote": "Comprobante de abono a cartera del cliente. No constituye factura de venta ni documento fiscal.",
+          "ticketEstablishmentFooter": "Comprobante de abono a cartera del establecimiento",
           "customer": "Cliente"
         }
       },

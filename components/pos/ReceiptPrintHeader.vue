@@ -17,6 +17,8 @@ const props = defineProps<{
   city?: string | null
   phone?: string | null
   logoUrl?: string | null
+  /** Overrides default "Establishment / seller" role prefix on the header meta line. */
+  roleLabel?: string | null
 }>()
 
 /**
@@ -52,7 +54,7 @@ const addressLine = computed(() => {
 
 /** Role + NIT + tel + email on one dense line. */
 const metaLine = computed(() => joinReceiptParts([
-  t('pos.receipt.establishmentSeller'),
+  props.roleLabel?.trim() || t('pos.receipt.establishmentSeller'),
   sellerNit.value ? t('pos.receipt.nit', { nit: sellerNit.value }) : null,
   displayPhone.value ? t('pos.receipt.tel', { phone: displayPhone.value }) : null,
   props.fiscalData?.email?.trim() || null,

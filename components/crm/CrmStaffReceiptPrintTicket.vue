@@ -16,7 +16,11 @@ export interface CrmStaffReceiptLine {
 
 const props = withDefaults(defineProps<{
   ticketId: string
+  documentKind: 'crm-credit' | 'crm-wallet'
   documentLabel: string
+  headerRoleLabel: string
+  footerBanner: string
+  footerNote: string
   fiscalData?: {
     business_name?: string | null
     nit?: string | null
@@ -31,27 +35,18 @@ const props = withDefaults(defineProps<{
   phone?: string | null
   logoUrl?: string | null
   platformLegal?: PlatformLegalPrint | null
-  matiasDian?: boolean
   lines: CrmStaffReceiptLine[]
   extraPreBlocks?: string[]
   notesLabel?: string
   notesValue?: string
 }>(), {
   platformLegal: null,
-  matiasDian: false,
 })
 
 const { t } = useI18n({ useScope: 'global' })
 
 const strongDivider = receiptDivider(32, '=')
 const sectionSeparator = receiptSectionSeparator()
-
-const fallbackIssuerLabel = computed(() => {
-  const name = props.fiscalData?.business_name?.trim() || null
-  const nit = props.fiscalData?.nit?.trim() || null
-  if (name && nit) return `${name} - NIT ${nit}`
-  return name || (nit ? `NIT ${nit}` : null)
-})
 
 const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFORM_LEGAL)
 </script>
@@ -69,6 +64,7 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
       :city="city"
       :phone="phone"
       :logo-url="logoUrl"
+      :role-label="headerRoleLabel"
     />
 
     <div class="receipt-plain-line">{{ strongDivider }}</div>
@@ -101,23 +97,15 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     <div class="receipt-footer">{{ t('pos.receipt.thanks') }}</div>
     <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
     <div class="receipt-footer receipt-small" style="font-weight:bold;">
-      {{ t('pos.receipt.saleReceipt') }}
+      {{ footerBanner }}
     </div>
     <div class="receipt-footer receipt-small">
-      {{ matiasDian
-        ? t('pos.receipt.notDianInvoice')
-        : t('pos.receipt.notElectronicInvoice') }}
-    </div>
-    <div
-      v-if="fallbackIssuerLabel"
-      class="receipt-footer receipt-small"
-    >
-      {{ t('pos.receipt.seller', { label: fallbackIssuerLabel }) }}
+      {{ footerNote }}
     </div>
     <PosReceiptPlatformFooter
-      document-kind="sale"
+      :document-kind="documentKind"
       :platform-legal="platformLegalResolved"
-      :matias-dian="matiasDian"
+      :matias-dian="false"
     />
   </div>
 </template>
