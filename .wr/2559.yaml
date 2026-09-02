@@ -1,0 +1,37 @@
+issue: 2559
+title: "fix(pos): handle post-pay pending-delivery checkout shell while success modal is open"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2559-pending-delivery-success-shell
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Success modal open after pending-delivery pay does not show error/empty shell behind
+  - Clear pendingOrder query on success (and after Wompi approve)
+  - Freeze shell errors via pendingDeliveryPaidShell / success / Wompi slideover
+  - closeSuccessModal still goes to /pos
+  - Cart/mesa success paths unchanged
+
+out_of_scope:
+  - Payment/GL API
+  - Navigate away immediately (option 3)
+  - Success modal redesign
+
+hints:
+  entry: "finalizePendingDeliverySuccess; checkoutError; processWompiCollection pending branch"
+  pattern: "showEmptyCheckout already skips when showSuccessModal"
+  tests: "none — UI state only; no front unit test target"
+
+risk:
+  sensitive: false
+  areas: [pos-ui]
+
+skip:
+  audits: [ux]
+
+next:
+  after_pr: "/wr-review"
