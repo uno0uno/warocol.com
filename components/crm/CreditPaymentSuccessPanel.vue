@@ -24,10 +24,21 @@ const props = defineProps<{
   open: boolean
   receipt: CreditPaymentReceiptData | null
   defaultEmail?: string | null
-  businessName?: string | null
-  businessAddress?: string | null
-  businessCity?: string | null
-  businessPhone?: string | null
+  fiscalData?: {
+    business_name?: string | null
+    nit?: string | null
+    fiscal_address?: string | null
+    city?: string | null
+    phone?: string | null
+    email?: string | null
+  } | null
+  displayName?: string | null
+  address?: string | null
+  city?: string | null
+  phone?: string | null
+  logoUrl?: string | null
+  platformLegal?: import('~/constants/waroLegalEntity').PlatformLegalPrint | null
+  matiasDian?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -115,10 +126,10 @@ const sendReceiptEmail = async () => {
         })),
         notes: props.receipt.notes || undefined,
         total_outstanding_after: props.receipt.total_outstanding_after,
-        business_name: props.businessName || undefined,
-        business_address: props.businessAddress || undefined,
-        business_city: props.businessCity || undefined,
-        business_phone: props.businessPhone || undefined,
+        business_name: props.displayName || props.fiscalData?.business_name || undefined,
+        business_address: props.address || props.fiscalData?.fiscal_address || undefined,
+        business_city: props.city || props.fiscalData?.city || undefined,
+        business_phone: props.phone || props.fiscalData?.phone || undefined,
       },
     })
     if (!res?.success) {
@@ -397,10 +408,14 @@ watch(showEmailPanel, (open) => {
   <CreditPaymentReceiptHost
     ref="receiptHostRef"
     :receipt="receipt"
-    :business-name="businessName"
-    :business-address="businessAddress"
-    :business-city="businessCity"
-    :business-phone="businessPhone"
+    :fiscal-data="fiscalData"
+    :display-name="displayName"
+    :address="address"
+    :city="city"
+    :phone="phone"
+    :logo-url="logoUrl"
+    :platform-legal="platformLegal"
+    :matias-dian="matiasDian"
   />
 </template>
 

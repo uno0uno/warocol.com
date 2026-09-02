@@ -3,7 +3,7 @@ import { notifyCajaPrintResult, useCajaTicketPrint } from '~/composables/useCaja
 import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 
 const TICKET_ELEMENT_ID = 'wallet-recharge-print-ticket'
-const BODY_PRINT_CLASS = 'printing-wallet-receipt-ticket'
+const BODY_PRINT_CLASS = 'printing-receipt-ticket'
 
 export function useWalletRechargeReceiptPrint() {
   const { t } = useI18n({ useScope: 'global' })

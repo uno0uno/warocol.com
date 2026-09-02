@@ -1,0 +1,42 @@
+issue: 2552
+title: "feat(crm): align cartera and wallet receipt print with POS prefactura format"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2552-crm-receipt-print-format
+
+paths:
+  - components/crm/CrmStaffReceiptPrintTicket.vue
+  - components/crm/CreditPaymentReceiptHost.vue
+  - components/crm/CreditPaymentSuccessPanel.vue
+  - components/crm/WalletRechargeReceiptHost.vue
+  - components/crm/WalletRechargeSuccessPanel.vue
+  - composables/useWalletRechargeReceiptPrint.ts
+  - pages/crm/clientes/[id].vue
+
+ac:
+  - Abono + wallet receipts use POS header/footer (logo, fiscal, platform legal, thermal CSS)
+  - Success panel + historial/list reprint paths share CrmStaffReceiptPrintTicket
+  - Caja bridge + browser fallback unchanged (printing-receipt-ticket body class)
+  - Receipt body content unchanged (no product lines / DIAN FE chrome)
+
+out_of_scope:
+  - Email templates
+  - API fiscal data changes
+  - Sub-nav loading UX
+
+hints:
+  entry: "pages/crm/clientes/[id].vue receipt hosts"
+  pattern: "components/pos/ReceiptPrintTicket.vue + useReceiptPrintSettings"
+  tests: "bun test utils/receiptTicketPlainText.test.ts utils/receiptPrintLines.test.ts"
+
+risk:
+  sensitive: false
+  areas: [print]
+
+skip:
+  audits: []
+
+next:
+  after_pr: ""
