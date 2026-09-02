@@ -42,7 +42,7 @@ const paymentDateLabel = computed(() => {
 
 const receiptLines = computed(() => {
   if (!props.receipt) return []
-  const lines = [
+  return [
     {
       label: t('analitica.customerDetail.credit.receipt.customer'),
       value: props.receipt.customer_name,
@@ -56,34 +56,34 @@ const receiptLines = computed(() => {
       value: props.receipt.payment_method_label,
     },
   ]
-  if (props.receipt.total_outstanding_after != null) {
-    lines.push({
-      label: t('analitica.customerDetail.credit.receipt.outstandingAfter'),
-      value: formatCurrency(props.receipt.total_outstanding_after),
-    })
-  }
-  lines.push({
-    label: t('analitica.customerDetail.credit.receipt.totalPaid'),
-    value: formatCurrency(props.receipt.total_amount),
-  })
-  return lines
 })
 
 const extraPreBlocks = computed(() => {
-  if (!props.receipt?.lines.length) return []
+  if (!props.receipt) return []
   const blocks: string[] = []
-  if (props.receipt.lines.length > 1) {
+  if (props.receipt.lines.length) {
     blocks.push(receiptDivider())
+    for (const line of props.receipt.lines) {
+      blocks.push(t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }))
+      blocks.push(padReceiptLine(
+        t('analitica.customerDetail.credit.receipt.paid'),
+        formatCurrency(line.amount),
+      ))
+      blocks.push(padReceiptLine(
+        t('analitica.customerDetail.credit.remaining'),
+        formatCurrency(line.remaining_amount),
+      ))
+    }
   }
-  for (const line of props.receipt.lines) {
-    blocks.push(t('analitica.customerDetail.credit.receipt.orderLine', { order: line.order_number }))
+  blocks.push(receiptDivider())
+  blocks.push(padReceiptLine(
+    t('analitica.customerDetail.credit.receipt.totalPaid'),
+    formatCurrency(props.receipt.total_amount),
+  ))
+  if (props.receipt.total_outstanding_after != null) {
     blocks.push(padReceiptLine(
-      t('analitica.customerDetail.credit.receipt.paid'),
-      formatCurrency(line.amount),
-    ))
-    blocks.push(padReceiptLine(
-      t('analitica.customerDetail.credit.remaining'),
-      formatCurrency(line.remaining_amount),
+      t('analitica.customerDetail.credit.receipt.outstandingAfter'),
+      formatCurrency(props.receipt.total_outstanding_after),
     ))
   }
   return blocks

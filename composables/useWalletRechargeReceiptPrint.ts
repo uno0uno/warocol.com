@@ -5,6 +5,14 @@ import { collectThermalTicketText } from '~/utils/receiptTicketPlainText'
 const TICKET_ELEMENT_ID = 'wallet-recharge-print-ticket'
 const BODY_PRINT_CLASS = 'printing-receipt-ticket'
 
+function setActivePrintTicket(id: string) {
+  document.body.dataset.printTicket = id
+}
+
+function clearActivePrintTicket() {
+  delete document.body.dataset.printTicket
+}
+
 export function useWalletRechargeReceiptPrint() {
   const { t } = useI18n({ useScope: 'global' })
   const toast = useToast()
@@ -18,9 +26,11 @@ export function useWalletRechargeReceiptPrint() {
 
     if (options?.auto === false && typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
       document.body.classList.add(BODY_PRINT_CLASS)
+      setActivePrintTicket(TICKET_ELEMENT_ID)
       await nextTick()
       const earlyCleanup = () => {
         document.body.classList.remove(BODY_PRINT_CLASS)
+        clearActivePrintTicket()
         window.removeEventListener('afterprint', earlyCleanup)
       }
       window.addEventListener('afterprint', earlyCleanup)
@@ -30,9 +40,11 @@ export function useWalletRechargeReceiptPrint() {
     }
 
     document.body.classList.add(BODY_PRINT_CLASS)
+    setActivePrintTicket(TICKET_ELEMENT_ID)
     await nextTick()
     const cleanup = () => {
       document.body.classList.remove(BODY_PRINT_CLASS)
+      clearActivePrintTicket()
       window.removeEventListener('afterprint', cleanup)
     }
     const syncBrowserPrint = typeof window !== 'undefined' ? window.print.bind(window) : () => {}
@@ -60,6 +72,7 @@ export function useWalletRechargeReceiptPrint() {
           onRetry: () => { void printWalletRechargeTicket() },
           onBrowserPrint: () => {
             document.body.classList.add(BODY_PRINT_CLASS)
+            setActivePrintTicket(TICKET_ELEMENT_ID)
             window.addEventListener('afterprint', cleanup)
             window.setTimeout(cleanup, 1500)
             syncBrowserPrint()

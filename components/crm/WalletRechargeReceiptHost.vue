@@ -4,6 +4,7 @@ import CrmStaffReceiptPrintTicket from '~/components/crm/CrmStaffReceiptPrintTic
 import type { WalletRechargeReceiptData } from '~/components/crm/WalletRechargeSuccessPanel.vue'
 import { useWalletRechargeReceiptPrint } from '~/composables/useWalletRechargeReceiptPrint'
 import type { PlatformLegalPrint } from '~/constants/waroLegalEntity'
+import { padReceiptLine, receiptDivider } from '~/utils/receiptTicketPlainText'
 
 const props = defineProps<{
   receipt: WalletRechargeReceiptData | null
@@ -54,14 +55,21 @@ const receiptLines = computed(() => {
       label: t('analitica.customerDetail.paymentMethod'),
       value: props.receipt.payment_method_label,
     },
-    {
-      label: t('analitica.customerDetail.wallet.receipt.amount'),
-      value: formatCurrency(props.receipt.amount_cop),
-    },
-    {
-      label: t('analitica.customerDetail.wallet.receipt.balanceAfter'),
-      value: formatCurrency(props.receipt.balance_after_cop),
-    },
+  ]
+})
+
+const extraPreBlocks = computed(() => {
+  if (!props.receipt) return []
+  return [
+    receiptDivider(),
+    padReceiptLine(
+      t('analitica.customerDetail.wallet.receipt.amount'),
+      formatCurrency(props.receipt.amount_cop),
+    ),
+    padReceiptLine(
+      t('analitica.customerDetail.wallet.receipt.balanceAfter'),
+      formatCurrency(props.receipt.balance_after_cop),
+    ),
   ]
 })
 
@@ -88,6 +96,7 @@ defineExpose({ printReceipt })
       :platform-legal="platformLegal"
       :matias-dian="matiasDian"
       :lines="receiptLines"
+      :extra-pre-blocks="extraPreBlocks"
       :notes-label="receipt.notes ? t('analitica.customerDetail.notes') : undefined"
       :notes-value="receipt.notes || undefined"
     />

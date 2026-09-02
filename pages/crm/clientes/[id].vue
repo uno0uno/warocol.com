@@ -393,6 +393,7 @@ const printWalletMovement = async (movement: WalletMovement) => {
   walletListReceipt.value = buildWalletReceiptFromMovement(movement)
   await nextTick()
   await walletListReceiptHostRef.value?.printReceipt()
+  walletListReceipt.value = null
 }
 
 const closeWalletSuccessPanel = () => {
@@ -514,6 +515,7 @@ const printHistoryPayment = async (row: CustomerCreditPaymentRow) => {
   historyReceipt.value = buildReceiptFromPayment(row)
   await nextTick()
   await historyReceiptHostRef.value?.printReceipt()
+  historyReceipt.value = null
 }
 
 const printHistoryFromPanel = async () => {

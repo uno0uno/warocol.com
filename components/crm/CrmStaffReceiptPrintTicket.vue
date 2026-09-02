@@ -189,12 +189,20 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     visibility: hidden !important;
   }
 
-  body.printing-receipt-ticket .receipt-print-ticket,
-  body.printing-receipt-ticket .receipt-print-ticket * {
+  body.printing-receipt-ticket .receipt-print-ticket {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket,
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket *,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket * {
     visibility: visible !important;
   }
 
-  body.printing-receipt-ticket .receipt-print-ticket {
+  body.printing-receipt-ticket[data-print-ticket="credit-payment-print-ticket"] #credit-payment-print-ticket,
+  body.printing-receipt-ticket[data-print-ticket="wallet-recharge-print-ticket"] #wallet-recharge-print-ticket {
     display: block !important;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9.5pt;
