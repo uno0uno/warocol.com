@@ -191,6 +191,8 @@
       "periodWindow": "Ventana del período",
       "openingFloat": "Fondo inicial",
       "netMovementByMethod": "Movimiento neto por método",
+      "filterByType": "Filtrar por tipo",
+      "allPaymentTypes": "Todos los tipos",
       "method": "Método",
       "inflow": "Entró",
       "outflow": "Salió",

@@ -188,6 +188,8 @@
       "periodWindow": "نافذة الفترة",
       "openingFloat": "رصيد الافتتاح",
       "netMovementByMethod": "صافي الحركة حسب الطريقة",
+      "filterByType": "تصفية حسب النوع",
+      "allPaymentTypes": "كل الأنواع",
       "method": "الطريقة",
       "inflow": "وارد",
       "outflow": "صادر",

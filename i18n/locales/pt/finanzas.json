@@ -188,6 +188,8 @@
       "periodWindow": "Janela do período",
       "openingFloat": "Fundo inicial",
       "netMovementByMethod": "Movimento líquido por método",
+      "filterByType": "Filtrar por tipo",
+      "allPaymentTypes": "Todos os tipos",
       "method": "Método",
       "inflow": "Entrada",
       "outflow": "Saída",

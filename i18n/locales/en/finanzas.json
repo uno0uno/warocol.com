@@ -191,6 +191,8 @@
       "periodWindow": "Period window",
       "openingFloat": "Opening float",
       "netMovementByMethod": "Net movement by method",
+      "filterByType": "Filter by type",
+      "allPaymentTypes": "All types",
       "method": "Method",
       "inflow": "In",
       "outflow": "Out",

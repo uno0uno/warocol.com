@@ -188,6 +188,8 @@
       "periodWindow": "Fenêtre de la période",
       "openingFloat": "Fonds de caisse initial",
       "netMovementByMethod": "Mouvement net par méthode",
+      "filterByType": "Filtrer par type",
+      "allPaymentTypes": "Tous les types",
       "method": "Méthode",
       "inflow": "Entrées",
       "outflow": "Sorties",

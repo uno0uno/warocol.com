@@ -188,6 +188,8 @@
       "periodWindow": "期间窗口",
       "openingFloat": "初始备用金",
       "netMovementByMethod": "按方式净变动",
+      "filterByType": "按类型筛选",
+      "allPaymentTypes": "全部类型",
       "method": "方式",
       "inflow": "入账",
       "outflow": "出账",
