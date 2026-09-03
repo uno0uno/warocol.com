@@ -40,10 +40,14 @@ const catalogLayout = computed<CatalogLayout>(() => {
 })
 const showProductImage = computed(() => businessProfile.value?.pos_show_product_image !== false)
 const showSearch = computed(() => businessProfile.value?.pos_show_search !== false)
+const deductInventoryOnCommand = computed(
+  () => businessProfile.value?.deduct_inventory_on_command !== false,
+)
 
 const isSavingLayout = ref(false)
 const isTogglingImages = ref(false)
 const isTogglingSearch = ref(false)
+const isTogglingDeductInventory = ref(false)
 
 const setCatalogLayout = async (layout: CatalogLayout) => {
   if (!businessProfile.value || isSavingLayout.value || catalogLayout.value === layout) return
@@ -112,6 +116,29 @@ const toggleShowSearch = async () => {
     })
   } finally {
     isTogglingSearch.value = false
+  }
+}
+
+const toggleDeductInventoryOnCommand = async () => {
+  if (!businessProfile.value || isTogglingDeductInventory.value) return
+  const newState = !deductInventoryOnCommand.value
+  isTogglingDeductInventory.value = true
+  try {
+    await $fetch('/api/operaciones/toggles/deduct-inventory-on-command', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    toast.success(
+      newState ? t('operaciones.pos.deductInventoryOn') : t('operaciones.pos.deductInventoryOff'),
+      { title: t('operaciones.comandas.savedTitle') },
+    )
+  } catch (error: any) {
+    toast.error(error?.data?.detail || t('operaciones.pos.saveError'), {
+      title: t('operaciones.comandas.error'),
+    })
+  } finally {
+    isTogglingDeductInventory.value = false
   }
 }
 </script>
@@ -203,6 +230,31 @@ const toggleShowSearch = async () => {
             :checked="showSearch"
             :disabled="isTogglingSearch"
             @change="toggleShowSearch"
+          >
+          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
+      </div>
+
+      <div class="flex min-h-[64px] items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-snug text-text-primary">
+            {{ t('operaciones.pos.deductInventory') }}
+          </p>
+          <p class="mt-0.5 text-xs text-text-secondary">
+            {{ t('operaciones.pos.deductInventoryHelp') }}
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingDeductInventory ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="deductInventoryOnCommand ? t('operaciones.pos.disableDeductInventory') : t('operaciones.pos.enableDeductInventory')"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="deductInventoryOnCommand"
+            :disabled="isTogglingDeductInventory"
+            @change="toggleDeductInventoryOnCommand"
           >
           <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
