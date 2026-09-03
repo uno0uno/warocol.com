@@ -37,6 +37,30 @@ const CITY_VISUALS: Record<string, { displayName: string; imageUrl: string }> = 
     displayName: 'Mosquera',
     imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/mosquera.webp',
   },
+  cartagena: {
+    displayName: 'Cartagena',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/cartagena.webp',
+  },
+  bucaramanga: {
+    displayName: 'Bucaramanga',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/bucaramanga.webp',
+  },
+  aguachica: {
+    displayName: 'Aguachica',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/aguachica.webp',
+  },
+  libano: {
+    displayName: 'Líbano',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/libano.webp',
+  },
+  buenaventura: {
+    displayName: 'Buenaventura',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/buenaventura.webp',
+  },
+  'guadalajara-de-buga': {
+    displayName: 'Guadalajara de Buga',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/guadalajara-de-buga.webp',
+  },
 }
 
 const cityDisplayName = (city: PublicCity) => CITY_VISUALS[city.city_slug]?.displayName ?? city.city
