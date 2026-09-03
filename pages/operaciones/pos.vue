@@ -41,7 +41,7 @@ const catalogLayout = computed<CatalogLayout>(() => {
 const showProductImage = computed(() => businessProfile.value?.pos_show_product_image !== false)
 const showSearch = computed(() => businessProfile.value?.pos_show_search !== false)
 const deductInventoryOnCommand = computed(
-  () => businessProfile.value?.deduct_inventory_on_command !== false,
+  () => businessProfile.value?.deduct_inventory_on_command === true,
 )
 
 const isSavingLayout = ref(false)
@@ -239,9 +239,6 @@ const toggleDeductInventoryOnCommand = async () => {
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-snug text-text-primary">
             {{ t('operaciones.pos.deductInventory') }}
-          </p>
-          <p class="mt-0.5 text-xs text-text-secondary">
-            {{ t('operaciones.pos.deductInventoryHelp') }}
           </p>
         </div>
         <label
