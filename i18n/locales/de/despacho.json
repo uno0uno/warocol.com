@@ -61,7 +61,8 @@
       "preparing": "In Zubereitung",
       "delivered": "Geliefert",
       "completed": "Abgeschlossen",
-      "cancelled": "Storniert"
+      "cancelled": "Storniert",
+      "rejected": "Abgelehnt"
     },
     "domicilios": {
       "filterStatus": "Nach Status filtern",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "Nach Tisch filtern",
-      "emptyTitle": "Keine ausstehenden Bestellungen.",
-      "emptySub": "Neue QR-Bestellungen erscheinen hier.",
+      "emptyTitle": "Keine Tischbestellungen.",
+      "emptySub": "QR-Tischbestellungen erscheinen hier.",
       "itemCountOne": "{count} Artikel",
-      "itemCountMany": "{count} Artikel"
+      "itemCountMany": "{count} Artikel",
+      "filterStatus": "Nach Status filtern",
+      "filterStatusAll": "Alle"
     },
     "comandas": {
       "filterSource": "Nach Herkunft filtern",

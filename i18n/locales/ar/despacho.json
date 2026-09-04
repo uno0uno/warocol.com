@@ -61,7 +61,8 @@
       "preparing": "قيد التحضير",
       "delivered": "تم التوصيل",
       "completed": "مكتمل",
-      "cancelled": "ملغى"
+      "cancelled": "ملغى",
+      "rejected": "مرفوض"
     },
     "domicilios": {
       "filterStatus": "تصفية حسب الحالة",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "تصفية حسب الطاولة",
-      "emptyTitle": "لا توجد طلبات معلقة.",
-      "emptySub": "ستظهر طلبات QR الجديدة هنا.",
+      "emptyTitle": "لا توجد طلبات طاولة.",
+      "emptySub": "ستظهر طلبات QR هنا.",
       "itemCountOne": "{count} صنف",
-      "itemCountMany": "{count} أصناف"
+      "itemCountMany": "{count} أصناف",
+      "filterStatus": "تصفية حسب الحالة",
+      "filterStatusAll": "الكل"
     },
     "comandas": {
       "filterSource": "تصفية حسب المصدر",

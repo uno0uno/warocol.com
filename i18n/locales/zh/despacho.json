@@ -61,7 +61,8 @@
       "preparing": "准备中",
       "delivered": "已送达",
       "completed": "已完成",
-      "cancelled": "已取消"
+      "cancelled": "已取消",
+      "rejected": "已拒绝"
     },
     "domicilios": {
       "filterStatus": "按状态筛选",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "按餐桌筛选",
-      "emptyTitle": "暂无待处理订单。",
-      "emptySub": "新的QR订单将显示在此处。",
+      "emptyTitle": "暂无桌边订单。",
+      "emptySub": "二维码桌边订单将显示在这里。",
       "itemCountOne": "{count} 件",
-      "itemCountMany": "{count} 件"
+      "itemCountMany": "{count} 件",
+      "filterStatus": "按状态筛选",
+      "filterStatusAll": "全部"
     },
     "comandas": {
       "filterSource": "按来源筛选",

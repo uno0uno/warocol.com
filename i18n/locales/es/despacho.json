@@ -61,7 +61,8 @@
       "preparing": "En preparación",
       "delivered": "Entregado",
       "completed": "Completado",
-      "cancelled": "Cancelado"
+      "cancelled": "Cancelado",
+      "rejected": "Rechazado"
     },
     "domicilios": {
       "filterStatus": "Filtrar por estado",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "Filtrar por mesa",
-      "emptyTitle": "Sin pedidos pendientes.",
-      "emptySub": "Los nuevos pedidos QR aparecerán aquí.",
+      "emptyTitle": "Sin pedidos en mesa.",
+      "emptySub": "Los pedidos QR aparecerán aquí.",
       "itemCountOne": "{count} item",
-      "itemCountMany": "{count} items"
+      "itemCountMany": "{count} items",
+      "filterStatus": "Filtrar por estado",
+      "filterStatusAll": "Todos"
     },
     "comandas": {
       "filterSource": "Filtrar por origen",

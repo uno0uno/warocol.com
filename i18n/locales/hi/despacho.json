@@ -61,7 +61,8 @@
       "preparing": "तैयारी में",
       "delivered": "डिलीवर किया गया",
       "completed": "पूरा हुआ",
-      "cancelled": "रद्द किया गया"
+      "cancelled": "रद्द किया गया",
+      "rejected": "अस्वीकृत"
     },
     "domicilios": {
       "filterStatus": "स्थिति के अनुसार फ़िल्टर करें",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "टेबल के अनुसार फ़िल्टर करें",
-      "emptyTitle": "कोई लंबित ऑर्डर नहीं है।",
-      "emptySub": "नए QR ऑर्डर यहां दिखाई देंगे।",
+      "emptyTitle": "कोई टेबल ऑर्डर नहीं।",
+      "emptySub": "QR टेबल ऑर्डर यहाँ दिखेंगे।",
       "itemCountOne": "{count} आइटम",
-      "itemCountMany": "{count} आइटम"
+      "itemCountMany": "{count} आइटम",
+      "filterStatus": "स्थिति से फ़िल्टर करें",
+      "filterStatusAll": "सभी"
     },
     "comandas": {
       "filterSource": "स्रोत के अनुसार फ़िल्टर करें",
