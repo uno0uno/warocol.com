@@ -386,14 +386,22 @@
 
     <UiConfirmActionModal
       v-model="showDeleteConfirm"
-      :title="t('abastecimiento.proveedorDetalle.deleteConfirmTitle')"
-      :message="t('abastecimiento.proveedorDetalle.deleteConfirmMessage')"
+      :title="deleteModalTitle"
+      :message="deleteModalMessage"
       :confirm-label="t('abastecimiento.proveedorDetalle.deleteConfirm')"
       :loading-label="t('abastecimiento.proveedorDetalle.deleting')"
       variant="destructive"
       :loading="isDeleting"
+      :disabled-confirm="!deleteReason.trim()"
       @confirm="performDelete"
-    />
+    >
+      <template #extra>
+        <div class="mt-1">
+          <label class="block text-sm font-medium text-text-primary mb-1 text-left">{{ t('operaciones.bitacora.reason') }} *</label>
+          <textarea v-model="deleteReason" rows="2" class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface text-text-primary" :placeholder="t('operaciones.promociones.deleteReasonPlaceholder')" />
+        </div>
+      </template>
+    </UiConfirmActionModal>
 
     <UiErrorAlertModal
       v-model="errorModal.open"
@@ -405,7 +413,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, inject, onMounted } from 'vue'
+import { ref, reactive, computed, inject, onMounted } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
 import {
   useSupplierTaxIdLabel,
@@ -435,6 +443,20 @@ const form = reactive({
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
 const showDeleteConfirm = ref(false)
+const deleteReason = ref('')
+// null = supplier; { agreementId } = payment agreement
+const deleteTarget = ref<null | { agreementId: string }>(null)
+
+const deleteModalTitle = computed(() =>
+  deleteTarget.value
+    ? t('abastecimiento.proveedorDetalle.agreementDeleteConfirm')
+    : t('abastecimiento.proveedorDetalle.deleteConfirmTitle'),
+)
+const deleteModalMessage = computed(() =>
+  deleteTarget.value
+    ? t('abastecimiento.proveedorDetalle.agreementDeleteMessage')
+    : t('abastecimiento.proveedorDetalle.deleteConfirmMessage'),
+)
 
 interface ErrorModalDependent {
   label: string
@@ -500,14 +522,22 @@ const handleSubmit = async () => {
 // Handle provider deletion — opens confirmation modal; performDelete runs on confirm
 const requestDelete = () => {
   if (isDeleting.value) return
+  deleteTarget.value = null
+  deleteReason.value = ''
   showDeleteConfirm.value = true
 }
 
 const performDelete = async () => {
+  if (!deleteReason.value.trim()) return
+  if (deleteTarget.value) {
+    await performAgreementDelete(deleteTarget.value.agreementId)
+    return
+  }
   isDeleting.value = true
   try {
     await $fetch(`/api/suppliers/providers/${supplierId}`, {
       method: 'DELETE',
+      body: { reason: deleteReason.value.trim() },
     })
 
     showDeleteConfirm.value = false
@@ -653,19 +683,29 @@ const saveAgreement = async () => {
   }
 }
 
-const deleteAgreement = async (agreementId) => {
-  if (!confirm(t('abastecimiento.proveedorDetalle.agreementDeleteConfirm'))) {
-    return
-  }
+const deleteAgreement = (agreementId) => {
+  if (isDeleting.value) return
+  deleteTarget.value = { agreementId }
+  deleteReason.value = ''
+  showDeleteConfirm.value = true
+}
 
+const performAgreementDelete = async (agreementId) => {
+  isDeleting.value = true
   try {
     await $fetch(`/api/suppliers/providers/${supplierId}/payment-agreements/${agreementId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      body: { reason: deleteReason.value.trim() },
     })
+    showDeleteConfirm.value = false
+    deleteTarget.value = null
     await refreshAgreements()
   } catch (err) {
     console.error('Error deleting agreement:', err)
+    showDeleteConfirm.value = false
     alert(t('abastecimiento.proveedorDetalle.deleteError'))
+  } finally {
+    isDeleting.value = false
   }
 }
 

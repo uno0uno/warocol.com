@@ -321,6 +321,7 @@
       "noCreatedId": "No se recibió el ID del proveedor creado",
       "createError": "Error al crear el proveedor. Por favor, inténtalo de nuevo.",
       "agreementDeleteConfirm": "¿Está seguro de que desea eliminar este acuerdo de pago?",
+      "agreementDeleteMessage": "Esta acción no se puede deshacer. El acuerdo desaparecerá del proveedor.",
       "saveError": "Error al guardar el acuerdo. Por favor intente nuevamente.",
       "deleteError": "Error al eliminar el acuerdo. Por favor intente nuevamente.",
       "updateError": "Error al actualizar el proveedor.",
