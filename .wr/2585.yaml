@@ -1,0 +1,34 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines. LLM reads once; humans use issue summary + PR.
+issue: 2585
+title: "feat(despacho): align domicilios/QR summary cards with CRM clientes style"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2585-despacho-crm-cards
+risk: low
+
+paths:
+  - pages/despacho/domicilios/[id].vue
+  - pages/despacho/en-mesa/[id].vue
+  - pages/despacho/en-mesa/index.vue
+
+ac:
+  - Domicilios detail: single CRM-style white header card + dl metrics
+  - QR detail: same pattern for table/date/payment/items + total
+  - en-mesa list mobile card tokens match crm/clientes
+  - No API / action logic changes
+
+out_of_scope:
+  - domicilios list
+  - comandas
+  - CRM pages
+  - loading-dots PR #2584 (separate)
+
+hints:
+  entry: "Replace 4-tile grids with bg-white border rounded-xl header + dl grid"
+  pattern: "pages/crm/clientes/[id].vue:706-833 — Customer Header Card"
+  tests: "manual — compare with /crm/clientes and /crm/clientes/[id]"
+
+skip:
+  audits: [ux, color, typography]

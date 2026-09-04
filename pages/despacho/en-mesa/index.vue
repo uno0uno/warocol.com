@@ -263,12 +263,12 @@ const viewRequest = (request: TableQrRequestRow) => {
 
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-data-table-border cursor-pointer transition-colors hover:bg-data-table-row-hover-bg"
-              :class="index % 2 === 0 ? 'bg-data-table-row-bg' : 'bg-data-table-row-alt-bg'"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
               @click="viewRequest(item)"
             >
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-text-primary leading-tight truncate">
+                <p class="text-sm font-bold text-text-primary leading-tight truncate">
                   {{ item.table_name }}
                 </p>
                 <p class="text-xs text-text-secondary mt-0.5">
@@ -277,9 +277,11 @@ const viewRequest = (request: TableQrRequestRow) => {
                   <span v-if="paymentLabel(item) !== '—'"> · {{ paymentLabel(item) }}</span>
                 </p>
               </div>
-              <span class="text-sm font-bold text-primary flex-shrink-0">
-                {{ formatCurrency(item.total_amount) }}
-              </span>
+              <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                <span class="text-sm font-bold text-text-primary tabular-nums">
+                  {{ formatCurrency(item.total_amount) }}
+                </span>
+              </div>
             </div>
           </template>
 

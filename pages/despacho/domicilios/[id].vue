@@ -283,41 +283,55 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else-if="order" class="space-y-6">
-      <!-- ── Section 1: Info Cards ── -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1: Cliente -->
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.customer') }}</p>
-          <p class="text-lg font-bold text-text-primary truncate">{{ order.verified_email ?? '—' }}</p>
-          <p class="text-sm text-text-secondary mt-1 truncate">{{ order.customer_phone || t('despacho.common.noPhone') }}</p>
+      <!-- ── Section 1: Summary card (CRM clientes style) ── -->
+      <div class="bg-white border border-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+              <span class="text-sm font-bold text-primary">#{{ order.order_number }}</span>
+            </div>
+            <div class="min-w-0">
+              <h2 class="text-lg font-bold text-text-primary truncate leading-snug">
+                {{ t('despacho.detail.order') }} #{{ order.order_number }}
+              </h2>
+              <p class="text-xs text-text-secondary leading-snug">
+                {{ orderTypeLabel(order.order_type) }}
+                ·
+                <template v-if="order.scheduled_time">{{ t('despacho.detail.scheduledAt', { date: formatDateTime(order.scheduled_time) }) }}</template>
+                <template v-else>{{ t('despacho.detail.immediateDelivery') }}</template>
+              </p>
+            </div>
+          </div>
+          <div class="text-end flex-shrink-0">
+            <p class="text-lg font-bold text-primary tabular-nums leading-snug">{{ formatCurrency(order.total_amount) }}</p>
+            <p class="text-xs text-text-secondary leading-snug">{{ t('despacho.common.total') }}</p>
+          </div>
         </div>
 
-        <!-- Card 2: Pedido -->
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.detail.order') }}</p>
-          <p class="text-lg font-bold text-text-primary">#{{ order.order_number }}</p>
-          <p class="text-sm text-text-secondary mt-1">{{ formatDate(order.order_date) }}</p>
-          <UiStatusBadge v-if="order.scheduled_time" variant="warning" size="sm" format="text" class="mt-1 border-0">
-            {{ t('despacho.detail.scheduledAt', { date: formatDateTime(order.scheduled_time) }) }}
-          </UiStatusBadge>
-          <UiStatusBadge v-else variant="success" size="sm" format="text" class="mt-1 border-0">
-            {{ t('despacho.detail.immediateDelivery') }}
-          </UiStatusBadge>
-        </div>
-
-        <!-- Card 3: Estado -->
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.status') }}</p>
-          <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
-            {{ getStatusText(order.status, order.order_type) }}
-          </UiStatusBadge>
-        </div>
-
-        <!-- Card 4: Total (primary accent) -->
-        <div class="bg-surface border-2 border-primary rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">{{ t('despacho.common.total') }}</p>
-          <p class="text-2xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
-        </div>
+        <dl class="grid grid-cols-2 lg:grid-cols-4 border-t border-border">
+          <div class="px-4 py-3 border-b lg:border-b-0 border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('despacho.common.customer') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary truncate">{{ order.verified_email ?? '—' }}</dd>
+          </div>
+          <div class="px-4 py-3 border-b lg:border-b-0 lg:border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('despacho.common.phone') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums truncate">
+              {{ order.customer_phone || t('despacho.common.noPhone') }}
+            </dd>
+          </div>
+          <div class="px-4 py-3 border-b lg:border-b-0 border-e border-border min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('despacho.common.date') }}</dt>
+            <dd class="m-0 text-sm font-semibold text-text-primary tabular-nums">{{ formatDate(order.order_date) }}</dd>
+          </div>
+          <div class="px-4 py-3 border-b lg:border-b-0 min-w-0">
+            <dt class="text-xs text-text-secondary mb-1">{{ t('despacho.common.status') }}</dt>
+            <dd class="m-0">
+              <UiStatusBadge :variant="getStatusVariant(order.status)" size="sm" format="text">
+                {{ getStatusText(order.status, order.order_type) }}
+              </UiStatusBadge>
+            </dd>
+          </div>
+        </dl>
       </div>
 
       <!-- ── Section 1.5: Status Actions ── -->
