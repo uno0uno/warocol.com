@@ -36,6 +36,9 @@ const statusHeaderOptions = computed(() => [
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
+const PAGE_SIZE = 25
+const currentPage = ref(1)
+
 const hasActiveFilters = computed(
   () =>
     !!localSearchTerm.value
@@ -45,13 +48,14 @@ const hasActiveFilters = computed(
     || !!orderTypeFilter.value,
 )
 
-const performSearch = () => applySearch()
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 const clearFilters = () => {
   clearSearch()
   clearDateRange()
   statusFilter.value = null
   orderTypeFilter.value = null
+  currentPage.value = 1
 }
 
 const {
@@ -62,14 +66,16 @@ const {
   refetch: refetchOrders,
 } = useQuery({
   key: () => ['online-orders', currentTenant.value?.id, {
+    limit: PAGE_SIZE,
+    offset: (currentPage.value - 1) * PAGE_SIZE,
     sortField: sortField.value,
     sortDirection: sortDirection.value,
     status: statusFilter.value,
   }],
   query: () => $fetch('/api/online/orders', {
     params: {
-      limit: 200,
-      offset: 0,
+      limit: PAGE_SIZE,
+      offset: (currentPage.value - 1) * PAGE_SIZE,
       sort_field: sortField.value,
       sort_direction: sortDirection.value,
       status: statusFilter.value || undefined,
@@ -82,6 +88,29 @@ const {
 const isLoadingOrders = computed(() => ordersStatus.value === 'loading' || (!ordersData.value && !fetchError.value))
 const isRefreshingOrders = computed(() => ordersAsyncStatus.value === 'loading' && ordersData.value != null)
 const ordersRaw = computed(() => ordersData.value?.data ?? [])
+
+const ordersTotal = computed(() => ordersData.value?.pagination?.total ?? 0)
+const ordersTotalPages = computed(() => {
+  const total = ordersTotal.value
+  return Math.max(1, Math.ceil(total / PAGE_SIZE))
+})
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, ordersTotalPages.value))
+}
+
+watch(() => currentTenant.value?.id, () => {
+  currentPage.value = 1
+})
+
+watch(dateRangeDates, (val) => {
+  if (!val || (val.length === 2 && val[0] && val[1])) {
+    currentPage.value = 1
+  }
+})
+
+watch([statusFilter, orderTypeFilter, sortField, sortDirection], () => {
+  currentPage.value = 1
+})
 
 const displayOrders = computed(() => {
   const q = appliedSearch.value.trim().toLowerCase()
@@ -270,6 +299,44 @@ const viewOrder = (order: any) => {
             <span class="text-sm text-text-secondary">{{ value || t('despacho.common.noPhone') }}</span>
           </template>
         </UiResponsiveDataView>
+
+      <div v-if="ordersTotal > 0" class="flex items-center justify-end px-1 py-2">
+        <div class="flex items-center gap-1">
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.primeraPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaAnterior')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            :disabled="currentPage >= ordersTotalPages"
+            @click="goToPage(currentPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.paginaSiguiente')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage >= ordersTotalPages"
+            @click="goToPage(ordersTotalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            :aria-label="t('ventas.common.ultimaPagina')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
