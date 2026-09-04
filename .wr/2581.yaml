@@ -1,0 +1,41 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines. LLM reads once; humans use issue summary + PR.
+issue: 2581
+title: "feat(despacho): require cancel reason on online order cancel for bitácora"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2581-domicilios-cancel-reason
+risk: low
+
+paths:
+  - pages/despacho/domicilios/[id].vue
+  - i18n/locales/es/despacho.json
+  - i18n/locales/en/despacho.json
+  - i18n/locales/pt/despacho.json
+  - i18n/locales/fr/despacho.json
+  - i18n/locales/de/despacho.json
+  - i18n/locales/ar/despacho.json
+  - i18n/locales/zh/despacho.json
+  - i18n/locales/hi/despacho.json
+
+ac:
+  - Cancel from /despacho/domicilios/[id] requires non-empty reason before PATCH cancelled
+  - UX mirrors QR reject (textarea + disabled confirm without reason)
+  - Reason sent as body.reason; visible in status timeline + bitácora via existing API
+  - Other status transitions unchanged
+  - i18n cancelReason / cancelReasonPlaceholder
+
+out_of_scope:
+  - POS/mesa cancel flows
+  - Bitácora list UI changes
+  - QR reject itself
+  - API harden (reason already optional and persisted)
+
+hints:
+  entry: "pages/despacho/domicilios/[id].vue — cancelOrder + canCancelOrder"
+  pattern: "pages/despacho/en-mesa/[id].vue:363-380 — rejectReason textarea"
+  tests: "manual — cancel online order, check timeline reason + bitácora"
+
+skip:
+  audits: [ux, color, typography]

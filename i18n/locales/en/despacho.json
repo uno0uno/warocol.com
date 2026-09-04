@@ -125,6 +125,8 @@
       "markDelivered": "Mark delivered",
       "completeOrder": "Complete order",
       "cancelOrder": "Cancel order",
+      "cancelReason": "Cancel reason",
+      "cancelReasonPlaceholder": "Why is this order being cancelled?",
       "acceptOrder": "Accept order",
       "reject": "Reject",
       "rejectReason": "Reject reason",

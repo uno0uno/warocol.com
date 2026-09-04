@@ -125,6 +125,8 @@
       "markDelivered": "标记为已送达",
       "completeOrder": "完成订单",
       "cancelOrder": "取消订单",
+      "cancelReason": "取消原因",
+      "cancelReasonPlaceholder": "为什么取消此订单？",
       "acceptOrder": "接受订单",
       "reject": "拒绝",
       "orderAccepted": "订单已接受。",

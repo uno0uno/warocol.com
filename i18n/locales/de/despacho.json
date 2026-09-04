@@ -125,6 +125,8 @@
       "markDelivered": "Als 'Geliefert' markieren",
       "completeOrder": "Bestellung abschließen",
       "cancelOrder": "Bestellung stornieren",
+      "cancelReason": "Stornierungsgrund",
+      "cancelReasonPlaceholder": "Warum wird diese Bestellung storniert?",
       "acceptOrder": "Bestellung annehmen",
       "reject": "Ablehnen",
       "orderAccepted": "Bestellung angenommen.",

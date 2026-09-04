@@ -38,6 +38,10 @@ const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 
 const isStatusUpdating = ref(false)
 const statusUpdateError = ref<string | null>(null)
+const cancelReason = ref('')
+const canCancelOrder = computed(() =>
+  ['pending', 'confirmed', 'preparing'].includes(order.value?.status),
+)
 
 // ── Payment-method capture on delivered (warocol.com#606) ────────────────────
 interface PaymentSelection {
@@ -122,6 +126,15 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
 }
 
 const confirmOrder = () => updateStatus('confirmed', { auto_complete: true })
+
+const cancelOrder = () => {
+  const reason = cancelReason.value.trim()
+  if (!reason) {
+    statusUpdateError.value = t('despacho.detail.cancelReasonPlaceholder')
+    return
+  }
+  return updateStatus('cancelled', { reason })
+}
 
 const orderTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
@@ -347,41 +360,53 @@ onUnmounted(() => {
         </div>
 
         <!-- Active states -->
-        <div v-else class="flex flex-col sm:flex-row gap-3">
-          <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="confirmOrder()">
-            {{ isStatusUpdating ? t('despacho.detail.confirming') : t('despacho.detail.confirmOrder') }}
-          </UiButton>
-          <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
-            {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markPreparing') }}
-          </UiButton>
-          <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="openDeliveredCapture">
-            {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markDelivered') }}
-          </UiButton>
-          <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
-            {{ isStatusUpdating ? t('despacho.detail.completing') : t('despacho.detail.completeOrder') }}
-          </UiButton>
+        <div v-else class="flex flex-col gap-3">
+          <div v-if="canCancelOrder" class="space-y-3">
+            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">{{ t('despacho.detail.cancelReason') }}</p>
+            <textarea
+              v-model="cancelReason"
+              rows="3"
+              maxlength="500"
+              :placeholder="t('despacho.detail.cancelReasonPlaceholder')"
+              class="w-full min-h-[88px] rounded-lg border-2 border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-status-critical-text/50"
+            />
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="confirmOrder()">
+              {{ isStatusUpdating ? t('despacho.detail.confirming') : t('despacho.detail.confirmOrder') }}
+            </UiButton>
+            <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
+              {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markPreparing') }}
+            </UiButton>
+            <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="openDeliveredCapture">
+              {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markDelivered') }}
+            </UiButton>
+            <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
+              {{ isStatusUpdating ? t('despacho.detail.completing') : t('despacho.detail.completeOrder') }}
+            </UiButton>
 
-          <UiButton
-            v-if="['pending', 'confirmed', 'preparing'].includes(order.status)"
-            variant="destructive"
-            size="lg"
-            :disabled="isStatusUpdating"
-            @click="updateStatus('cancelled')"
-          >
-            {{ isStatusUpdating ? t('despacho.detail.cancelling') : t('despacho.detail.cancelOrder') }}
-          </UiButton>
-          <UiButton
-            variant="crocus-outline"
-            size="lg"
-            class="gap-2"
-            :disabled="isStatusUpdating || !canPrintComanda"
-            :aria-label="t('despacho.common.printComanda')"
-            :title="t('despacho.common.printComanda')"
-            @click="printOrderComanda"
-          >
-            <Printer class="h-4 w-4" aria-hidden="true" />
-            <span>{{ t('despacho.common.print') }}</span>
-          </UiButton>
+            <UiButton
+              v-if="canCancelOrder"
+              variant="destructive"
+              size="lg"
+              :disabled="isStatusUpdating || !cancelReason.trim()"
+              @click="cancelOrder"
+            >
+              {{ isStatusUpdating ? t('despacho.detail.cancelling') : t('despacho.detail.cancelOrder') }}
+            </UiButton>
+            <UiButton
+              variant="crocus-outline"
+              size="lg"
+              class="gap-2"
+              :disabled="isStatusUpdating || !canPrintComanda"
+              :aria-label="t('despacho.common.printComanda')"
+              :title="t('despacho.common.printComanda')"
+              @click="printOrderComanda"
+            >
+              <Printer class="h-4 w-4" aria-hidden="true" />
+              <span>{{ t('despacho.common.print') }}</span>
+            </UiButton>
+          </div>
         </div>
 
         <p v-if="statusUpdateError" role="alert" class="mt-3 text-sm text-destructive">{{ statusUpdateError }}</p>

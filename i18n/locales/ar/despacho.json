@@ -125,6 +125,8 @@
       "markDelivered": "وضع علامة تم تسليمه",
       "completeOrder": "إكمال الطلب",
       "cancelOrder": "إلغاء الطلب",
+      "cancelReason": "سبب الإلغاء",
+      "cancelReasonPlaceholder": "لماذا يتم إلغاء هذا الطلب؟",
       "acceptOrder": "قبول الطلب",
       "reject": "رفض",
       "orderAccepted": "تم قبول الطلب.",
