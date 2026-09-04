@@ -1248,11 +1248,50 @@ const onSplitAmountInput = (e: Event) => {
   const input = e.target as HTMLInputElement
   const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
   splitPartialAmount.value = raw || null
+  splitAmountManualOverride.value = true
   cashReceivedInput.value = 0
   input.value = raw ? raw.toLocaleString(uiLocale.value) : ''
 }
 const isAddingPayment = ref(false)
 const splitPartialAmount = ref<number | null>(null)
+// Issue warocol.com#2591 — split by item selection and/or typed amount.
+// Taps on items accumulate into the amount input; manual typing sets an
+// override that wins until the next item tap recomputes from selection.
+const splitSelectedItemKeys = ref<string[]>([])
+const splitAmountManualOverride = ref(false)
+const splitItemKey = (line: any, idx: number): string =>
+  String(line?.orderItemId ?? line?.id ?? `${line?.product?.id ?? 'p'}-${idx}`)
+const splitSelectedTotal = computed(() =>
+  cartItems.value.reduce((sum, line, idx) => {
+    if (!splitSelectedItemKeys.value.includes(splitItemKey(line, idx))) return sum
+    const l = line as { subtotal?: number; product?: { price?: number }; quantity?: number }
+    return sum + (Number(l.subtotal) || (Number(l.product?.price) || 0) * (Number(l.quantity) || 0))
+  }, 0),
+)
+const splitSelectableItems = computed(() =>
+  cartItems.value.map((line, idx) => {
+    const l = line as { subtotal?: number; product?: { name?: string; price?: number }; quantity?: number }
+    return {
+      key: splitItemKey(line, idx),
+      name: String((line as any)?.product?.name ?? l?.product?.name ?? 'Ítem'),
+      quantity: Number((line as any)?.quantity ?? l?.quantity ?? 1),
+      subtotal: Number(l.subtotal) || (Number(l?.product?.price) || 0) * (Number((line as any)?.quantity) || 0),
+    }
+  }),
+)
+const toggleSplitItem = (key: string) => {
+  const i = splitSelectedItemKeys.value.indexOf(key)
+  if (i >= 0) splitSelectedItemKeys.value.splice(i, 1)
+  else splitSelectedItemKeys.value.push(key)
+  splitAmountManualOverride.value = false
+  const total = Math.round(splitSelectedTotal.value)
+  splitPartialAmount.value = total > 0 ? total : null
+  cashReceivedInput.value = 0
+}
+const clearSplitSelection = () => {
+  splitSelectedItemKeys.value = []
+  splitAmountManualOverride.value = false
+}
 
 // Issue warocol.com#649 — the partial amount input is always reset after each
 // payment lands and when split mode toggles. The cashier must explicitly type
@@ -1262,6 +1301,7 @@ watch(splitMode, (val) => {
   cashReceivedInput.value = 0
   if (val) {
     splitPartialAmount.value = null
+    clearSplitSelection()
     activeAccordion.value = null
   }
 })
@@ -1281,6 +1321,7 @@ const toggleSplitMode = () => {
   if (!next) {
     splitPayments.value = []
     splitPaidTotal.value = 0
+    clearSplitSelection()
   }
 }
 
@@ -1625,6 +1666,7 @@ const addSplitPayment = async () => {
     cashReceivedInput.value = 0
     // Issue warocol.com#649 — reset partial so next iteration starts at 0.
     splitPartialAmount.value = null
+    clearSplitSelection()
     if (isKitchenServiceMode.value) {
       cache.invalidateQueries({
         key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
@@ -5238,6 +5280,8 @@ onUnmounted(() => {
           :split-remaining="splitRemaining"
           :split-amount-due="splitAmountDue"
           :split-partial-amount="splitPartialAmount"
+          :split-selectable-items="splitSelectableItems"
+          :split-selected-item-keys="splitSelectedItemKeys"
           :split-amount-validation-message="splitAmountValidationMessage"
           :split-payment-validation-message="splitPaymentValidationMessage"
           :tip-amount="tipAmount"
@@ -5255,6 +5299,7 @@ onUnmounted(() => {
           :get-payment-method-label="getPaymentMethodLabel"
           @toggle-split-mode="toggleSplitMode"
           @split-amount-input="onSplitAmountInput"
+          @toggle-split-item="toggleSplitItem"
           @add-split-payment="addSplitPayment"
           @void-payment="openVoidPaymentModal"
         />
@@ -5603,6 +5648,8 @@ onUnmounted(() => {
         :split-remaining="splitRemaining"
         :split-amount-due="splitAmountDue"
         :split-partial-amount="splitPartialAmount"
+        :split-selectable-items="splitSelectableItems"
+        :split-selected-item-keys="splitSelectedItemKeys"
         :split-amount-validation-message="splitAmountValidationMessage"
         :split-payment-validation-message="splitPaymentValidationMessage"
         :tip-amount="tipAmount"
@@ -5620,6 +5667,7 @@ onUnmounted(() => {
         :get-payment-method-label="getPaymentMethodLabel"
         @toggle-split-mode="toggleSplitMode"
         @split-amount-input="onSplitAmountInput"
+        @toggle-split-item="toggleSplitItem"
         @add-split-payment="addSplitPayment"
         @void-payment="openVoidPaymentModal"
       />

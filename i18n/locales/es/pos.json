@@ -169,6 +169,7 @@
         "complete": "Cobro completo",
         "pendingBalance": "Saldo pendiente",
         "amountNow": "Monto a cobrar ahora",
+        "selectItems": "O marca platos de la cuenta",
         "chargeAmount": "Cobrar {amount} · {method}",
         "deletePaymentAria": "Eliminar pago #{number} de {amount}",
         "amountGreaterThanZero": "Ingresa un monto mayor a $0.",
