@@ -1,0 +1,33 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines. LLM reads once; humans use issue summary + PR.
+issue: 2583
+title: "feat(despacho): show inline loading dots on accept/cancel (domicilios + QR)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2583-despacho-loading-dots
+risk: low
+
+paths:
+  - pages/despacho/domicilios/[id].vue
+  - pages/despacho/en-mesa/[id].vue
+
+ac:
+  - Domicilios detail: UiLoadingDots on confirm/cancel (and other status actions) while updating
+  - QR detail: UiLoadingDots on Accept and Reject while working
+  - Buttons disabled during request; dots only on the active button
+  - Mirror payment-modal UiLoadingDots pattern
+  - No API changes
+
+out_of_scope:
+  - list pages, comandas, POS
+  - i18n overhaul
+  - API
+
+hints:
+  entry: "statusUpdatingAction / workingAction + UiLoadingDots in action buttons"
+  pattern: "pages/despacho/domicilios/[id].vue payment modal — UiLoadingDots size 8px"
+  tests: "manual — click accept/cancel on both details"
+
+skip:
+  audits: [ux, color, typography]
