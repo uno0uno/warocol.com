@@ -1268,17 +1268,6 @@ const splitSelectedTotal = computed(() =>
     return sum + (Number(l.subtotal) || (Number(l.product?.price) || 0) * (Number(l.quantity) || 0))
   }, 0),
 )
-const splitSelectableItems = computed(() =>
-  cartItems.value.map((line, idx) => {
-    const l = line as { subtotal?: number; product?: { name?: string; price?: number }; quantity?: number }
-    return {
-      key: splitItemKey(line, idx),
-      name: String((line as any)?.product?.name ?? l?.product?.name ?? 'Ítem'),
-      quantity: Number((line as any)?.quantity ?? l?.quantity ?? 1),
-      subtotal: Number(l.subtotal) || (Number(l?.product?.price) || 0) * (Number((line as any)?.quantity) || 0),
-    }
-  }),
-)
 const toggleSplitItem = (key: string) => {
   const i = splitSelectedItemKeys.value.indexOf(key)
   if (i >= 0) splitSelectedItemKeys.value.splice(i, 1)
@@ -4495,6 +4484,12 @@ onUnmounted(() => {
               class="px-3 py-2.5 md:p-4 flex gap-2.5 md:gap-4 items-start group hover:bg-surface-secondary/50 theme-transition"
             >
               <!-- Order Number -->
+              <div v-if="splitMode" class="mt-0.5 flex-shrink-0">
+                <UiBulkSelectCheckbox
+                  :checked="splitSelectedItemKeys.includes(splitItemKey(item, index))"
+                  @change="toggleSplitItem(splitItemKey(item, index))"
+                />
+              </div>
               <div class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-action-primary-bg text-action-primary-text flex items-center justify-center text-xs font-bold mt-0.5">
                 {{ index + 1 }}
               </div>
@@ -5280,8 +5275,6 @@ onUnmounted(() => {
           :split-remaining="splitRemaining"
           :split-amount-due="splitAmountDue"
           :split-partial-amount="splitPartialAmount"
-          :split-selectable-items="splitSelectableItems"
-          :split-selected-item-keys="splitSelectedItemKeys"
           :split-amount-validation-message="splitAmountValidationMessage"
           :split-payment-validation-message="splitPaymentValidationMessage"
           :tip-amount="tipAmount"
@@ -5299,7 +5292,6 @@ onUnmounted(() => {
           :get-payment-method-label="getPaymentMethodLabel"
           @toggle-split-mode="toggleSplitMode"
           @split-amount-input="onSplitAmountInput"
-          @toggle-split-item="toggleSplitItem"
           @add-split-payment="addSplitPayment"
           @void-payment="openVoidPaymentModal"
         />
@@ -5648,8 +5640,6 @@ onUnmounted(() => {
         :split-remaining="splitRemaining"
         :split-amount-due="splitAmountDue"
         :split-partial-amount="splitPartialAmount"
-        :split-selectable-items="splitSelectableItems"
-        :split-selected-item-keys="splitSelectedItemKeys"
         :split-amount-validation-message="splitAmountValidationMessage"
         :split-payment-validation-message="splitPaymentValidationMessage"
         :tip-amount="tipAmount"
@@ -5667,7 +5657,6 @@ onUnmounted(() => {
         :get-payment-method-label="getPaymentMethodLabel"
         @toggle-split-mode="toggleSplitMode"
         @split-amount-input="onSplitAmountInput"
-        @toggle-split-item="toggleSplitItem"
         @add-split-payment="addSplitPayment"
         @void-payment="openVoidPaymentModal"
       />
