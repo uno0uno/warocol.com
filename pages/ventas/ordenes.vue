@@ -375,6 +375,16 @@ const getPaymentStatusLabel = (status: string | null | undefined) => {
   return labels[status] ?? status
 }
 
+// Issue warocol.com#2598 — split orders must always render Dividido N,
+// never the method label. Count>1 covers settled splits; payment_status
+// 'partial' covers mid-split orders with a single payment row so far.
+const splitOrderCount = (row: any): number => {
+  const n = Number(row?.split_payments_count)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
+}
+const isSplitOrder = (row: any): boolean =>
+  splitOrderCount(row) > 1 || row?.payment_status === 'partial'
+
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     'completed': t('ventas.common.completada'),
@@ -848,8 +858,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_method="{ row }">
           <UiStatusBadge
-            v-if="Number(row?.split_payments_count) > 1"
-            :value="t('ventas.ordenes.splitCount', { count: Number(row.split_payments_count) })"
+            v-if="isSplitOrder(row)"
+            :value="t('ventas.ordenes.splitCount', { count: Math.max(1, splitOrderCount(row)) })"
             format="text"
             variant="secondary"
             size="sm"
