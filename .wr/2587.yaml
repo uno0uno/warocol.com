@@ -1,0 +1,39 @@
+# Machine contract — front companion for api-warolabs#974 / warocol.com#2587
+issue: 2587
+title: "feat(despacho): show accepted/rejected Table QR requests with pagination"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2587-table-qr-historial-front
+risk: low
+depends_on: uno0uno/api-warolabs#974
+
+paths:
+  - pages/despacho/en-mesa/index.vue
+  - i18n/locales/es/despacho.json
+  - i18n/locales/en/despacho.json
+  - i18n/locales/pt/despacho.json
+  - i18n/locales/fr/despacho.json
+  - i18n/locales/de/despacho.json
+  - i18n/locales/ar/despacho.json
+  - i18n/locales/zh/despacho.json
+  - i18n/locales/hi/despacho.json
+
+ac:
+  - Status filter pending/accepted/rejected/all
+  - Pagination 25/page like ordenes
+  - Uses grouped=false flat API
+  - Status column + badges on list/cards
+
+out_of_scope:
+  - accept/reject logic
+  - comandas
+
+hints:
+  entry: "pages/despacho/en-mesa/index.vue"
+  pattern: "pages/despacho/domicilios/index.vue pagination"
+  tests: "manual — filter accepted/rejected after API deploy"
+
+skip:
+  audits: [ux, color, typography]

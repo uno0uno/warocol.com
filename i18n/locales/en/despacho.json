@@ -61,7 +61,8 @@
       "preparing": "Preparing",
       "delivered": "Delivered",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "rejected": "Rejected"
     },
     "domicilios": {
       "filterStatus": "Filter by status",
@@ -71,10 +72,12 @@
     },
     "enMesa": {
       "filterTable": "Filter by table",
-      "emptyTitle": "No pending orders.",
-      "emptySub": "New QR orders will appear here.",
+      "emptyTitle": "No table orders.",
+      "emptySub": "QR table orders will appear here.",
       "itemCountOne": "{count} item",
-      "itemCountMany": "{count} items"
+      "itemCountMany": "{count} items",
+      "filterStatus": "Filter by status",
+      "filterStatusAll": "All"
     },
     "comandas": {
       "filterSource": "Filter by source",
