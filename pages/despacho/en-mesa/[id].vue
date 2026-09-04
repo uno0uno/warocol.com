@@ -84,6 +84,7 @@ const isRefreshing = computed(() => asyncStatus.value === 'loading' && requestRe
 const paymentLabel = computed(() => request.value ? formatTableQrPayment(request.value, { t }) : '—')
 
 const isWorking = ref(false)
+const workingAction = ref<'accept' | 'reject' | null>(null)
 const actionError = ref<string | null>(null)
 const rejectReason = ref('')
 const pendingListRoute = { path: '/despacho/en-mesa' }
@@ -113,6 +114,7 @@ async function acceptRequest() {
   if (!request.value || isWorking.value || !isPending.value) return
   const acceptedTableName = request.value.table_name
   isWorking.value = true
+  workingAction.value = 'accept'
   actionError.value = null
   try {
     const res = await $fetch<{
@@ -150,6 +152,7 @@ async function acceptRequest() {
       : detail?.message ?? t('despacho.detail.acceptError')
   } finally {
     isWorking.value = false
+    workingAction.value = null
   }
 }
 
@@ -161,6 +164,7 @@ async function rejectRequest() {
     return
   }
   isWorking.value = true
+  workingAction.value = 'reject'
   actionError.value = null
   try {
     await $fetch(`/api/table-qr-requests/${requestId.value}/reject`, {
@@ -178,6 +182,7 @@ async function rejectRequest() {
       : detail?.message ?? t('despacho.detail.rejectError')
   } finally {
     isWorking.value = false
+    workingAction.value = null
   }
 }
 
@@ -373,11 +378,13 @@ async function printQrComanda() {
           />
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
-          <UiButton size="lg" :disabled="isWorking" @click="acceptRequest">
-            {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.acceptOrder') }}
+          <UiButton size="lg" class="gap-2" :disabled="isWorking" @click="acceptRequest">
+            <UiLoadingDots v-if="workingAction === 'accept'" size="8px" color="currentColor" />
+            <span>{{ t('despacho.detail.acceptOrder') }}</span>
           </UiButton>
-          <UiButton variant="destructive" size="lg" :disabled="isWorking || !rejectReason.trim()" @click="rejectRequest">
-            {{ isWorking ? t('despacho.detail.processing') : t('despacho.detail.reject') }}
+          <UiButton variant="destructive" size="lg" class="gap-2" :disabled="isWorking || !rejectReason.trim()" @click="rejectRequest">
+            <UiLoadingDots v-if="workingAction === 'reject'" size="8px" color="currentColor" />
+            <span>{{ t('despacho.detail.reject') }}</span>
           </UiButton>
           <UiButton
             variant="crocus-outline"

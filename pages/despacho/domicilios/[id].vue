@@ -37,6 +37,7 @@ const isRefreshing = computed(() =>
 const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 
 const isStatusUpdating = ref(false)
+const statusUpdatingAction = ref<string | null>(null)
 const statusUpdateError = ref<string | null>(null)
 const cancelReason = ref('')
 const canCancelOrder = computed(() =>
@@ -110,6 +111,7 @@ const confirmDelivered = async () => {
 const updateStatus = async (newStatus: string, extra: Record<string, unknown> = {}) => {
   if (!order.value || isStatusUpdating.value) return
   isStatusUpdating.value = true
+  statusUpdatingAction.value = newStatus
   statusUpdateError.value = null
   try {
     await $fetch(`/api/online/orders/${orderId.value}/status`, {
@@ -122,6 +124,7 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
     statusUpdateError.value = err?.data?.detail ?? err?.message ?? t('despacho.detail.updateStatusError')
   } finally {
     isStatusUpdating.value = false
+    statusUpdatingAction.value = null
   }
 }
 
@@ -372,27 +375,32 @@ onUnmounted(() => {
             />
           </div>
           <div class="flex flex-col sm:flex-row gap-3">
-            <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="confirmOrder()">
-              {{ isStatusUpdating ? t('despacho.detail.confirming') : t('despacho.detail.confirmOrder') }}
+            <UiButton v-if="order.status === 'pending'" size="lg" class="gap-2" :disabled="isStatusUpdating" @click="confirmOrder()">
+              <UiLoadingDots v-if="statusUpdatingAction === 'confirmed'" size="8px" color="currentColor" />
+              <span>{{ t('despacho.detail.confirmOrder') }}</span>
             </UiButton>
-            <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
-              {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markPreparing') }}
+            <UiButton v-else-if="order.status === 'confirmed'" size="lg" class="gap-2" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
+              <UiLoadingDots v-if="statusUpdatingAction === 'preparing'" size="8px" color="currentColor" />
+              <span>{{ t('despacho.detail.markPreparing') }}</span>
             </UiButton>
-            <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="openDeliveredCapture">
-              {{ isStatusUpdating ? t('despacho.detail.updating') : t('despacho.detail.markDelivered') }}
+            <UiButton v-else-if="order.status === 'preparing'" size="lg" class="gap-2" :disabled="isStatusUpdating" @click="openDeliveredCapture">
+              <span>{{ t('despacho.detail.markDelivered') }}</span>
             </UiButton>
-            <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
-              {{ isStatusUpdating ? t('despacho.detail.completing') : t('despacho.detail.completeOrder') }}
+            <UiButton v-else-if="order.status === 'delivered'" size="lg" class="gap-2" :disabled="isStatusUpdating" @click="updateStatus('completed')">
+              <UiLoadingDots v-if="statusUpdatingAction === 'completed'" size="8px" color="currentColor" />
+              <span>{{ t('despacho.detail.completeOrder') }}</span>
             </UiButton>
 
             <UiButton
               v-if="canCancelOrder"
               variant="destructive"
               size="lg"
+              class="gap-2"
               :disabled="isStatusUpdating || !cancelReason.trim()"
               @click="cancelOrder"
             >
-              {{ isStatusUpdating ? t('despacho.detail.cancelling') : t('despacho.detail.cancelOrder') }}
+              <UiLoadingDots v-if="statusUpdatingAction === 'cancelled'" size="8px" color="currentColor" />
+              <span>{{ t('despacho.detail.cancelOrder') }}</span>
             </UiButton>
             <UiButton
               variant="crocus-outline"
