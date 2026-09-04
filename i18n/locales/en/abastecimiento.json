@@ -321,6 +321,7 @@
       "noCreatedId": "The created supplier ID was not received",
       "createError": "Error creating the supplier. Please try again.",
       "agreementDeleteConfirm": "Are you sure you want to delete this payment agreement?",
+      "agreementDeleteMessage": "This action cannot be undone. The agreement will be removed from the supplier.",
       "saveError": "Error saving the agreement. Please try again.",
       "deleteError": "Error deleting the agreement. Please try again.",
       "updateError": "Error updating the supplier.",
