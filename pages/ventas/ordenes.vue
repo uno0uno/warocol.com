@@ -809,7 +809,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #cell-invoice="{ row }">
           <span
             v-if="row"
-            class="text-sm font-medium"
+            class="text-sm font-medium whitespace-normal break-words"
             :class="row.invoice_number ? 'text-text-primary' : 'text-text-secondary'"
           >
             {{ getInvoiceLabel(row) }}
@@ -848,11 +848,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_method="{ row }">
           <UiStatusBadge
-            v-if="row?.split_payments_count > 1"
-            :value="t('ventas.ordenes.splitCount', { count: row.split_payments_count })"
+            v-if="Number(row?.split_payments_count) > 1"
+            :value="t('ventas.ordenes.splitCount', { count: Number(row.split_payments_count) })"
             format="text"
             variant="secondary"
             size="sm"
+            class="whitespace-nowrap"
           />
           <UiStatusBadge
             v-else
@@ -860,6 +861,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             format="text"
             :variant="row?.payment_method === 'cash' ? 'success' : row?.payment_method === 'card' ? 'info' : row?.payment_method === 'digital' ? 'primary' : row?.payment_method === 'credit' ? 'warning' : 'secondary'"
             size="sm"
+            class="whitespace-nowrap"
           />
         </template>
 
