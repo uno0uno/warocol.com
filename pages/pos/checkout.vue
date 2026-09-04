@@ -4483,15 +4483,16 @@ onUnmounted(() => {
               :key="index"
               class="px-3 py-2.5 md:p-4 flex gap-2.5 md:gap-4 items-start group hover:bg-surface-secondary/50 theme-transition"
             >
-              <!-- Order Number -->
-              <div v-if="splitMode" class="mt-0.5 flex-shrink-0">
+              <!-- Split checkbox + Order Number: vertically centered, muted until checked -->
+              <div class="flex items-center gap-2 flex-shrink-0 mt-0.5 opacity-60 has-[input:checked]:opacity-100">
                 <UiBulkSelectCheckbox
+                  v-if="splitMode"
                   :checked="splitSelectedItemKeys.includes(splitItemKey(item, index))"
                   @change="toggleSplitItem(splitItemKey(item, index))"
                 />
-              </div>
-              <div class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-action-primary-bg text-action-primary-text flex items-center justify-center text-xs font-bold mt-0.5">
-                {{ index + 1 }}
+                <div class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full bg-action-primary-bg text-action-primary-text flex items-center justify-center text-xs font-bold">
+                  {{ index + 1 }}
+                </div>
               </div>
 
               <!-- Product Image -->
