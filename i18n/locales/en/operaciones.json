@@ -314,6 +314,11 @@
       "deductInventoryOff": "Inventory deducts at checkout",
       "enableDeductInventory": "Enable deduct on send",
       "disableDeductInventory": "Disable deduct on send",
+      "hideWithoutStock": "Hide products without recipe stock",
+      "hideWithoutStockOn": "Out-of-recipe-stock products hidden",
+      "hideWithoutStockOff": "Out-of-recipe-stock products visible",
+      "enableHideWithoutStock": "Enable hide without recipe stock",
+      "disableHideWithoutStock": "Disable hide without recipe stock",
       "saveError": "Could not save"
     },
     "propinas": {

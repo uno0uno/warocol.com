@@ -251,6 +251,11 @@
       "deductInventoryOff": "يُخصم المخزون عند الدفع",
       "enableDeductInventory": "تفعيل الخصم عند الإرسال",
       "disableDeductInventory": "إيقاف الخصم عند الإرسال",
+      "hideWithoutStock": "إخفاء المنتجات بلا مخزون وصفة",
+      "hideWithoutStockOn": "المنتجات بلا مخزون وصفة مخفية",
+      "hideWithoutStockOff": "المنتجات بلا مخزون وصفة ظاهرة",
+      "enableHideWithoutStock": "تفعيل إخفاء بلا مخزون وصفة",
+      "disableHideWithoutStock": "إيقاف إخفاء بلا مخزون وصفة",
       "saveError": "تعذر الحفظ"
     },
     "propinas": {

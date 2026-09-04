@@ -251,6 +251,11 @@
       "deductInventoryOff": "चेकआउट पर इन्वेंटरी कटती है",
       "enableDeductInventory": "भेजने पर कटौती चालू करें",
       "disableDeductInventory": "भेजने पर कटौती बंद करें",
+      "hideWithoutStock": "रेसिपी स्टॉक के बिना उत्पाद छिपाएँ",
+      "hideWithoutStockOn": "बिना रेसिपी स्टॉक वाले उत्पाद छिपे",
+      "hideWithoutStockOff": "बिना रेसिपी स्टॉक वाले उत्पाद दिखें",
+      "enableHideWithoutStock": "बिना रेसिपी स्टॉक छिपाना चालू करें",
+      "disableHideWithoutStock": "बिना रेसिपी स्टॉक छिपाना बंद करें",
       "saveError": "सहेजा नहीं जा सका"
     },
     "propinas": {

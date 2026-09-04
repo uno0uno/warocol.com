@@ -251,6 +251,11 @@
       "deductInventoryOff": "Bestand wird beim Checkout abgezogen",
       "enableDeductInventory": "Abzug beim Bestellen aktivieren",
       "disableDeductInventory": "Abzug beim Bestellen deaktivieren",
+      "hideWithoutStock": "Produkte ohne Rezeptbestand ausblenden",
+      "hideWithoutStockOn": "Produkte ohne Rezeptbestand ausgeblendet",
+      "hideWithoutStockOff": "Produkte ohne Rezeptbestand sichtbar",
+      "enableHideWithoutStock": "Ausblenden ohne Rezeptbestand aktivieren",
+      "disableHideWithoutStock": "Ausblenden ohne Rezeptbestand deaktivieren",
       "saveError": "Speichern fehlgeschlagen"
     },
     "propinas": {
