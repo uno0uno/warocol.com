@@ -251,6 +251,11 @@
       "deductInventoryOff": "Stock déduit au paiement",
       "enableDeductInventory": "Activer la déduction à l'envoi",
       "disableDeductInventory": "Désactiver la déduction à l'envoi",
+      "hideWithoutStock": "Masquer les produits sans stock de recette",
+      "hideWithoutStockOn": "Produits sans stock de recette masqués",
+      "hideWithoutStockOff": "Produits sans stock de recette visibles",
+      "enableHideWithoutStock": "Activer le masquage sans stock de recette",
+      "disableHideWithoutStock": "Désactiver le masquage sans stock de recette",
       "saveError": "Impossible d'enregistrer"
     },
     "propinas": {

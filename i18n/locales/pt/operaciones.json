@@ -254,6 +254,11 @@
       "deductInventoryOff": "Estoque desconta no pagamento",
       "enableDeductInventory": "Ativar desconto ao comandar",
       "disableDeductInventory": "Desativar desconto ao comandar",
+      "hideWithoutStock": "Ocultar produtos sem estoque de receita",
+      "hideWithoutStockOn": "Produtos sem estoque de receita ocultos",
+      "hideWithoutStockOff": "Produtos sem estoque de receita visíveis",
+      "enableHideWithoutStock": "Ativar ocultar sem estoque de receita",
+      "disableHideWithoutStock": "Desativar ocultar sem estoque de receita",
       "saveError": "Não foi possível salvar"
     },
     "propinas": {

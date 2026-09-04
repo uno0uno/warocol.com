@@ -314,6 +314,11 @@
       "deductInventoryOff": "Inventario se descuenta al cobrar",
       "enableDeductInventory": "Activar descuento al comandar",
       "disableDeductInventory": "Desactivar descuento al comandar",
+      "hideWithoutStock": "Ocultar productos sin stock de receta",
+      "hideWithoutStockOn": "Productos sin stock de receta ocultos",
+      "hideWithoutStockOff": "Productos sin stock de receta visibles",
+      "enableHideWithoutStock": "Activar ocultar sin stock de receta",
+      "disableHideWithoutStock": "Desactivar ocultar sin stock de receta",
       "saveError": "No se pudo guardar"
     },
     "propinas": {

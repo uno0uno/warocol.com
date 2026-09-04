@@ -43,11 +43,15 @@ const showSearch = computed(() => businessProfile.value?.pos_show_search !== fal
 const deductInventoryOnCommand = computed(
   () => businessProfile.value?.deduct_inventory_on_command !== false,
 )
+const hideProductsWithoutStock = computed(
+  () => businessProfile.value?.hide_products_without_stock === true,
+)
 
 const isSavingLayout = ref(false)
 const isTogglingImages = ref(false)
 const isTogglingSearch = ref(false)
 const isTogglingDeductInventory = ref(false)
+const isTogglingHideWithoutStock = ref(false)
 
 const setCatalogLayout = async (layout: CatalogLayout) => {
   if (!businessProfile.value || isSavingLayout.value || catalogLayout.value === layout) return
@@ -139,6 +143,31 @@ const toggleDeductInventoryOnCommand = async () => {
     })
   } finally {
     isTogglingDeductInventory.value = false
+  }
+}
+
+const toggleHideProductsWithoutStock = async () => {
+  if (!businessProfile.value || isTogglingHideWithoutStock.value) return
+  const newState = !hideProductsWithoutStock.value
+  isTogglingHideWithoutStock.value = true
+  try {
+    await $fetch('/api/operaciones/toggles/hide-products-without-stock', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    toast.success(
+      newState
+        ? t('operaciones.pos.hideWithoutStockOn')
+        : t('operaciones.pos.hideWithoutStockOff'),
+      { title: t('operaciones.comandas.savedTitle') },
+    )
+  } catch (error: any) {
+    toast.error(error?.data?.detail || t('operaciones.pos.saveError'), {
+      title: t('operaciones.comandas.error'),
+    })
+  } finally {
+    isTogglingHideWithoutStock.value = false
   }
 }
 </script>
@@ -255,6 +284,28 @@ const toggleDeductInventoryOnCommand = async () => {
             :checked="deductInventoryOnCommand"
             :disabled="isTogglingDeductInventory"
             @change="toggleDeductInventoryOnCommand"
+          >
+          <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
+      </div>
+
+      <div class="flex min-h-[64px] items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-snug text-text-primary">
+            {{ t('operaciones.pos.hideWithoutStock') }}
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingHideWithoutStock ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="hideProductsWithoutStock ? t('operaciones.pos.disableHideWithoutStock') : t('operaciones.pos.enableHideWithoutStock')"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="hideProductsWithoutStock"
+            :disabled="isTogglingHideWithoutStock"
+            @change="toggleHideProductsWithoutStock"
           >
           <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>

@@ -251,6 +251,11 @@
       "deductInventoryOff": "结账时扣减库存",
       "enableDeductInventory": "启用下单扣减",
       "disableDeductInventory": "关闭下单扣减",
+      "hideWithoutStock": "隐藏无配方库存的产品",
+      "hideWithoutStockOn": "无配方库存的产品已隐藏",
+      "hideWithoutStockOff": "无配方库存的产品可见",
+      "enableHideWithoutStock": "启用隐藏无配方库存",
+      "disableHideWithoutStock": "关闭隐藏无配方库存",
       "saveError": "无法保存"
     },
     "propinas": {
