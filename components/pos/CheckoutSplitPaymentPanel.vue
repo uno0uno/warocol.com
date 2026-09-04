@@ -20,6 +20,13 @@ const {
 
 const cashReceivedInput = defineModel<number>('cashReceivedInput', { default: 0 })
 
+interface SplitSelectableItem {
+  key: string
+  name: string
+  quantity: number
+  subtotal: number
+}
+
 const props = defineProps<{
   splitMode: boolean
   splitPayments: ReceiptPaymentLine[]
@@ -28,6 +35,8 @@ const props = defineProps<{
   splitRemaining: number
   splitAmountDue: number
   splitPartialAmount: number | null
+  splitSelectableItems: SplitSelectableItem[]
+  splitSelectedItemKeys: string[]
   splitAmountValidationMessage: string
   splitPaymentValidationMessage: string
   tipAmount: number
@@ -49,6 +58,7 @@ const props = defineProps<{
 defineEmits<{
   toggleSplitMode: []
   splitAmountInput: [event: Event]
+  toggleSplitItem: [key: string]
   addSplitPayment: []
   voidPayment: [payment: ReceiptPaymentLine]
 }>()
@@ -161,6 +171,26 @@ const uiLocale = computed(() => locale.value)
           :class="splitIsComplete ? 'text-state-success-text ' : 'text-text-primary'"
           aria-live="polite"
         >{{ formatCurrency(splitRemaining) }}</span>
+      </div>
+
+      <div v-if="!splitIsComplete && splitSelectableItems.length > 0" class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-text-secondary">{{ t('pos.checkout.split.selectItems') }}</span>
+        <ul class="space-y-1.5 max-h-48 overflow-y-auto">
+          <li v-for="item in splitSelectableItems" :key="item.key">
+            <label
+              class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm cursor-pointer hover:bg-surface-secondary/70 has-checked:border-primary has-checked:border"
+            >
+              <input
+                type="checkbox"
+                :checked="splitSelectedItemKeys.includes(item.key)"
+                class="h-4 w-4 accent-primary"
+                @change="$emit('toggleSplitItem', item.key)"
+              >
+              <span class="flex-1 text-text-primary">{{ item.name }}<span v-if="item.quantity > 1" class="text-text-secondary"> × {{ item.quantity }}</span></span>
+              <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(item.subtotal) }}</span>
+            </label>
+          </li>
+        </ul>
       </div>
 
       <div v-if="!splitIsComplete" class="flex flex-col gap-1">

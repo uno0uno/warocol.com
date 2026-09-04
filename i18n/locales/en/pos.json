@@ -181,7 +181,8 @@
         "cashRefundWarning": "Cash payment — remember to physically return the money to the customer before confirming.",
         "reason": "Reason",
         "reasonPlaceholder": "e.g. charge recorded by mistake",
-        "deletePayment": "Delete payment"
+        "deletePayment": "Delete payment",
+        "selectItems": "Or tap items from the bill"
       },
       "success": {
         "pendingTitle": "Sale pending",
