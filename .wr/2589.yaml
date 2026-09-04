@@ -1,0 +1,27 @@
+issue: 2589
+title: "feat(despacho): en-mesa status header filter and pending-first sort"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2589-en-mesa-status-header
+risk: low
+depends_on: api sort PR
+
+paths:
+  - pages/despacho/en-mesa/index.vue
+
+ac:
+  - Status filter in #header-status UiTableHeaderFilter
+  - Remove status select from AdvancedFiltersBar
+  - Client sort keeps pending-first then date
+
+out_of_scope:
+  - API
+
+hints:
+  entry: "pages/despacho/en-mesa/index.vue"
+  pattern: "domicilios/index.vue header-status"
+
+skip:
+  audits: [ux, color, typography]

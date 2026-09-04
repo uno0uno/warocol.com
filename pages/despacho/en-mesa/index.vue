@@ -60,6 +60,13 @@ const PAGE_SIZE = 25
 const currentPage = ref(1)
 const statusFilter = ref<string>('pending')
 
+const statusHeaderFilter = computed({
+  get: () => (statusFilter.value === 'all' ? '' : statusFilter.value),
+  set: (value: string | boolean) => {
+    statusFilter.value = typeof value === 'string' && value ? value : 'all'
+  },
+})
+
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const tableFilterId = ref('')
 
@@ -70,6 +77,18 @@ const statusLabel = (status: string) => {
   const key = `despacho.orderStatuses.${status}`
   const translated = t(key)
   return translated === key ? status : translated
+}
+
+const statusHeaderOptions = computed(() => [
+  { value: 'pending', label: statusLabel('pending') },
+  { value: 'accepted', label: statusLabel('accepted') },
+  { value: 'rejected', label: statusLabel('rejected') },
+])
+
+const STATUS_RANK: Record<string, number> = {
+  pending: 0,
+  accepted: 1,
+  rejected: 2,
 }
 
 const hasActiveFilters = computed(
@@ -165,6 +184,9 @@ const sortedRequests = computed(() => {
   const dir = sortDirection.value === 'asc' ? 1 : -1
 
   list.sort((a, b) => {
+    const statusDiff = (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9)
+    if (statusDiff !== 0) return statusDiff
+
     const av = a[field as keyof TableQrRequestRow]
     const bv = b[field as keyof TableQrRequestRow]
     if (av == null && bv == null) return 0
@@ -266,16 +288,6 @@ const viewRequest = (request: TableQrRequestRow) => {
       >
         <template #additional-filters>
           <select
-            v-model="statusFilter"
-            :class="filterSelectClass"
-            :aria-label="t('despacho.enMesa.filterStatus')"
-          >
-            <option value="pending">{{ statusLabel('pending') }}</option>
-            <option value="accepted">{{ statusLabel('accepted') }}</option>
-            <option value="rejected">{{ statusLabel('rejected') }}</option>
-            <option value="all">{{ t('despacho.enMesa.filterStatusAll') }}</option>
-          </select>
-          <select
             v-model="tableFilterId"
             :class="filterSelectClass"
             class="md:hidden"
@@ -313,6 +325,17 @@ const viewRequest = (request: TableQrRequestRow) => {
             :options="tableHeaderOptions"
             :all-label="t('despacho.common.allFemale')"
             @sort="handleSort"
+          />
+        </template>
+
+        <template #header-status>
+          <UiTableHeaderFilter
+            v-model="statusHeaderFilter"
+            :title="t('despacho.common.status')"
+            filter-type="select"
+            :options="statusHeaderOptions"
+            :all-label="t('despacho.enMesa.filterStatusAll')"
+            align="center"
           />
         </template>
 
