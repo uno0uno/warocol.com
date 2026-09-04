@@ -125,6 +125,8 @@
       "markDelivered": "Marcar como entregue",
       "completeOrder": "Concluir pedido",
       "cancelOrder": "Cancelar pedido",
+      "cancelReason": "Motivo do cancelamento",
+      "cancelReasonPlaceholder": "Por que este pedido está sendo cancelado?",
       "acceptOrder": "Aceitar pedido",
       "reject": "Recusar",
       "orderAccepted": "Pedido aceito.",

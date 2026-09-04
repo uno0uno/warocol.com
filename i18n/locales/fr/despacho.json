@@ -125,6 +125,8 @@
       "markDelivered": "Marquer comme livrée",
       "completeOrder": "Finaliser la commande",
       "cancelOrder": "Annuler la commande",
+      "cancelReason": "Motif d'annulation",
+      "cancelReasonPlaceholder": "Pourquoi cette commande est-elle annulée ?",
       "acceptOrder": "Accepter la commande",
       "reject": "Refuser",
       "orderAccepted": "Commande acceptée.",

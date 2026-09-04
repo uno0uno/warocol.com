@@ -125,6 +125,8 @@
       "markDelivered": "वितरित के रूप में चिह्नित करें",
       "completeOrder": "ऑर्डर पूरा करें",
       "cancelOrder": "ऑर्डर रद्द करें",
+      "cancelReason": "रद्द करने का कारण",
+      "cancelReasonPlaceholder": "यह ऑर्डर क्यों रद्द किया जा रहा है?",
       "acceptOrder": "ऑर्डर स्वीकार करें",
       "reject": "अस्वीकार करें",
       "orderAccepted": "ऑर्डर स्वीकार किया गया।",
