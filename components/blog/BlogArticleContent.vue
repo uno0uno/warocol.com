@@ -6,6 +6,7 @@ import type { BlogLeadCtaContent } from '~/utils/blogLeadCta'
 import {
   TRAIL_SCROLL_THRESHOLDS,
   articleScrollPct,
+  fireCtaClick,
   sendTrailEvent,
 } from '~/utils/trailBeacon'
 
@@ -143,7 +144,10 @@ function buildMidCta(cta: BlogLeadCtaContent, index: number, source: string): HT
   btn.textContent = cta.button
   btn.type = 'button'
   btn.setAttribute('aria-haspopup', 'dialog')
-  btn.addEventListener('click', () => leadModal.open(source))
+  btn.addEventListener('click', () => {
+    fireCtaClick(trailVisitorKey(), trailPath(), `article:pos${index + 1}`)
+    leadModal.open(source)
+  })
 
   content.appendChild(headline)
   content.appendChild(text)

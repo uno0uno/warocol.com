@@ -58,6 +58,7 @@ import {
 } from '~/utils/appLocales'
 import { resolveAnonymousReaderMarket } from '~/utils/articleMarket'
 import { activatePublicCta, getPublicCta } from '~/utils/publicCta'
+import { fireCtaClick } from '~/utils/trailBeacon'
 import logo from '~/public/logo_waro_colombia.png'
 
 const route = useRoute()
@@ -95,12 +96,17 @@ const headerMarket = computed(() => resolveAnonymousReaderMarket({
 }))
 const headerCta = computed(() => getPublicCta('pos', 'header', headerMarket.value))
 
-const startRegistration = () => router.push(activatePublicCta(
+const startRegistration = () => {
+  if (import.meta.client) {
+    fireCtaClick(useCookie<string | null>('waro_visitor_key').value, route.path, 'header')
+  }
+  return router.push(activatePublicCta(
   headerCta.value,
   { source: 'public_header', content: 'primary' },
   undefined,
   import.meta.client ? window.sessionStorage : null,
-))
+  ))
+}
 
 const isDocs = computed(() => route.path.startsWith('/docs'))
 
