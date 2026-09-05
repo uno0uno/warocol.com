@@ -220,7 +220,7 @@
             :class="[
               'w-full py-3 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold bg-shell-cta-bg text-shell-cta-text hover:bg-shell-cta-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring'
             ]">
-            <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
+            <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
             <span>{{ isSubmitting ? t('abastecimiento.proveedorDetalle.creating') : t('abastecimiento.proveedorDetalle.createSupplier') }}</span>
           </button>
           
