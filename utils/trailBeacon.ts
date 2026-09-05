@@ -2,7 +2,7 @@ export const TRAIL_SITE_KEY = 'warocol.com'
 export const TRAIL_EVENTS_URL = '/api/public/trail/events'
 export const TRAIL_SCROLL_THRESHOLDS = [25, 50, 75, 100] as const
 
-export type TrailEventType = 'page_view' | 'scroll_depth' | 'page_leave'
+export type TrailEventType = 'page_view' | 'scroll_depth' | 'page_leave' | 'cta_click'
 
 export type TrailEventPayload = {
   visitor_key: string
@@ -17,6 +17,18 @@ export type TrailEventPayload = {
   utm_campaign?: string
   utm_term?: string
   utm_content?: string
+}
+
+/** Fire-and-forget CTA click. Placement rides in utm_content (stored column, SQL-queryable). */
+export function fireCtaClick(visitorKey: string | null, path: string, placement: string): void {
+  if (typeof window === 'undefined') return
+  if (!visitorKey || !path || !placement) return
+  sendTrailEvent({
+    visitor_key: visitorKey,
+    path,
+    event_type: 'cta_click',
+    utm_content: placement,
+  })
 }
 
 export function sendTrailEvent(payload: TrailEventPayload): void {

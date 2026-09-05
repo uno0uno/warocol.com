@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import { fireCtaClick } from '~/utils/trailBeacon'
+
 const { t, locale } = useI18n({ useScope: 'global' })
 const leadModal = useLeadModal()
 
-const openLeadModal = () => leadModal.open('habla_con_nosotros')
+const openLeadModal = () => {
+  if (import.meta.client) {
+    fireCtaClick(useCookie<string | null>('waro_visitor_key').value, '/', 'home')
+  }
+  leadModal.open('habla_con_nosotros')
+}
 </script>
 
 <template>
