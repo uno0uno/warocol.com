@@ -216,7 +216,7 @@
               type="submit" 
               :disabled="isSubmitting"
               class="w-full py-3 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
-              <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
+              <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
               <span>{{ isSubmitting ? t('abastecimiento.proveedorDetalle.saving') : t('abastecimiento.proveedorDetalle.saveChanges') }}</span>
             </button>
             
@@ -367,9 +367,10 @@
             <button
               type="submit"
               :disabled="isSavingAgreement"
-              class="flex-1 py-2 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 font-medium"
+              class="flex-1 py-2 bg-shell-cta-bg text-shell-cta-text rounded-lg hover:bg-shell-cta-hover-bg transition-all focus:outline-none focus:ring-2 focus:ring-shell-cta-focus-ring disabled:opacity-50 font-medium inline-flex items-center justify-center gap-2"
             >
-              {{ isSavingAgreement ? t('abastecimiento.proveedorDetalle.savingAgreement') : t('abastecimiento.proveedorDetalle.saveAgreement') }}
+              <UiLoadingDots v-if="isSavingAgreement" size="8px" color="currentColor" />
+              <span>{{ isSavingAgreement ? t('abastecimiento.proveedorDetalle.savingAgreement') : t('abastecimiento.proveedorDetalle.saveAgreement') }}</span>
             </button>
             <button
               type="button"
