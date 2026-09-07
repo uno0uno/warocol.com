@@ -290,6 +290,10 @@ const onZoneDragStart = () => {
   isDraggingZone.value = true
 }
 
+const onZoneDragEnd = () => {
+  isDraggingZone.value = false
+}
+
 const persistZoneDrop = async (table: any, targetZona: string) => {
   const payload = buildZoneDropPayload(table, targetZona)
   try {
@@ -683,6 +687,8 @@ onMounted(() => {
 onUnmounted(() => {
   clearRefreshHandler(refreshFloor)
   if (pollInterval) clearInterval(pollInterval)
+  for (const timer of zoneDropTimers.values()) clearTimeout(timer)
+  zoneDropTimers.clear()
 })
 </script>
 
@@ -890,6 +896,7 @@ onUnmounted(() => {
             chosen-class="shadow-lg"
             class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch"
             @start="onZoneDragStart"
+            @end="onZoneDragEnd"
             @change="onZoneChange(zone.zona, $event)"
           >
             <template #item="{ element: table }">
