@@ -22,7 +22,7 @@ import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import {
-  firstFreeCell,
+  NODE_PX,
   hasCoords,
   layoutUnplacedInMatrix,
   nodeToPayload,
@@ -443,7 +443,7 @@ const syncCanvasNodes = () => {
   if (isDraggingNode.value) return
   const nodes: FloorPlanNode[] = []
   for (const table of regularTables.value as any[]) {
-    const coords = resolveTableCoords(table, stagedMoves)
+    const coords = resolveTableCoords(table, stagedMoves.value)
     if (!coords) continue
     nodes.push({
       id: String(table.id),
@@ -462,7 +462,9 @@ const syncCanvasNodes = () => {
 
 watch(regularTables, syncCanvasNodes, { immediate: true })
 
-const unplacedTables = computed(() => (regularTables.value as any[]).filter((t) => !hasCoords(t)))
+const unplacedTables = computed(() =>
+  (regularTables.value as any[]).filter((t) => !hasCoords(t) && !stagedMoves.value.has(String(t.id))),
+)
 
 // ── Canvas draft (uno0uno/warocol.com#2620): drag stages locally,
 // Guardar persists everything at once. No auto-PATCH on drop.
@@ -483,6 +485,7 @@ const onNodeDragStop = (event: NodeDragEvent) => {
   const next = new Map(stagedMoves.value)
   next.set(node.id, { ...payload, zona: table?.zona ?? null })
   stagedMoves.value = next
+  syncCanvasNodes()
 }
 
 const saveCanvas = async () => {
@@ -514,13 +517,9 @@ const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
 }
 
 const placeOnCanvas = (table: any) => {
-  const cell = firstFreeCell([
-    ...(regularTables.value as any[]),
-    ...[...stagedMoves.value].map(([id, c]) => ({ id, pos_x: c.pos_x, pos_y: c.pos_y })),
-  ])
-  const next = new Map(stagedMoves.value)
-  next.set(String(table.id), { ...cell, zona: table.zona ?? 'Salon' })
-  stagedMoves.value = next
+  const regs = regularTables.value as any[]
+  stagedMoves.value = layoutUnplacedInMatrix([table], regs, stagedMoves.value)
+  syncCanvasNodes()
 }
 
 const placeAllOnCanvas = () => {
@@ -530,6 +529,7 @@ const placeAllOnCanvas = () => {
     regs,
     stagedMoves.value,
   )
+  syncCanvasNodes()
 }
 
 type FloorTab = { id: FloorView; label: string; badge?: number }
