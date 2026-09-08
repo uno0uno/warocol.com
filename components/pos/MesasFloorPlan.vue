@@ -10,6 +10,12 @@ import {
   groupTablesByZona,
   sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
+import {
+  groupWallsByZona,
+  isValidWallPayload,
+  type FloorWall,
+  type NewFloorWall,
+} from '~/composables/useFloorWalls'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
@@ -291,6 +297,76 @@ const zoneGroups = computed(() =>
     tables: sortTablesByPosition(zone.tables),
   })),
 )
+
+// ── Floor walls (uno0uno/warocol.com#2614, visual reference only) ────────
+const { data: wallsData, refetch: refetchWalls } = useQuery({
+  key: () => ['tables', 'walls', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: FloorWall[] }>('/api/tables/walls'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 0,
+})
+
+const wallsByZona = computed(() => groupWallsByZona((wallsData.value?.data ?? []) as FloorWall[]))
+const zoneWalls = (zona: string): FloorWall[] => wallsByZona.value.get(zona) ?? []
+const isSavingWall = ref(false)
+const wallError = ref('')
+const editingWallId = ref<string | null>(null)
+const wallDraft = ref({ x1: 0, y1: 0, x2: 4, y2: 0 })
+
+const addWall = async (zona: string) => {
+  const payload: NewFloorWall = { zona, x1: 0, y1: 0, x2: 4, y2: 0 }
+  if (!isValidWallPayload(payload) || isSavingWall.value) return
+  isSavingWall.value = true
+  wallError.value = ''
+  try {
+    await $fetch('/api/tables/walls', { method: 'POST', body: payload })
+    await refetchWalls()
+  } catch {
+    wallError.value = 'No se pudo agregar la pared'
+  } finally {
+    isSavingWall.value = false
+  }
+}
+
+const removeWall = async (wallId: string) => {
+  if (isSavingWall.value) return
+  isSavingWall.value = true
+  wallError.value = ''
+  try {
+    await $fetch(`/api/tables/walls/${wallId}`, { method: 'DELETE' })
+    await refetchWalls()
+  } catch {
+    wallError.value = 'No se pudo quitar la pared'
+  } finally {
+    isSavingWall.value = false
+  }
+}
+
+const startEditWall = (wall: FloorWall) => {
+  editingWallId.value = wall.id
+  wallDraft.value = { x1: wall.x1, y1: wall.y1, x2: wall.x2, y2: wall.y2 }
+  wallError.value = ''
+}
+
+const saveWallEdit = async (wall: FloorWall) => {
+  const payload = { ...wallDraft.value }
+  if (isSavingWall.value) return
+  if (!['x1', 'y1', 'x2', 'y2'].every((k) => Number.isFinite((payload as any)[k]))) {
+    wallError.value = 'Coordenadas inválidas'
+    return
+  }
+  isSavingWall.value = true
+  wallError.value = ''
+  try {
+    await $fetch(`/api/tables/walls/${wall.id}`, { method: 'PATCH', body: payload })
+    editingWallId.value = null
+    await refetchWalls()
+  } catch {
+    wallError.value = 'No se pudo mover la pared'
+  } finally {
+    isSavingWall.value = false
+  }
+}
 const isDraggingZone = ref(false)
 const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -903,7 +979,88 @@ onUnmounted(() => {
       <!-- Table grid — zone matrix (uno0uno/warocol.com#2610) -->
       <div v-if="floorLayout === 'grid'" key="tables-grid" class="flex flex-col gap-6 pb-32">
         <section v-for="zone in zoneGroups" :key="zone.zona" :aria-label="zone.zona">
-          <p class="mb-2 text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
+            <button
+              type="button"
+              class="text-[11px] font-semibold text-text-tertiary hover:text-text-primary disabled:opacity-50"
+              :disabled="isSavingWall"
+              @click="addWall(zone.zona)"
+            >
+              + Pared
+            </button>
+          </div>
+          <p v-if="wallError" class="mb-2 text-[11px] font-semibold text-state-danger-icon">{{ wallError }}</p>
+          <svg
+            v-if="zoneWalls(zone.zona).length"
+            class="mb-2 h-16 w-full rounded-md border border-border/60 bg-surface-secondary/40"
+            viewBox="0 0 4 3"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line
+              v-for="wall in zoneWalls(zone.zona)"
+              :key="wall.id"
+              :x1="wall.x1"
+              :y1="wall.y1"
+              :x2="wall.x2"
+              :y2="wall.y2"
+              stroke="currentColor"
+              stroke-width="0.12"
+              stroke-linecap="round"
+              class="text-text-primary"
+            />
+          </svg>
+          <ul v-if="zoneWalls(zone.zona).length" class="mb-2 flex flex-col gap-1">
+            <li
+              v-for="wall in zoneWalls(zone.zona)"
+              :key="wall.id"
+              class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/60 bg-surface-secondary/50 px-2 py-1 text-[11px] tabular-nums text-text-secondary"
+            >
+              <template v-if="editingWallId === wall.id">
+                <label class="flex items-center gap-1">x1<input v-model.number="wallDraft.x1" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
+                <label class="flex items-center gap-1">y1<input v-model.number="wallDraft.y1" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
+                <label class="flex items-center gap-1">x2<input v-model.number="wallDraft.x2" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
+                <label class="flex items-center gap-1">y2<input v-model.number="wallDraft.y2" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
+                <button
+                  type="button"
+                  class="font-bold text-text-primary hover:underline disabled:opacity-50"
+                  :disabled="isSavingWall"
+                  @click="saveWallEdit(wall)"
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  class="hover:text-text-primary disabled:opacity-50"
+                  :disabled="isSavingWall"
+                  @click="editingWallId = null"
+                >
+                  Cancelar
+                </button>
+              </template>
+              <template v-else>
+                <span>Pared ({{ wall.x1 }},{{ wall.y1 }})→({{ wall.x2 }},{{ wall.y2 }})</span>
+                <button
+                  type="button"
+                  class="font-semibold hover:text-text-primary disabled:opacity-50"
+                  :disabled="isSavingWall"
+                  @click="startEditWall(wall)"
+                >
+                  Mover
+                </button>
+                <button
+                  type="button"
+                  class="font-bold hover:text-text-primary disabled:opacity-50"
+                  :disabled="isSavingWall"
+                  :aria-label="`Quitar pared en ${zone.zona}`"
+                  @click="removeWall(wall.id)"
+                >
+                  ×
+                </button>
+              </template>
+            </li>
+          </ul>
           <Draggable
             :list="zone.tables"
             item-key="id"
