@@ -1,8 +1,13 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Draggable from 'vuedraggable'
 import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
+import {
+  buildZoneDropPayload,
+  groupTablesByZona,
+} from '~/composables/useTableZoneMatrix'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
@@ -98,6 +103,7 @@ const isFloorRefreshing = computed(() => isRefreshing.value || isRefreshingDeliv
 registerProgressiveLoading(isFloorRefreshing)
 
 const refreshFloor = async () => {
+  if (isDraggingZone.value) return
   await Promise.all([refetch(), refetchPendingDeliveries()])
 }
 
@@ -273,6 +279,52 @@ const deliveryListColumns = computed(() => [
 // Bar tile is always-on — separate from regular tables
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
 const regularTables = computed(() => tables.value.filter((t: any) => !t.is_bar))
+
+// ── Zone matrix (uno0uno/warocol.com#2610) ───────────────────────────────
+// NULL/blank zona falls back to UNPLACED_ZONE in API (Operaciones) order.
+const zoneGroups = computed(() => groupTablesByZona(regularTables.value as any[]))
+const isDraggingZone = ref(false)
+const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+const onZoneDragStart = () => {
+  isDraggingZone.value = true
+}
+
+const onZoneDragEnd = () => {
+  isDraggingZone.value = false
+}
+
+const persistZoneDrop = async (table: any, targetZona: string) => {
+  const payload = buildZoneDropPayload(table, targetZona)
+  try {
+    await $fetch(`/api/tables/${table.id}/position`, { method: 'PATCH', body: payload })
+  } finally {
+    // Reload keeps layout (or reverts on error)
+    await refetch()
+  }
+}
+
+const onZoneChange = (targetZona: string, evt: any) => {
+  isDraggingZone.value = false
+  const added = evt?.added?.element
+  if (added?.id) {
+    // Between zones: debounce to one PATCH per drop
+    const prev = zoneDropTimers.get(added.id)
+    if (prev) clearTimeout(prev)
+    zoneDropTimers.set(
+      added.id,
+      setTimeout(() => {
+        zoneDropTimers.delete(added.id)
+        void persistZoneDrop(added, targetZona)
+      }, 300),
+    )
+    return
+  }
+  if (evt?.moved) {
+    // Within-zone reorder has no server-side order change: restore API order
+    void refetch()
+  }
+}
 
 type FloorTab = { id: FloorView; label: string; badge?: number }
 
@@ -635,6 +687,8 @@ onMounted(() => {
 onUnmounted(() => {
   clearRefreshHandler(refreshFloor)
   if (pollInterval) clearInterval(pollInterval)
+  for (const timer of zoneDropTimers.values()) clearTimeout(timer)
+  zoneDropTimers.clear()
 })
 </script>
 
@@ -829,13 +883,28 @@ onUnmounted(() => {
 
       <div v-else key="mesas">
       <Transition name="pos-floor-layout" mode="out-in">
-      <!-- Table grid -->
-      <div v-if="floorLayout === 'grid'" key="tables-grid" class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32 items-stretch">
-        <div v-for="table in regularTables" :key="table.id" class="h-full">
+      <!-- Table grid — zone matrix (uno0uno/warocol.com#2610) -->
+      <div v-if="floorLayout === 'grid'" key="tables-grid" class="flex flex-col gap-6 pb-32">
+        <section v-for="zone in zoneGroups" :key="zone.zona" :aria-label="zone.zona">
+          <p class="mb-2 text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
+          <Draggable
+            :list="zone.tables"
+            item-key="id"
+            group="floor-zones"
+            handle=".table-zone-handle"
+            ghost-class="opacity-50"
+            chosen-class="shadow-lg"
+            class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch"
+            @start="onZoneDragStart"
+            @end="onZoneDragEnd"
+            @change="onZoneChange(zone.zona, $event)"
+          >
+            <template #item="{ element: table }">
+              <div class="h-full">
 
           <!-- Card — uniform height across grid -->
           <button
-            class="table-card group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="table-card table-zone-handle group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed cursor-grab active:cursor-grabbing"
             :class="[cardClass(table.status), focusRingClass(table.status)]"
             :disabled="openingTableId === table.id"
             :aria-label="tableCardAriaLabel(table)"
@@ -912,7 +981,10 @@ onUnmounted(() => {
             </div>
           </button>
 
-        </div>
+              </div>
+            </template>
+          </Draggable>
+        </section>
       </div>
 
       <div v-else key="tables-list" class="pos-floor-list">
