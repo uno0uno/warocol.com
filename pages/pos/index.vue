@@ -2036,7 +2036,8 @@ onUnmounted(() => {
       <PosMesasFloorPlan
         :comandas-enabled="comandasEnabled"
         :waiter-attribution-enabled="waiterAttributionEnabled"
-        :mode="floorCanvasEnabled ? 'view' : 'pos'"
+        mode="pos"
+        :canvas-enabled="floorCanvasEnabled"
         @enter-table="handleEnterTable"
         @no-tables="noTablesConfigured = true"
         @move-table="handleMoveTable"
