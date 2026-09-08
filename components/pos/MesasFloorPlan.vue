@@ -475,7 +475,7 @@ const syncCanvasNodes = () => {
         zona: coords.zona,
         runningTotal: Number(table.session?.running_total ?? 0),
         openedAt: (table.session?.opened_at as string | undefined) ?? null,
-        waiterName: (table.effective_waiter_member_name as string | undefined) ?? null,
+        waiterName: (table.effective_waiter_member_name as string | undefined)?.trim() || null,
       },
     })
   }
@@ -1452,25 +1452,27 @@ onUnmounted(() => {
             </button>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button
-              v-for="table in unplacedTables"
-              v-if="floorMode === 'order'"
-              :key="table.id"
-              type="button"
-              class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary"
-              :title="`Colocar ${table.name} en el plano`"
-              @click="placeOnCanvas(table)"
-            >
-              + {{ table.name }}
-            </button>
-            <span
-              v-for="table in unplacedTables"
-              v-else
-              :key="table.id"
-              class="rounded-lg border border-border/60 px-3 py-1.5 text-sm text-text-secondary"
-            >
-              {{ table.name }}
-            </span>
+            <template v-if="floorMode === 'order'">
+              <button
+                v-for="table in unplacedTables"
+                :key="table.id"
+                type="button"
+                class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary"
+                :title="`Colocar ${table.name} en el plano`"
+                @click="placeOnCanvas(table)"
+              >
+                + {{ table.name }}
+              </button>
+            </template>
+            <template v-else>
+              <span
+                v-for="table in unplacedTables"
+                :key="table.id"
+                class="rounded-lg border border-border/60 px-3 py-1.5 text-sm text-text-secondary"
+              >
+                {{ table.name }}
+              </span>
+            </template>
           </div>
         </div>
         <div
