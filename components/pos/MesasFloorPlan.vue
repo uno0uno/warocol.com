@@ -30,7 +30,7 @@ import {
   type FloorPlanNode,
   type StagedCoords,
 } from '~/composables/useFloorPlanNodes'
-import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
+import { tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
   shellHeaderToolButtonActiveClass,
@@ -203,7 +203,7 @@ const codeFilterOptions = computed(() =>
 
 const capacityFilterOptions = computed(() =>
   uniqueSortedLabels(
-    regularTables.value.map((table: any) => tableCardCapacityLabel(table)),
+    regularTables.value.map((table: any) => tableListCapacityLabel(table) ?? '0'),
   ).map((value) => ({ label: value, value })),
 )
 
@@ -244,7 +244,7 @@ const filteredRegularTables = computed(() =>
     }
 
     if (filterCode.value && tableListCode(table) !== filterCode.value) return false
-    if (filterCapacity.value && tableCardCapacityLabel(table) !== filterCapacity.value) return false
+    if (filterCapacity.value && (tableListCapacityLabel(table) ?? '0') !== filterCapacity.value) return false
 
     if (filterMin.value) {
       const state = table.session?.minimum_consumption
@@ -707,71 +707,13 @@ const handleMoveTable = (table: any, event: Event) => {
   })
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-const formatDuration = (openedAt: string): string => {
-  const diffMs = Date.now() - new Date(openedAt).getTime()
-  const totalMins = Math.floor(diffMs / 60_000)
-  if (totalMins < 60) return `${totalMins}m`
-  const h = Math.floor(totalMins / 60)
-  const m = totalMins % 60
-  return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-const minimumConsumptionLabel = (table: any): string | null => {
-  const state = table.session?.minimum_consumption
-  if (!state?.enabled || !(Number(state.amount) > 0)) return null
-  const remaining = Number(state.remaining) || 0
-  if (state.covered || remaining <= 0) return t('pos.floor.minCovered')
-  return t('pos.floor.remaining', { amount: formatCurrency(remaining) })
-}
-
-const badgeLabel = (status: string) => {
-  if (status === 'open') return t('pos.floor.inService')
-  if (status === 'bill_requested') return t('pos.floor.bill')
-  return t('pos.floor.free')
-}
-
-
-const parsePositiveInt = (value: unknown): number | null => {
-  if (value == null || value === '') return null
-  const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10)
-  return Number.isFinite(n) && n >= 1 ? n : null
-}
-
-const tableCatalogCapacity = (table: { capacity?: unknown }) => parsePositiveInt(table.capacity)
-
-const sessionCapacitySnapshot = (session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null) =>
-  parsePositiveInt(session?.capacity_snapshot) ?? parsePositiveInt(session?.capacitySnapshot)
-
-const tableEffectiveCapacity = (table: {
-  capacity?: unknown
-  session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}) => sessionCapacitySnapshot(table.session) ?? tableCatalogCapacity(table)
-
-const tableListCapacityLabel = (table: {
-  capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}): string | null => {
-  const capacity = tableEffectiveCapacity(table)
-  const covers = parsePositiveInt(table.session?.covers)
-
-  if (covers != null && capacity != null) {
-    return t('pos.floor.coversOfCapacity', { covers, capacity })
-  }
-  if (covers != null) {
-    return String(covers)
-  }
-  if (capacity != null) {
-    return String(capacity)
-  }
-  return null
-}
-
-const tableCardCapacityLabel = (table: {
-  status: string
-  capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}): string => tableListCapacityLabel(table) ?? '0'
+// ── Helpers (list/bar views; card helpers live in useTableCard) ─────────────
+const {
+  formatDuration,
+  minimumConsumptionLabel,
+  badgeLabel,
+  tableListCapacityLabel,
+} = useTableCard()
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
 const openCount = computed(() => regularTables.value.filter((t: any) => t.status === 'open').length)
@@ -1337,10 +1279,9 @@ onUnmounted(() => {
                 <PosTableCard
                   v-if="tableById(nodeProps.data.tableId)"
                   :table="tableById(nodeProps.data.tableId)"
+                  :disabled="openingTableId === nodeProps.data.tableId"
                   :comandas-enabled="props.comandasEnabled"
                   :waiter-attribution-enabled="props.waiterAttributionEnabled"
-                  @open="handleTableClick"
-                  @move="({ table: t, event }) => handleMoveTable(t, event)"
                 />
               </div>
             </template>

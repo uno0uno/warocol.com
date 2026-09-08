@@ -223,9 +223,6 @@ export function useTableCard() {
       : `${display} — ${status}`
   }
 
-  const tableCardTotalLabel = (table: AnyTable): number =>
-    table.status === 'free' ? 0 : Number(table.session?.running_total ?? 0)
-
   const moveAriaLabel = (table: { name: string }) =>
     `Mover ${table.name} a otra ${tableSingularLower.value}`
 
@@ -254,7 +251,6 @@ export function useTableCard() {
     tableCardSecondaryParts,
     tableCardWaiterLine,
     tableCardAriaLabel,
-    tableCardTotalLabel,
     tableListCapacityLabel,
     moveAriaLabel,
   }

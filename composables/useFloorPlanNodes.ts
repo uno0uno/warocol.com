@@ -37,7 +37,7 @@ export function tablesToNodes(tables: readonly ZoneTableItem[]): FloorPlanNode[]
 
 /**
  * Convert a dropped node position back to floor-plan units for PATCH.
- * Snapped to integers so occupancy checks (firstFreeCell) stay exact.
+ * Snapped to integers so occupancy checks stay exact.
  */
 export function nodeToPayload(node: { position: { x: number; y: number } }): {
   pos_x: number
@@ -79,7 +79,15 @@ export function resolveTableCoords(
 }
 
 /**
- * Lay out unplaced tables into free matrix cells (row-major) for
+ * Card footprint in grid units (full PosTableCard ≈ 224px wide on 140px units).
+ * Auto-place steps by footprint so fresh nodes never overlap.
+ * uno0uno/warocol.com#2629
+ */
+export const NODE_FOOTPRINT_W = 2
+export const NODE_FOOTPRINT_H = 2
+
+/**
+ * Lay out unplaced tables into free matrix cells (row-major, footprint steps) for
  * "Colocar todas" — pure, testable; caller stages the result.
  * uno0uno/warocol.com#2620
  */
@@ -96,8 +104,8 @@ export function layoutUnplacedInMatrix(
     if (c) taken.add(key(Math.round(c.pos_x), Math.round(c.pos_y)))
   }
   const freeCell = (): { pos_x: number; pos_y: number } => {
-    for (let y = 0; y < 100; y++) {
-      for (let x = 0; x < 100; x++) {
+    for (let y = 0; y < 100; y += NODE_FOOTPRINT_H) {
+      for (let x = 0; x < 100; x += NODE_FOOTPRINT_W) {
         if (!taken.has(key(x, y))) {
           taken.add(key(x, y))
           return { pos_x: x, pos_y: y }
@@ -112,15 +120,4 @@ export function layoutUnplacedInMatrix(
     next.set(String(table.id), { ...cell, zona: typeof table.zona === 'string' && table.zona.trim() ? table.zona : 'Salon' })
   }
   return next
-}
-export function firstFreeCell(tables: readonly ZoneTableItem[]): { pos_x: number; pos_y: number } {
-  const used = new Set(
-    tables.filter(hasCoords).map((t) => `${Math.round(t.pos_x as number)}:${Math.round(t.pos_y as number)}`),
-  )
-  for (let y = 0; y < 100; y++) {
-    for (let x = 0; x < 100; x++) {
-      if (!used.has(`${x}:${y}`)) return { pos_x: x, pos_y: y }
-    }
-  }
-  return { pos_x: 0, pos_y: 0 }
 }

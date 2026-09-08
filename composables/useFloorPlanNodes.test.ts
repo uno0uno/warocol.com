@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  firstFreeCell,
+  NODE_FOOTPRINT_H,
+  NODE_FOOTPRINT_W,
   layoutUnplacedInMatrix,
   nodeToPayload,
   resolveTableCoords,
@@ -30,12 +31,23 @@ describe('nodeToPayload', () => {
   })
 })
 
-describe('firstFreeCell', () => {
-  it('finds the first free row-major cell', () => {
-    expect(firstFreeCell(tables)).toEqual({ pos_x: 1, pos_y: 0 })
-    expect(firstFreeCell([])).toEqual({ pos_x: 0, pos_y: 0 })
+describe('layoutUnplacedInMatrix', () => {
+  it('places all unplaced into free footprint cells at once', () => {
+    const unplaced = [
+      { id: 'a', zona: null, pos_x: null, pos_y: null },
+      { id: 'b', zona: null, pos_x: null, pos_y: null },
+    ]
+    const next = layoutUnplacedInMatrix(unplaced, tables, new Map())
+    expect(next.get('a')).toMatchObject({ pos_x: 2, pos_y: 0 })
+    expect(next.get('b')).toMatchObject({ pos_x: 4, pos_y: 0 })
   })
-})
+
+  it('skips already staged tables', () => {
+    const unplaced = [{ id: 'a', zona: null, pos_x: null, pos_y: null }]
+    const staged = new Map([['a', { pos_x: 9, pos_y: 9 }]])
+    const next = layoutUnplacedInMatrix(unplaced, tables, staged)
+    expect(next.get('a')).toMatchObject({ pos_x: 9, pos_y: 9 })
+  })
 
 describe('resolveTableCoords', () => {
   it('prefers staged draft over stored coords', () => {
@@ -52,14 +64,14 @@ describe('resolveTableCoords', () => {
 })
 
 describe('layoutUnplacedInMatrix', () => {
-  it('places all unplaced into free cells at once', () => {
+  it('places all unplaced into free footprint cells at once', () => {
     const unplaced = [
       { id: 'a', zona: null, pos_x: null, pos_y: null },
       { id: 'b', zona: null, pos_x: null, pos_y: null },
     ]
     const next = layoutUnplacedInMatrix(unplaced, tables, new Map())
-    expect(next.get('a')).toMatchObject({ pos_x: 1, pos_y: 0 })
-    expect(next.get('b')).toMatchObject({ pos_x: 2, pos_y: 0 })
+    expect(next.get('a')).toMatchObject({ pos_x: 2, pos_y: 0 })
+    expect(next.get('b')).toMatchObject({ pos_x: 4, pos_y: 0 })
   })
 
   it('skips already staged tables', () => {
@@ -68,4 +80,10 @@ describe('layoutUnplacedInMatrix', () => {
     const next = layoutUnplacedInMatrix(unplaced, tables, staged)
     expect(next.get('a')).toMatchObject({ pos_x: 9, pos_y: 9 })
   })
+
+  it('uses 2-unit footprint steps for full cards', () => {
+    expect(NODE_FOOTPRINT_W).toBe(2)
+    expect(NODE_FOOTPRINT_H).toBe(2)
+  })
+})
 })
