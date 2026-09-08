@@ -16,6 +16,18 @@ import {
   type FloorWall,
   type NewFloorWall,
 } from '~/composables/useFloorWalls'
+import { VueFlow, type NodeDragEvent } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/controls/dist/style.css'
+import {
+  firstFreeCell,
+  hasCoords,
+  nodeToPayload,
+  tablesToNodes,
+  type FloorPlanNode,
+} from '~/composables/useFloorPlanNodes'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
@@ -40,7 +52,7 @@ const emit = defineEmits<{
 }>()
 
 type FloorView = 'mesas' | 'barra' | 'domicilios'
-type FloorLayout = 'grid' | 'list'
+type FloorLayout = 'grid' | 'list' | 'canvas'
 
 interface PendingDeliveryRow {
   id: string
@@ -78,8 +90,9 @@ const tables = computed(() => tablesData.value?.data ?? [])
 
 const floorView = ref<FloorView>('mesas')
 const floorLayout = ref<FloorLayout>('grid')
+const floorLayouts: FloorLayout[] = ['grid', 'list', 'canvas']
 const floorLayoutToggleTarget = computed<FloorLayout>(() =>
-  floorLayout.value === 'grid' ? 'list' : 'grid',
+  floorLayouts[(floorLayouts.indexOf(floorLayout.value) + 1) % floorLayouts.length]!,
 )
 const toggleFloorLayout = () => {
   floorLayout.value = floorLayoutToggleTarget.value
@@ -111,7 +124,7 @@ const isFloorRefreshing = computed(() => isRefreshing.value || isRefreshingDeliv
 registerProgressiveLoading(isFloorRefreshing)
 
 const refreshFloor = async () => {
-  if (isDraggingZone.value) return
+  if (isDraggingZone.value || isDraggingNode.value) return
   await Promise.all([refetch(), refetchPendingDeliveries()])
 }
 
@@ -416,6 +429,60 @@ const onZoneChange = (targetZona: string, evt: any) => {
   const moved = evt?.moved
   if (moved?.element?.id && typeof moved.newIndex === 'number') {
     scheduleZoneDrop(moved.element, targetZona, moved.newIndex)
+  }
+}
+
+// ── Free canvas (uno0uno/warocol.com#2617, Vue Flow) ─────────────────────
+const canvasNodes = ref<FloorPlanNode[]>([])
+const isDraggingNode = ref(false)
+const isPlacingTable = ref(false)
+
+const syncCanvasNodes = () => {
+  if (isDraggingNode.value) return
+  canvasNodes.value = tablesToNodes(regularTables.value as any[])
+}
+
+watch(regularTables, syncCanvasNodes, { immediate: true })
+
+const unplacedTables = computed(() => (regularTables.value as any[]).filter((t) => !hasCoords(t)))
+
+const persistNodeDrop = async (tableId: string, position: { x: number; y: number }) => {
+  const payload = nodeToPayload({ position })
+  try {
+    await $fetch(`/api/tables/${tableId}/position`, { method: 'PATCH', body: payload })
+  } finally {
+    await refetch()
+  }
+}
+
+const onNodeDragStart = () => {
+  isDraggingNode.value = true
+}
+
+const onNodeDragStop = (event: NodeDragEvent) => {
+  isDraggingNode.value = false
+  const node = (event as unknown as { node?: { id?: string; position?: { x: number; y: number } } }).node
+  if (!node?.id || !node.position) return
+  void persistNodeDrop(node.id, node.position)
+}
+
+const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
+  const table = (regularTables.value as any[]).find((t) => String(t.id) === event.node?.id)
+  if (table) void handleTableClick(table)
+}
+
+const placeOnCanvas = async (table: any) => {
+  if (isPlacingTable.value) return
+  isPlacingTable.value = true
+  try {
+    const cell = firstFreeCell(regularTables.value as any[])
+    await $fetch(`/api/tables/${table.id}/position`, {
+      method: 'PATCH',
+      body: { ...cell, zona: table.zona ?? 'Salon' },
+    })
+    await refetch()
+  } finally {
+    isPlacingTable.value = false
   }
 }
 
@@ -1161,7 +1228,7 @@ onUnmounted(() => {
         </section>
       </div>
 
-      <div v-else key="tables-list" class="pos-floor-list">
+      <div v-else-if="floorLayout === 'list'" key="tables-list" class="pos-floor-list">
       <UiResponsiveDataView
         :columns="tableListColumns"
         :data="filteredRegularTables"
@@ -1301,6 +1368,54 @@ onUnmounted(() => {
           </span>
         </template>
       </UiResponsiveDataView>
+      </div>
+      <div v-else-if="floorLayout === 'canvas'" key="tables-canvas" class="flex flex-col gap-3 pb-32">
+        <div v-if="unplacedTables.length" class="rounded-xl border border-border/60 bg-surface p-3">
+          <p class="mb-2 text-xs font-bold uppercase tracking-wide text-text-tertiary">Sin ubicar ({{ unplacedTables.length }})</p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="table in unplacedTables"
+              :key="table.id"
+              type="button"
+              class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+              :disabled="isPlacingTable"
+              :title="`Colocar ${table.name} en el plano`"
+              @click="placeOnCanvas(table)"
+            >
+              + {{ table.name }}
+            </button>
+          </div>
+        </div>
+        <div class="h-[60vh] min-h-96 overflow-hidden rounded-xl border border-border/60">
+          <VueFlow
+            v-model:nodes="canvasNodes"
+            :edges="[]"
+            :min-zoom="0.3"
+            :max-zoom="2.5"
+            :zoom-on-scroll="false"
+            :zoom-on-pinch="true"
+            :pan-on-drag="true"
+            fit-view-on-init
+            @node-drag-start="onNodeDragStart"
+            @node-drag-stop="onNodeDragStop"
+            @node-click="onNodeCanvasClick"
+          >
+            <Background variant="dots" :gap="28" :size="1.5" />
+            <Controls position="bottom-right" />
+            <template #node-mesa="nodeProps">
+              <button
+                type="button"
+                class="flex min-w-28 flex-col gap-0.5 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
+              >
+                <span class="flex items-center gap-1.5 text-sm font-bold text-text-primary">
+                  <span class="h-2 w-2 rounded-full" :class="dotClass(nodeProps.data.status)" aria-hidden="true" />
+                  {{ nodeProps.data.title }}
+                </span>
+                <span class="text-[11px] text-text-tertiary">{{ nodeProps.data.zona ?? 'Sin ubicar' }} · {{ badgeLabel(nodeProps.data.status) }}</span>
+              </button>
+            </template>
+          </VueFlow>
+        </div>
       </div>
       </Transition>
       </div>
