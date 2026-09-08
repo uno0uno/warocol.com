@@ -30,7 +30,7 @@ import {
   type FloorPlanNode,
   type StagedCoords,
 } from '~/composables/useFloorPlanNodes'
-import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
+import { tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
   shellHeaderToolButtonActiveClass,
@@ -38,8 +38,6 @@ import {
 } from '~/utils/shellHeaderToolClasses'
 
 const { formatCurrency, formatDateTime } = useFormatters()
-const { singular: tableSingular } = useTableLabel()
-const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
 const props = defineProps<{
   comandasEnabled?: boolean
@@ -205,7 +203,7 @@ const codeFilterOptions = computed(() =>
 
 const capacityFilterOptions = computed(() =>
   uniqueSortedLabels(
-    regularTables.value.map((table: any) => tableCardCapacityLabel(table)),
+    regularTables.value.map((table: any) => tableListCapacityLabel(table) ?? '0'),
   ).map((value) => ({ label: value, value })),
 )
 
@@ -246,7 +244,7 @@ const filteredRegularTables = computed(() =>
     }
 
     if (filterCode.value && tableListCode(table) !== filterCode.value) return false
-    if (filterCapacity.value && tableCardCapacityLabel(table) !== filterCapacity.value) return false
+    if (filterCapacity.value && (tableListCapacityLabel(table) ?? '0') !== filterCapacity.value) return false
 
     if (filterMin.value) {
       const state = table.session?.minimum_consumption
@@ -535,9 +533,12 @@ const discardCanvas = async () => {
 
 const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
   if (floorMode.value === 'order') return
-  const table = (regularTables.value as any[]).find((t) => String(t.id) === event.node?.id)
+  const table = tableById(event.node?.id ?? '')
   if (table) void handleTableClick(table)
 }
+
+const tableById = (id: string): any | undefined =>
+  (regularTables.value as any[]).find((t) => String(t.id) === String(id))
 
 const placeOnCanvas = (table: any) => {
   const regs = regularTables.value as any[]
@@ -706,197 +707,13 @@ const handleMoveTable = (table: any, event: Event) => {
   })
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-const formatDuration = (openedAt: string): string => {
-  const diffMs = Date.now() - new Date(openedAt).getTime()
-  const totalMins = Math.floor(diffMs / 60_000)
-  if (totalMins < 60) return `${totalMins}m`
-  const h = Math.floor(totalMins / 60)
-  const m = totalMins % 60
-  return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-const minimumConsumptionLabel = (table: any): string | null => {
-  const state = table.session?.minimum_consumption
-  if (!state?.enabled || !(Number(state.amount) > 0)) return null
-  const remaining = Number(state.remaining) || 0
-  if (state.covered || remaining <= 0) return t('pos.floor.minCovered')
-  return t('pos.floor.remaining', { amount: formatCurrency(remaining) })
-}
-
-const badgeLabel = (status: string) => {
-  if (status === 'open') return t('pos.floor.inService')
-  if (status === 'bill_requested') return t('pos.floor.bill')
-  return t('pos.floor.free')
-}
-
-
-/** Status theme — soft tint on body, stronger tint on footer (no left border). */
-const tableStatusTheme = (status: string) => {
-  const panel = 'px-2.5 py-1.5 flex flex-col gap-0.5'
-  const text = {
-    title: 'text-text-primary',
-    meta: 'text-text-secondary',
-    amount: 'text-text-primary',
-    time: 'text-text-secondary',
-    waiter: 'text-text-tertiary',
-  }
-  const moveHover = 'hover:bg-black/5 focus-visible:ring-border/50'
-
-  if (status === 'open') {
-    return {
-      card: 'border border-border/60 hover:border-border hover:shadow-sm',
-      bodyPanel: 'table-card-body table-card-body--open',
-      footerPanel: 'table-card-footer table-card-footer--open',
-      focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
-      panel,
-      divider: 'border-border/40',
-      statusLabel: 'text-text-secondary',
-      dot: 'bg-status-success-text/55',
-      moveHover,
-      ...text,
-    }
-  }
-  if (status === 'bill_requested') {
-    return {
-      card: 'border border-border/60 hover:border-border hover:shadow-sm',
-      bodyPanel: 'table-card-body table-card-body--bill',
-      footerPanel: 'table-card-footer table-card-footer--bill',
-      focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
-      panel,
-      divider: 'border-border/40',
-      statusLabel: 'text-text-secondary',
-      dot: 'bg-status-warning-text/55',
-      moveHover,
-      ...text,
-    }
-  }
-  return {
-    card: 'border border-border/60 hover:border-border hover:shadow-sm',
-    bodyPanel: 'table-card-body table-card-body--free',
-    footerPanel: 'table-card-footer table-card-footer--free',
-    focus: 'focus-visible:ring-border/40 focus-visible:ring-offset-surface',
-    panel,
-    divider: 'border-border/40',
-    statusLabel: 'text-text-tertiary',
-    dot: 'bg-status-info-text/45',
-    moveHover,
-    ...text,
-  }
-}
-
-const cardClass = (status: string) => tableStatusTheme(status).card
-const focusRingClass = (status: string) => tableStatusTheme(status).focus
-const tableCardPanelClass = (status: string) => tableStatusTheme(status).panel
-const tableCardPanelDividerClass = (status: string) => tableStatusTheme(status).divider
-const tableCardBodyPanelClass = (status: string) =>
-  `${tableCardPanelClass(status)} border-b ${tableCardPanelDividerClass(status)} ${tableStatusTheme(status).bodyPanel} flex-1 min-h-[3.75rem] text-start`
-const tableCardFooterPanelClass = (status: string) =>
-  `${tableCardPanelClass(status)} border-t ${tableCardPanelDividerClass(status)} ${tableStatusTheme(status).footerPanel} shrink-0 text-start`
-const themeTitleClass = (status: string) => tableStatusTheme(status).title
-const themeMetaClass = (status: string) => tableStatusTheme(status).meta
-const themeAmountClass = (status: string) => tableStatusTheme(status).amount
-const themeTimeClass = (status: string) => tableStatusTheme(status).time
-const themeWaiterClass = (status: string) => tableStatusTheme(status).waiter
-const themeStatusLabelClass = (status: string) => tableStatusTheme(status).statusLabel
-const dotClass = (status: string) => tableStatusTheme(status).dot
-const moveButtonClass = (status: string) => tableStatusTheme(status).moveHover
-
-/** Shared row typography — same scale in body and footer panels. */
-const tableCardTitleTextClass = 'text-lg font-bold leading-tight'
-const tableCardPrimaryTextClass = 'text-sm font-bold tabular-nums leading-none'
-const tableCardSecondaryTextClass = 'text-xs font-medium tabular-nums leading-none'
-const tableCardTertiaryTextClass = 'text-xs font-normal leading-none truncate'
-
-const tableCardDisplayName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
-  tableSessionDisplayName(table.name, table.session?.custom_label)
-
-const tableCardShowsCatalogName = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
-  tableSessionHasAlias(table.name, table.session?.custom_label)
-
-const tableCardAriaLabel = (table: { name: string; status: string; capacity?: number | null; session?: { custom_label?: string | null; covers?: number | null; capacity_snapshot?: number | null } | null }) => {
-  const display = tableCardDisplayName(table)
-  const capacity = tableCardCapacityLabel(table)
-  const status = badgeLabel(table.status)
-  if (tableCardShowsCatalogName(table)) {
-    return capacity
-      ? t('pos.floor.tableAriaWithAliasCapacity', { alias: display, name: table.name, status, capacity })
-      : t('pos.floor.tableAriaWithAlias', { alias: display, name: table.name, status })
-  }
-  return capacity
-    ? t('pos.floor.tableAriaWithCapacity', { name: display, status, capacity })
-    : `${display} — ${status}`
-}
-
-const parsePositiveInt = (value: unknown): number | null => {
-  if (value == null || value === '') return null
-  const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10)
-  return Number.isFinite(n) && n >= 1 ? n : null
-}
-
-const tableCatalogCapacity = (table: { capacity?: unknown }) => parsePositiveInt(table.capacity)
-
-const sessionCapacitySnapshot = (session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null) =>
-  parsePositiveInt(session?.capacity_snapshot) ?? parsePositiveInt(session?.capacitySnapshot)
-
-const tableEffectiveCapacity = (table: {
-  capacity?: unknown
-  session?: { capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}) => sessionCapacitySnapshot(table.session) ?? tableCatalogCapacity(table)
-
-const tableListCapacityLabel = (table: {
-  capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}): string | null => {
-  const capacity = tableEffectiveCapacity(table)
-  const covers = parsePositiveInt(table.session?.covers)
-
-  if (covers != null && capacity != null) {
-    return t('pos.floor.coversOfCapacity', { covers, capacity })
-  }
-  if (covers != null) {
-    return String(covers)
-  }
-  if (capacity != null) {
-    return String(capacity)
-  }
-  return null
-}
-
-const tableCardCapacityLabel = (table: {
-  status: string
-  capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown } | null
-}): string => tableListCapacityLabel(table) ?? '0'
-
-const tableCardTitle = (table: { name: string; session?: { custom_label?: string | null } | null }) =>
-  tableCardDisplayName(table)
-
-/** Secondary line split into parts — bold highlights codes, capacity, minimum. */
-type TableCardSecondaryPart = { text: string; bold?: boolean }
-
-const tableCardSecondaryParts = (table: {
-  name: string
-  status: string
-  capacity?: unknown
-  session?: { covers?: unknown; capacity_snapshot?: unknown; capacitySnapshot?: unknown; custom_label?: string | null } | null
-}): TableCardSecondaryPart[] => {
-  const parts: TableCardSecondaryPart[] = []
-  const code = displayTableCode(table)
-  const title = tableCardTitle(table)
-  if (code && code !== title && !title.includes(code)) parts.push({ text: code, bold: true })
-  if (tableCardShowsCatalogName(table)) parts.push({ text: table.name })
-  const capacity = tableCardCapacityLabel(table)
-  parts.push({ text: capacity, bold: capacity !== '0' })
-  const minLabel = minimumConsumptionLabel(table)
-  if (minLabel) parts.push({ text: minLabel, bold: true })
-  return parts
-}
-
-const tableCardWaiterLine = (table: { status: string; effective_waiter_member_name?: string | null }) => {
-  if (table.status === 'free' && !table.effective_waiter_member_name) return null
-  return table.effective_waiter_member_name || t('pos.floor.unassigned')
-}
+// ── Helpers (list/bar views; card helpers live in useTableCard) ─────────────
+const {
+  formatDuration,
+  minimumConsumptionLabel,
+  badgeLabel,
+  tableListCapacityLabel,
+} = useTableCard()
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
 const openCount = computed(() => regularTables.value.filter((t: any) => t.status === 'open').length)
@@ -1212,84 +1029,17 @@ onUnmounted(() => {
             <template #item="{ element: table }">
               <div class="h-full">
 
-          <!-- Card — uniform height across grid -->
-          <button
-            class="table-card table-zone-handle group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed cursor-grab active:cursor-grabbing"
-            :class="[cardClass(table.status), focusRingClass(table.status)]"
+          <!-- Card — uniform height across grid (shared PosTableCard) -->
+          <PosTableCard
+            :table="table"
             :disabled="openingTableId === table.id"
-            :aria-label="tableCardAriaLabel(table)"
-            @click="handleTableClick(table)"
-          >
-            <!-- Body panel — same chrome as footer -->
-            <div :class="tableCardBodyPanelClass(table.status)">
-              <p
-                class="uppercase tracking-wide line-clamp-2 min-h-[2.75rem]"
-                :class="[tableCardTitleTextClass, themeTitleClass(table.status)]"
-              >
-                {{ tableCardTitle(table) }}
-              </p>
-              <p
-                class="line-clamp-2 min-h-[1.125rem]"
-                :class="tableCardSecondaryTextClass"
-              >
-                <span v-if="tableCardSecondaryParts(table).length" :class="themeMetaClass(table.status)">
-                  <template v-for="(part, partIdx) in tableCardSecondaryParts(table)" :key="partIdx">
-                    <span v-if="partIdx > 0" class="font-normal opacity-70"> · </span>
-                    <span :class="part.bold ? 'font-bold' : 'font-normal'">{{ part.text }}</span>
-                  </template>
-                </span>
-                <span v-else aria-hidden="true">&nbsp;</span>
-              </p>
-            </div>
-
-            <!-- Footer panel -->
-            <div :class="tableCardFooterPanelClass(table.status)">
-              <div class="flex items-center min-h-[1.75rem]">
-                <template v-if="table.status !== 'free'">
-                  <div class="flex w-full items-center justify-between gap-2">
-                    <span class="truncate min-w-0" :class="[tableCardPrimaryTextClass, themeAmountClass(table.status)]">
-                      {{ formatCurrency(table.session?.running_total ?? 0) }}
-                    </span>
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                      <span class="w-1.5 h-1.5 rounded-full" :class="dotClass(table.status)" aria-hidden="true" />
-                      <span class="whitespace-nowrap" :class="[tableCardSecondaryTextClass, themeTimeClass(table.status)]">
-                        {{ formatDuration(table.session.opened_at) }}
-                      </span>
-                      <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
-                        <span class="relative flex h-2 w-2 flex-shrink-0" aria-hidden="true">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-state-danger-icon" />
-                        </span>
-                      </template>
-                      <button
-                        type="button"
-                        class="min-h-7 min-w-7 flex items-center justify-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 -me-0.5 text-text-tertiary"
-                        :class="moveButtonClass(table.status)"
-                        :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
-                        @click.stop="handleMoveTable(table, $event)"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </template>
-                <template v-else>
-                  <span class="uppercase tracking-wide" :class="[tableCardPrimaryTextClass, themeStatusLabelClass(table.status)]">
-                    {{ t('pos.floor.free') }}
-                  </span>
-                </template>
-              </div>
-              <p
-                v-if="waiterAttributionEnabled"
-                class="w-full text-start min-h-[1rem]"
-                :class="[tableCardTertiaryTextClass, themeWaiterClass(table.status), !table.effective_waiter_member_name && tableCardWaiterLine(table) && 'italic']"
-              >
-                {{ tableCardWaiterLine(table) || '\u00A0' }}
-              </p>
-            </div>
-          </button>
+            drag-handle
+            show-move
+            :comandas-enabled="props.comandasEnabled"
+            :waiter-attribution-enabled="props.waiterAttributionEnabled"
+            @open="handleTableClick"
+            @move="({ table: t, event }) => handleMoveTable(t, event)"
+          />
 
               </div>
             </template>
@@ -1525,16 +1275,15 @@ onUnmounted(() => {
             <Background variant="lines" :gap="28" />
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
-              <button
-                type="button"
-                class="flex min-w-28 items-center gap-1.5 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
-                :aria-label="`${nodeProps.data.title} — ${badgeLabel(nodeProps.data.status)}`"
-              >
-                <span class="h-2 w-2 flex-shrink-0 rounded-full" :class="dotClass(nodeProps.data.status)" aria-hidden="true" />
-                <span class="truncate text-sm font-bold text-text-primary">
-                  {{ nodeProps.data.title }}
-                </span>
-              </button>
+              <div class="min-w-56">
+                <PosTableCard
+                  v-if="tableById(nodeProps.data.tableId)"
+                  :table="tableById(nodeProps.data.tableId)"
+                  :disabled="openingTableId === nodeProps.data.tableId"
+                  :comandas-enabled="props.comandasEnabled"
+                  :waiter-attribution-enabled="props.waiterAttributionEnabled"
+                />
+              </div>
             </template>
           </VueFlow>
           <p v-if="!loadingTables && !canvasNodes.length" class="p-3 text-xs text-text-tertiary">
