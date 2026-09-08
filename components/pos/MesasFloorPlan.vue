@@ -5,8 +5,10 @@ import Draggable from 'vuedraggable'
 import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import {
+  buildFreePositionPayload,
   buildZoneDropPayload,
   groupTablesByZona,
+  sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
@@ -280,9 +282,15 @@ const deliveryListColumns = computed(() => [
 const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
 const regularTables = computed(() => tables.value.filter((t: any) => !t.is_bar))
 
-// ── Zone matrix (uno0uno/warocol.com#2610) ───────────────────────────────
-// NULL/blank zona falls back to UNPLACED_ZONE in API (Operaciones) order.
-const zoneGroups = computed(() => groupTablesByZona(regularTables.value as any[]))
+// ── Zone matrix (uno0uno/warocol.com#2610, free x/y #2613) ───────────────
+// NULL/blank zona falls back to UNPLACED_ZONE in API (Operaciones) order;
+// tables with stored x/y render sorted by (y, x).
+const zoneGroups = computed(() =>
+  groupTablesByZona(regularTables.value as any[]).map((zone) => ({
+    zona: zone.zona,
+    tables: sortTablesByPosition(zone.tables),
+  })),
+)
 const isDraggingZone = ref(false)
 const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -294,8 +302,11 @@ const onZoneDragEnd = () => {
   isDraggingZone.value = false
 }
 
-const persistZoneDrop = async (table: any, targetZona: string) => {
-  const payload = buildZoneDropPayload(table, targetZona)
+const persistZoneDrop = async (table: any, targetZona: string, newIndex?: number) => {
+  const payload =
+    typeof newIndex === 'number'
+      ? buildFreePositionPayload(targetZona, newIndex)
+      : buildZoneDropPayload(table, targetZona)
   try {
     await $fetch(`/api/tables/${table.id}/position`, { method: 'PATCH', body: payload })
   } finally {
@@ -304,25 +315,31 @@ const persistZoneDrop = async (table: any, targetZona: string) => {
   }
 }
 
+const scheduleZoneDrop = (table: any, targetZona: string, newIndex?: number) => {
+  // Debounce: one PATCH per drop
+  const prev = zoneDropTimers.get(table.id)
+  if (prev) clearTimeout(prev)
+  zoneDropTimers.set(
+    table.id,
+    setTimeout(() => {
+      zoneDropTimers.delete(table.id)
+      void persistZoneDrop(table, targetZona, newIndex)
+    }, 300),
+  )
+}
+
 const onZoneChange = (targetZona: string, evt: any) => {
   isDraggingZone.value = false
-  const added = evt?.added?.element
-  if (added?.id) {
-    // Between zones: debounce to one PATCH per drop
-    const prev = zoneDropTimers.get(added.id)
-    if (prev) clearTimeout(prev)
-    zoneDropTimers.set(
-      added.id,
-      setTimeout(() => {
-        zoneDropTimers.delete(added.id)
-        void persistZoneDrop(added, targetZona)
-      }, 300),
-    )
+  // Free x/y grid (#2613): derive coordinates from the drop index,
+  // both between zones (added) and within a zone (moved).
+  const added = evt?.added
+  if (added?.element?.id && typeof added.newIndex === 'number') {
+    scheduleZoneDrop(added.element, targetZona, added.newIndex)
     return
   }
-  if (evt?.moved) {
-    // Within-zone reorder has no server-side order change: restore API order
-    void refetch()
+  const moved = evt?.moved
+  if (moved?.element?.id && typeof moved.newIndex === 'number') {
+    scheduleZoneDrop(moved.element, targetZona, moved.newIndex)
   }
 }
 
