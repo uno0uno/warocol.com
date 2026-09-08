@@ -275,7 +275,7 @@
       ,"assignWaiterTitle": "Assign waiter per {table}"
       ,"assignWaiterHelp": "Each {table} can have a default waiter. It can be changed when opening the session or per order. History is preserved even if the member is removed."
       ,"qrTitle": "Order by table QR"
-      ,"qrHelp": "Static link per {table} so guests can order from their phone.","canvasTitle": "Canvas floor plan","canvasHelp": "Show the free table floor plan in POS instead of the matrix."
+      ,"qrHelp": "Static link per {table} so guests can order from their phone.","canvasTitle": "Canvas floor plan","canvasEnable": "Enable canvas floor plan","canvasDisable": "Disable canvas floor plan","canvasHelp": "Show the free table floor plan in POS instead of the matrix."
       ,"searchPlaceholder": "Search {table}..."
       ,"newTable": "+ New {table}"
       ,"newShort": "+ New"

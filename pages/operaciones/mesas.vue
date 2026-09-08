@@ -698,7 +698,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingFloorCanvas ? 'opacity-50 pointer-events-none' : ''"
-            aria-label="Plano canvas"
+            :aria-label="businessProfile.floor_canvas_enabled ? t('operaciones.mesas.canvasDisable') : t('operaciones.mesas.canvasEnable')"
           >
             <input
               type="checkbox"

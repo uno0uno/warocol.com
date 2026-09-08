@@ -206,7 +206,7 @@
       "assignWaiterTitle": "Kellner pro {table} zuweisen",
       "assignWaiterHelp": "Jede {table} kann einen Standard-Kellner haben. Dies kann beim Öffnen der Schicht oder pro Bestellung geändert werden. Der Verlauf bleibt erhalten, auch wenn das Mitglied gelöscht wird.",
       "qrTitle": "Bestellung per QR am Tisch",
-      "qrHelp": "Statischer Link pro {table}, damit Gäste vom Handy aus bestellen können.","canvasTitle": "Canvas-Saalplan","canvasHelp": "Freien Tisch-Saalplan im POS statt der Matrix anzeigen.",
+      "qrHelp": "Statischer Link pro {table}, damit Gäste vom Handy aus bestellen können.","canvasTitle": "Canvas-Saalplan","canvasEnable": "Canvas-Saalplan aktivieren","canvasDisable": "Canvas-Saalplan deaktivieren","canvasHelp": "Freien Tisch-Saalplan im POS statt der Matrix anzeigen.",
       "searchPlaceholder": "{table} suchen...",
       "newTable": "+ Neue {table}",
       "newShort": "+ Neu",
