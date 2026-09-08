@@ -275,7 +275,7 @@
       ,"assignWaiterTitle": "Asignar mesero por {table}"
       ,"assignWaiterHelp": "Cada {table} puede tener un mesero por defecto. Se puede cambiar al abrir la sesión o por orden. El historial se preserva incluso si el miembro se elimina."
       ,"qrTitle": "Pedido por QR en mesa"
-      ,"qrHelp": "Enlace estático por {table} para que el comensal pida desde el celular."
+      ,"qrHelp": "Enlace estático por {table} para que el comensal pida desde el celular.","canvasTitle": "Plano canvas","canvasEnable": "Activar plano canvas","canvasDisable": "Desactivar plano canvas","canvasHelp": "Muestra el plano libre de mesas en el POS en vez de la matriz."
       ,"searchPlaceholder": "Buscar {table}..."
       ,"newTable": "+ Nueva {table}"
       ,"newShort": "+ Nueva"

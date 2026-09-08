@@ -206,7 +206,7 @@
       "assignWaiterTitle": "Assigner un serveur par {table}",
       "assignWaiterHelp": "Chaque {table} peut avoir un serveur par défaut. Il peut être modifié à l'ouverture de la session ou par commande. L'historique est conservé même si le membre est supprimé.",
       "qrTitle": "Commande par QR à table",
-      "qrHelp": "Lien statique par {table} pour que le client puisse commander depuis son téléphone.",
+      "qrHelp": "Lien statique par {table} pour que le client puisse commander depuis son téléphone.","canvasTitle": "Plan canevas","canvasEnable": "Activer le plan canevas","canvasDisable": "Désactiver le plan canevas","canvasHelp": "Affiche le plan libre des tables dans le POS au lieu de la matrice.",
       "searchPlaceholder": "Rechercher {table}...",
       "newTable": "+ Nouvelle {table}",
       "newShort": "+ Nouveau",
