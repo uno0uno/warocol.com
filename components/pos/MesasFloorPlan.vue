@@ -16,6 +16,7 @@ import {
   type FloorWall,
   type NewFloorWall,
 } from '~/composables/useFloorWalls'
+import { MAX_ZOOM, MIN_ZOOM, useFloorZoom } from '~/composables/useFloorZoom'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
@@ -73,6 +74,8 @@ const loadingTables = computed(() => {
 const isRefreshing = computed(() => tablesAsyncStatus.value === 'loading' && tablesData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+
+const { zoom, zoomIn, zoomOut, zoomReset, zoomStyle } = useFloorZoom()
 
 const tables = computed(() => tablesData.value?.data ?? [])
 
@@ -976,8 +979,39 @@ onUnmounted(() => {
 
       <div v-else key="mesas">
       <Transition name="pos-floor-layout" mode="out-in">
-      <!-- Table grid — zone matrix (uno0uno/warocol.com#2610) -->
+      <!-- Table grid — zone matrix (uno0uno/warocol.com#2610, zoom #2617) -->
       <div v-if="floorLayout === 'grid'" key="tables-grid" class="flex flex-col gap-6 pb-32">
+        <div class="flex items-center gap-2" role="toolbar" aria-label="Zoom del plano">
+          <button
+            type="button"
+            class="rounded-md border border-border px-2 py-1 text-sm font-bold text-text-secondary hover:text-text-primary disabled:opacity-40"
+            :disabled="zoom <= MIN_ZOOM"
+            aria-label="Alejar plano"
+            @click="zoomOut"
+          >
+            −
+          </button>
+          <span class="min-w-12 text-center text-xs tabular-nums text-text-tertiary">{{ Math.round(zoom * 100) }}%</span>
+          <button
+            type="button"
+            class="rounded-md border border-border px-2 py-1 text-sm font-bold text-text-secondary hover:text-text-primary disabled:opacity-40"
+            :disabled="zoom >= MAX_ZOOM"
+            aria-label="Acercar plano"
+            @click="zoomIn"
+          >
+            +
+          </button>
+          <button
+            v-if="zoom !== 1"
+            type="button"
+            class="text-xs font-semibold text-text-tertiary hover:text-text-primary"
+            @click="zoomReset"
+          >
+            Restablecer
+          </button>
+        </div>
+        <div class="overflow-auto">
+        <div :style="zoomStyle" class="floor-zoom-grid flex flex-col gap-6 origin-top-left">
         <section v-for="zone in zoneGroups" :key="zone.zona" :aria-label="zone.zona">
           <div class="mb-2 flex items-center justify-between gap-2">
             <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
@@ -1159,6 +1193,8 @@ onUnmounted(() => {
             </template>
           </Draggable>
         </section>
+        </div>
+        </div>
       </div>
 
       <div v-else key="tables-list" class="pos-floor-list">
@@ -1313,6 +1349,16 @@ onUnmounted(() => {
 <style scoped>
 .table-card {
   min-height: 8.75rem;
+}
+
+/* Zoom grid (#2617) — visible cells behind each zone grid */
+.floor-zoom-grid .pos-floor-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, var(--border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, var(--border) 55%, transparent) 1px, transparent 1px);
+  background-size: 25% 3.5rem;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
 }
 
 /* status-bg tokens are too faint + Tailwind /opacity doesn't apply to var() colors */
