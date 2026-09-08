@@ -1527,26 +1527,12 @@ onUnmounted(() => {
             <template #node-mesa="nodeProps">
               <button
                 type="button"
-                class="flex min-w-36 flex-col gap-1 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
+                class="flex min-w-28 items-center gap-1.5 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
+                :aria-label="`${nodeProps.data.title} — ${badgeLabel(nodeProps.data.status)}`"
               >
-                <span class="flex items-center gap-1.5 text-base font-bold uppercase tracking-wide text-text-primary">
-                  <span class="h-2 w-2 rounded-full" :class="dotClass(nodeProps.data.status)" aria-hidden="true" />
+                <span class="h-2 w-2 flex-shrink-0 rounded-full" :class="dotClass(nodeProps.data.status)" aria-hidden="true" />
+                <span class="truncate text-sm font-bold text-text-primary">
                   {{ nodeProps.data.title }}
-                </span>
-                <span v-if="nodeProps.data.status !== 'free'" class="text-sm font-bold tabular-nums text-text-primary">
-                  {{ formatCurrency(nodeProps.data.runningTotal ?? 0) }}
-                </span>
-                <span v-else class="text-sm font-bold uppercase tracking-wide text-text-tertiary">
-                  {{ t('pos.floor.free') }}
-                </span>
-                <span class="text-xs tabular-nums text-text-secondary">
-                  <template v-if="nodeProps.data.status !== 'free' && nodeProps.data.openedAt">
-                    {{ formatDuration(nodeProps.data.openedAt) }} ·
-                  </template>
-                  {{ nodeProps.data.zona ?? 'Sin ubicar' }}
-                </span>
-                <span v-if="waiterAttributionEnabled && nodeProps.data.waiterName" class="truncate text-xs text-text-tertiary">
-                  {{ nodeProps.data.waiterName }}
                 </span>
               </button>
             </template>
