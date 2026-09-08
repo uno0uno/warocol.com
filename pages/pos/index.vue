@@ -151,6 +151,8 @@ const isResolvingSettings = computed(() => {
 
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+// ── Floor canvas flag (warocol.com#2622): canvas read-only en vez de matriz ──
+const floorCanvasEnabled = computed(() => settingsData.value?.data?.floor_canvas_enabled === true)
 const authStore = useAuthStore()
 const tenantCatalogLayoutDefault = computed<'grid' | 'list'>(() => {
   const value = settingsData.value?.data?.pos_catalog_layout_default
@@ -2034,6 +2036,7 @@ onUnmounted(() => {
       <PosMesasFloorPlan
         :comandas-enabled="comandasEnabled"
         :waiter-attribution-enabled="waiterAttributionEnabled"
+        :mode="floorCanvasEnabled ? 'view' : 'pos'"
         @enter-table="handleEnterTable"
         @no-tables="noTablesConfigured = true"
         @move-table="handleMoveTable"
