@@ -1050,6 +1050,17 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           </template>
         </UiResponsiveDataView>
       </template>
+
+      <!-- ══════ FLOOR CANVAS (warocol.com#2622, order mode) ══════ -->
+      <section
+        v-if="businessProfile?.floor_canvas_enabled"
+        aria-label="Plano para ordenar"
+        class="rounded-xl border border-data-table-border bg-data-table-container-bg shadow-sm overflow-hidden p-4"
+      >
+        <p class="mb-1 text-sm font-semibold text-text-primary">Plano del salón</p>
+        <p class="mb-3 text-xs text-text-secondary">Arrastra las mesas para ordenar el plano. Los cambios se guardan con Guardar plano.</p>
+        <PosMesasFloorPlan mode="order" />
+      </section>
     </div>
 
     <!-- Create / Edit Panel -->

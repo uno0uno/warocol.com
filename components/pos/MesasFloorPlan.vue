@@ -45,7 +45,16 @@ const props = defineProps<{
   comandasEnabled?: boolean
   /** Issue #574 — when true, render the effective-waiter line under each mesa card */
   waiterAttributionEnabled?: boolean
+  /**
+   * uno0uno/warocol.com#2624 —
+   * pos: full POS behavior (grid/list + canvas editor when enabled).
+   * order: canvas editor only, no session side-effects (Operaciones embed).
+   * view: canvas read-only (POS with flag ON): no drag/edit, click opens.
+   */
+  mode?: 'pos' | 'order' | 'view'
 }>()
+
+const floorMode = computed(() => props.mode ?? 'pos')
 
 const emit = defineEmits<{
   (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }): void
@@ -91,11 +100,21 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const tables = computed(() => tablesData.value?.data ?? [])
 
 const floorView = ref<FloorView>('mesas')
-const floorLayout = ref<FloorLayout>('grid')
-const floorLayouts: FloorLayout[] = ['grid', 'list', 'canvas']
-const floorLayoutToggleTarget = computed<FloorLayout>(() =>
-  floorLayouts[(floorLayouts.indexOf(floorLayout.value) + 1) % floorLayouts.length]!,
+const floorLayouts = computed<FloorLayout[]>(() =>
+  floorMode.value === 'pos' ? ['grid', 'list'] : ['canvas'],
 )
+const floorLayout = ref<FloorLayout>('grid')
+watch(
+  floorMode,
+  (mode) => {
+    floorLayout.value = mode === 'pos' ? 'grid' : 'canvas'
+  },
+  { immediate: true },
+)
+const floorLayoutToggleTarget = computed<FloorLayout>(() => {
+  const layouts = floorLayouts.value
+  return layouts[(layouts.indexOf(floorLayout.value) + 1) % layouts.length]!
+})
 const toggleFloorLayout = () => {
   floorLayout.value = floorLayoutToggleTarget.value
 }
@@ -454,6 +473,9 @@ const syncCanvasNodes = () => {
         title: String(table.name ?? table.id),
         status: String(table.status ?? 'free'),
         zona: coords.zona,
+        runningTotal: Number(table.session?.running_total ?? 0),
+        openedAt: (table.session?.opened_at as string | undefined) ?? null,
+        waiterName: (table.effective_waiter_member_name as string | undefined)?.trim() || null,
       },
     })
   }
@@ -512,6 +534,7 @@ const discardCanvas = async () => {
 }
 
 const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
+  if (floorMode.value === 'order') return
   const table = (regularTables.value as any[]).find((t) => String(t.id) === event.node?.id)
   if (table) void handleTableClick(table)
 }
@@ -913,7 +936,7 @@ onUnmounted(() => {
       <ClientOnly>
         <Teleport to="#dashboard-header-pos-tools">
           <button
-            v-if="floorView === 'mesas'"
+            v-if="floorView === 'mesas' && floorMode === 'pos'"
             type="button"
             :class="shellHeaderToolButtonClass"
             :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
@@ -955,7 +978,7 @@ onUnmounted(() => {
       </ClientOnly>
 
       <div
-        v-if="floorTabs.length > 1"
+        v-if="floorMode === 'pos' && floorTabs.length > 1"
         class="mb-4 flex flex-wrap items-center gap-2"
         role="tablist"
         :aria-label="t('pos.floor.mainPlan')"
@@ -983,7 +1006,7 @@ onUnmounted(() => {
       </div>
 
       <button
-        v-if="showBarEntryCard"
+        v-if="floorMode === 'pos' && showBarEntryCard"
         class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-border bg-surface shadow-sm text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-border/50 focus-visible:ring-offset-2 hover:bg-surface-secondary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         :disabled="isEnteringBar"
         :aria-label="t('pos.floor.barEnterAria')"
@@ -1420,6 +1443,7 @@ onUnmounted(() => {
           <div class="mb-2 flex items-center justify-between gap-2">
             <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">Sin ubicar ({{ unplacedTables.length }})</p>
             <button
+              v-if="floorMode === 'order'"
               type="button"
               class="rounded-md border border-border px-2 py-1 text-xs font-bold text-text-secondary hover:text-text-primary"
               @click="placeAllOnCanvas"
@@ -1428,20 +1452,31 @@ onUnmounted(() => {
             </button>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button
-              v-for="table in unplacedTables"
-              :key="table.id"
-              type="button"
-              class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary"
-              :title="`Colocar ${table.name} en el plano`"
-              @click="placeOnCanvas(table)"
-            >
-              + {{ table.name }}
-            </button>
+            <template v-if="floorMode === 'order'">
+              <button
+                v-for="table in unplacedTables"
+                :key="table.id"
+                type="button"
+                class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary"
+                :title="`Colocar ${table.name} en el plano`"
+                @click="placeOnCanvas(table)"
+              >
+                + {{ table.name }}
+              </button>
+            </template>
+            <template v-else>
+              <span
+                v-for="table in unplacedTables"
+                :key="table.id"
+                class="rounded-lg border border-border/60 px-3 py-1.5 text-sm text-text-secondary"
+              >
+                {{ table.name }}
+              </span>
+            </template>
           </div>
         </div>
         <div
-          v-if="hasUnsavedCanvas || canvasError"
+          v-if="floorMode === 'order' && (hasUnsavedCanvas || canvasError)"
           class="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-surface p-3"
           role="status"
         >
@@ -1476,6 +1511,7 @@ onUnmounted(() => {
             v-else
             v-model:nodes="canvasNodes"
             :edges="[]"
+            :nodes-draggable="floorMode === 'order'"
             :min-zoom="0.3"
             :max-zoom="2.5"
             :zoom-on-scroll="false"
@@ -1491,13 +1527,27 @@ onUnmounted(() => {
             <template #node-mesa="nodeProps">
               <button
                 type="button"
-                class="flex min-w-28 flex-col gap-0.5 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
+                class="flex min-w-36 flex-col gap-1 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left shadow-sm hover:shadow"
               >
-                <span class="flex items-center gap-1.5 text-sm font-bold text-text-primary">
+                <span class="flex items-center gap-1.5 text-base font-bold uppercase tracking-wide text-text-primary">
                   <span class="h-2 w-2 rounded-full" :class="dotClass(nodeProps.data.status)" aria-hidden="true" />
                   {{ nodeProps.data.title }}
                 </span>
-                <span class="text-[11px] text-text-tertiary">{{ nodeProps.data.zona ?? 'Sin ubicar' }} · {{ badgeLabel(nodeProps.data.status) }}</span>
+                <span v-if="nodeProps.data.status !== 'free'" class="text-sm font-bold tabular-nums text-text-primary">
+                  {{ formatCurrency(nodeProps.data.runningTotal ?? 0) }}
+                </span>
+                <span v-else class="text-sm font-bold uppercase tracking-wide text-text-tertiary">
+                  {{ t('pos.floor.free') }}
+                </span>
+                <span class="text-xs tabular-nums text-text-secondary">
+                  <template v-if="nodeProps.data.status !== 'free' && nodeProps.data.openedAt">
+                    {{ formatDuration(nodeProps.data.openedAt) }} ·
+                  </template>
+                  {{ nodeProps.data.zona ?? 'Sin ubicar' }}
+                </span>
+                <span v-if="waiterAttributionEnabled && nodeProps.data.waiterName" class="truncate text-xs text-text-tertiary">
+                  {{ nodeProps.data.waiterName }}
+                </span>
               </button>
             </template>
           </VueFlow>
