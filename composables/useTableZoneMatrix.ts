@@ -67,7 +67,7 @@ export function sortTablesByPosition(tables: readonly ZoneTableItem[]): ZoneTabl
  * uno0uno/warocol.com#2613
  */
 export function positionForIndex(index: number): { pos_x: number; pos_y: number } {
-  const safe = Math.max(0, Math.floor(index))
+  const safe = Number.isFinite(index) ? Math.max(0, Math.floor(index)) : 0
   return { pos_x: safe % ZONE_GRID_COLS, pos_y: Math.floor(safe / ZONE_GRID_COLS) }
 }
 

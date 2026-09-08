@@ -63,6 +63,7 @@ describe('useTableZoneMatrix free x/y grid (#2613)', () => {
     expect(positionForIndex(3)).toEqual({ pos_x: 3, pos_y: 0 })
     expect(positionForIndex(4)).toEqual({ pos_x: 0, pos_y: 1 })
     expect(positionForIndex(-2)).toEqual({ pos_x: 0, pos_y: 0 })
+    expect(positionForIndex(NaN)).toEqual({ pos_x: 0, pos_y: 0 })
   })
 
   it('sorts placed tables by (y, x), legacy without coords last in API order', () => {
