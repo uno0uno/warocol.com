@@ -10,6 +10,12 @@ import {
   groupTablesByZona,
   sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
+import {
+  groupWallsByZona,
+  isValidWallPayload,
+  type FloorWall,
+  type NewFloorWall,
+} from '~/composables/useFloorWalls'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
@@ -291,6 +297,41 @@ const zoneGroups = computed(() =>
     tables: sortTablesByPosition(zone.tables),
   })),
 )
+
+// ── Floor walls (uno0uno/warocol.com#2614, visual reference only) ────────
+const { data: wallsData, refetch: refetchWalls } = useQuery({
+  key: () => ['tables', 'walls', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: FloorWall[] }>('/api/tables/walls'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 0,
+})
+
+const wallsByZona = computed(() => groupWallsByZona((wallsData.value?.data ?? []) as FloorWall[]))
+const zoneWalls = (zona: string): FloorWall[] => wallsByZona.value.get(zona) ?? []
+const isSavingWall = ref(false)
+
+const addWall = async (zona: string) => {
+  const payload: NewFloorWall = { zona, x1: 0, y1: 0, x2: 4, y2: 0 }
+  if (!isValidWallPayload(payload) || isSavingWall.value) return
+  isSavingWall.value = true
+  try {
+    await $fetch('/api/tables/walls', { method: 'POST', body: payload })
+    await refetchWalls()
+  } finally {
+    isSavingWall.value = false
+  }
+}
+
+const removeWall = async (wallId: string) => {
+  if (isSavingWall.value) return
+  isSavingWall.value = true
+  try {
+    await $fetch(`/api/tables/walls/${wallId}`, { method: 'DELETE' })
+    await refetchWalls()
+  } finally {
+    isSavingWall.value = false
+  }
+}
 const isDraggingZone = ref(false)
 const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -903,7 +944,35 @@ onUnmounted(() => {
       <!-- Table grid — zone matrix (uno0uno/warocol.com#2610) -->
       <div v-if="floorLayout === 'grid'" key="tables-grid" class="flex flex-col gap-6 pb-32">
         <section v-for="zone in zoneGroups" :key="zone.zona" :aria-label="zone.zona">
-          <p class="mb-2 text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
+            <button
+              type="button"
+              class="text-[11px] font-semibold text-text-tertiary hover:text-text-primary disabled:opacity-50"
+              :disabled="isSavingWall"
+              @click="addWall(zone.zona)"
+            >
+              + Pared
+            </button>
+          </div>
+          <ul v-if="zoneWalls(zone.zona).length" class="mb-2 flex flex-col gap-1">
+            <li
+              v-for="wall in zoneWalls(zone.zona)"
+              :key="wall.id"
+              class="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-surface-secondary/50 px-2 py-1 text-[11px] tabular-nums text-text-secondary"
+            >
+              <span>Pared ({{ wall.x1 }},{{ wall.y1 }})→({{ wall.x2 }},{{ wall.y2 }})</span>
+              <button
+                type="button"
+                class="font-bold hover:text-text-primary disabled:opacity-50"
+                :disabled="isSavingWall"
+                :aria-label="`Quitar pared en ${zone.zona}`"
+                @click="removeWall(wall.id)"
+              >
+                ×
+              </button>
+            </li>
+          </ul>
           <Draggable
             :list="zone.tables"
             item-key="id"
