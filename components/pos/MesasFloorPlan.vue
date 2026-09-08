@@ -45,11 +45,12 @@ const props = defineProps<{
   waiterAttributionEnabled?: boolean
   /**
    * uno0uno/warocol.com#2624 —
-   * pos: full POS behavior (grid/list + canvas editor when enabled).
+   * pos: full POS behavior (grid/list + canvas as 3rd option when canvasEnabled).
    * order: canvas editor only, no session side-effects (Operaciones embed).
-   * view: canvas read-only (POS with flag ON): no drag/edit, click opens.
    */
-  mode?: 'pos' | 'order' | 'view'
+  mode?: 'pos' | 'order'
+  /** uno0uno/warocol.com#2631 — flag ON adds canvas as 3rd layout in pos mode. */
+  canvasEnabled?: boolean
 }>()
 
 const floorMode = computed(() => props.mode ?? 'pos')
@@ -98,9 +99,10 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const tables = computed(() => tablesData.value?.data ?? [])
 
 const floorView = ref<FloorView>('mesas')
-const floorLayouts = computed<FloorLayout[]>(() =>
-  floorMode.value === 'pos' ? ['grid', 'list'] : ['canvas'],
-)
+const floorLayouts = computed<FloorLayout[]>(() => {
+  if (floorMode.value === 'pos') return props.canvasEnabled ? ['grid', 'list', 'canvas'] : ['grid', 'list']
+  return ['canvas']
+})
 const floorLayout = ref<FloorLayout>('grid')
 watch(
   floorMode,
@@ -109,6 +111,11 @@ watch(
   },
   { immediate: true },
 )
+watch(floorLayouts, (layouts) => {
+  if (!layouts.includes(floorLayout.value)) {
+    floorLayout.value = layouts[0]!
+  }
+})
 const floorLayoutToggleTarget = computed<FloorLayout>(() => {
   const layouts = floorLayouts.value
   return layouts[(layouts.indexOf(floorLayout.value) + 1) % layouts.length]!
@@ -493,11 +500,13 @@ const isSavingCanvas = ref(false)
 const canvasError = ref('')
 
 const onNodeDragStart = () => {
+  if (floorMode.value !== 'order') return
   isDraggingNode.value = true
 }
 
 const onNodeDragStop = (event: NodeDragEvent) => {
   isDraggingNode.value = false
+  if (floorMode.value !== 'order') return
   const node = (event as unknown as { node?: { id?: string; position?: { x: number; y: number } } }).node
   if (!node?.id || !node.position) return
   const payload = nodeToPayload({ position: node.position })
@@ -753,11 +762,11 @@ onUnmounted(() => {
       <ClientOnly>
         <Teleport to="#dashboard-header-pos-tools">
           <button
-            v-if="floorView === 'mesas' && floorMode === 'pos'"
+            v-if="floorView === 'mesas' && floorLayouts.length > 1"
             type="button"
             :class="shellHeaderToolButtonClass"
-            :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : t('pos.catalog.layoutSwitchToGrid')"
-            :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : t('pos.catalog.layoutGrid')"
+            :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutSwitchToCanvas') : t('pos.catalog.layoutSwitchToGrid')"
+            :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid')"
             @click="toggleFloorLayout"
           >
             <span class="inline-flex h-4 w-4 items-center justify-center">
@@ -774,6 +783,19 @@ onUnmounted(() => {
                   aria-hidden="true"
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+                <svg
+                  v-else-if="floorLayoutToggleTarget === 'canvas'"
+                  key="icon-canvas"
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.5-2.5v-13L9 7l6-2.5L20.5 7v13L15 17.5 9 20zm0 0v-13m6-2.5v13" />
                 </svg>
                 <svg
                   v-else
@@ -795,7 +817,7 @@ onUnmounted(() => {
       </ClientOnly>
 
       <div
-        v-if="floorMode === 'pos' && floorTabs.length > 1"
+        v-if="floorMode !== 'order' && floorTabs.length > 1"
         class="mb-4 flex flex-wrap items-center gap-2"
         role="tablist"
         :aria-label="t('pos.floor.mainPlan')"
@@ -823,7 +845,7 @@ onUnmounted(() => {
       </div>
 
       <button
-        v-if="floorMode === 'pos' && showBarEntryCard"
+        v-if="floorMode !== 'order' && showBarEntryCard"
         class="mb-4 w-full min-w-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-border bg-surface shadow-sm text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-border/50 focus-visible:ring-offset-2 hover:bg-surface-secondary/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         :disabled="isEnteringBar"
         :aria-label="t('pos.floor.barEnterAria')"
