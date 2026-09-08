@@ -18,9 +18,9 @@ describe('tablesToNodes', () => {
 })
 
 describe('nodeToPayload', () => {
-  it('converts pixels back to units rounded to 1 decimal', () => {
-    expect(nodeToPayload({ position: { x: 210, y: 70 } })).toEqual({ pos_x: 1.5, pos_y: 0.5 })
-    expect(nodeToPayload({ position: { x: NaN, y: 10 } })).toEqual({ pos_x: 0, pos_y: 0.1 })
+  it('converts pixels back to integer units', () => {
+    expect(nodeToPayload({ position: { x: 210, y: 70 } })).toEqual({ pos_x: 2, pos_y: 1 })
+    expect(nodeToPayload({ position: { x: NaN, y: 10 } })).toEqual({ pos_x: 0, pos_y: 0 })
   })
 })
 

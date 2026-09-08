@@ -27,7 +27,8 @@ import {
   nodeToPayload,
   tablesToNodes,
   type FloorPlanNode,
-} from '~/composables/useFloorPlanNodes'import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
+} from '~/composables/useFloorPlanNodes'
+import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
   shellHeaderToolButtonClass,
   shellHeaderToolButtonActiveClass,
@@ -390,7 +391,8 @@ const onZoneDragEnd = () => {
   isDraggingZone.value = false
 }
 
-const persistZoneDrop = async (table: any, targetZona: string, newIndex?: number) => {  const payload =
+const persistZoneDrop = async (table: any, targetZona: string, newIndex?: number) => {
+  const payload =
     typeof newIndex === 'number'
       ? buildFreePositionPayload(targetZona, newIndex)
       : buildZoneDropPayload(table, targetZona)

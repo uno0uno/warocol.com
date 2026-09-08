@@ -37,13 +37,14 @@ export function tablesToNodes(tables: readonly ZoneTableItem[]): FloorPlanNode[]
 
 /**
  * Convert a dropped node position back to floor-plan units for PATCH.
+ * Snapped to integers so occupancy checks (firstFreeCell) stay exact.
  */
 export function nodeToPayload(node: { position: { x: number; y: number } }): {
   pos_x: number
   pos_y: number
 } {
-  const round1 = (n: number) => Math.round((Number.isFinite(n) ? n : 0) * 10) / 10
-  return { pos_x: round1(node.position.x / NODE_PX), pos_y: round1(node.position.y / NODE_PX) }
+  const snap = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.round(n / NODE_PX)) : 0)
+  return { pos_x: snap(node.position.x), pos_y: snap(node.position.y) }
 }
 
 /**
