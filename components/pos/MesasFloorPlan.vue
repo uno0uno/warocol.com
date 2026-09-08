@@ -22,11 +22,13 @@ import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import {
-  firstFreeCell,
+  NODE_PX,
   hasCoords,
+  layoutUnplacedInMatrix,
   nodeToPayload,
-  tablesToNodes,
+  resolveTableCoords,
   type FloorPlanNode,
+  type StagedCoords,
 } from '~/composables/useFloorPlanNodes'
 import { tableSessionDisplayName, tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
@@ -435,25 +437,40 @@ const onZoneChange = (targetZona: string, evt: any) => {
 // ── Free canvas (uno0uno/warocol.com#2617, Vue Flow) ─────────────────────
 const canvasNodes = ref<FloorPlanNode[]>([])
 const isDraggingNode = ref(false)
-const isPlacingTable = ref(false)
+const stagedMoves = ref(new Map<string, StagedCoords>())
 
 const syncCanvasNodes = () => {
   if (isDraggingNode.value) return
-  canvasNodes.value = tablesToNodes(regularTables.value as any[])
+  const nodes: FloorPlanNode[] = []
+  for (const table of regularTables.value as any[]) {
+    const coords = resolveTableCoords(table, stagedMoves.value)
+    if (!coords) continue
+    nodes.push({
+      id: String(table.id),
+      type: 'mesa',
+      position: { x: coords.pos_x * NODE_PX, y: coords.pos_y * NODE_PX },
+      data: {
+        tableId: String(table.id),
+        title: String(table.name ?? table.id),
+        status: String(table.status ?? 'free'),
+        zona: coords.zona,
+      },
+    })
+  }
+  canvasNodes.value = nodes
 }
 
 watch(regularTables, syncCanvasNodes, { immediate: true })
 
-const unplacedTables = computed(() => (regularTables.value as any[]).filter((t) => !hasCoords(t)))
+const unplacedTables = computed(() =>
+  (regularTables.value as any[]).filter((t) => !hasCoords(t) && !stagedMoves.value.has(String(t.id))),
+)
 
-const persistNodeDrop = async (tableId: string, position: { x: number; y: number }) => {
-  const payload = nodeToPayload({ position })
-  try {
-    await $fetch(`/api/tables/${tableId}/position`, { method: 'PATCH', body: payload })
-  } finally {
-    await refetch()
-  }
-}
+// ── Canvas draft (uno0uno/warocol.com#2620): drag stages locally,
+// Guardar persists everything at once. No auto-PATCH on drop.
+const hasUnsavedCanvas = computed(() => stagedMoves.value.size > 0)
+const isSavingCanvas = ref(false)
+const canvasError = ref('')
 
 const onNodeDragStart = () => {
   isDraggingNode.value = true
@@ -463,7 +480,35 @@ const onNodeDragStop = (event: NodeDragEvent) => {
   isDraggingNode.value = false
   const node = (event as unknown as { node?: { id?: string; position?: { x: number; y: number } } }).node
   if (!node?.id || !node.position) return
-  void persistNodeDrop(node.id, node.position)
+  const payload = nodeToPayload({ position: node.position })
+  const table = (regularTables.value as any[]).find((t) => String(t.id) === node.id)
+  const next = new Map(stagedMoves.value)
+  next.set(node.id, { ...payload, zona: table?.zona ?? null })
+  stagedMoves.value = next
+  syncCanvasNodes()
+}
+
+const saveCanvas = async () => {
+  if (!stagedMoves.value.size || isSavingCanvas.value) return
+  isSavingCanvas.value = true
+  canvasError.value = ''
+  try {
+    for (const [tableId, coords] of stagedMoves.value) {
+      await $fetch(`/api/tables/${tableId}/position`, { method: 'PATCH', body: coords })
+    }
+    stagedMoves.value = new Map()
+    await refetch()
+  } catch {
+    canvasError.value = 'No se pudo guardar el plano'
+  } finally {
+    isSavingCanvas.value = false
+  }
+}
+
+const discardCanvas = async () => {
+  stagedMoves.value = new Map()
+  canvasError.value = ''
+  await refetch()
 }
 
 const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
@@ -471,19 +516,20 @@ const onNodeCanvasClick = (event: { node?: { id?: string } }) => {
   if (table) void handleTableClick(table)
 }
 
-const placeOnCanvas = async (table: any) => {
-  if (isPlacingTable.value) return
-  isPlacingTable.value = true
-  try {
-    const cell = firstFreeCell(regularTables.value as any[])
-    await $fetch(`/api/tables/${table.id}/position`, {
-      method: 'PATCH',
-      body: { ...cell, zona: table.zona ?? 'Salon' },
-    })
-    await refetch()
-  } finally {
-    isPlacingTable.value = false
-  }
+const placeOnCanvas = (table: any) => {
+  const regs = regularTables.value as any[]
+  stagedMoves.value = layoutUnplacedInMatrix([table], regs, stagedMoves.value)
+  syncCanvasNodes()
+}
+
+const placeAllOnCanvas = () => {
+  const regs = regularTables.value as any[]
+  stagedMoves.value = layoutUnplacedInMatrix(
+    regs.filter((t) => !hasCoords(t) && !stagedMoves.value.has(String(t.id))),
+    regs,
+    stagedMoves.value,
+  )
+  syncCanvasNodes()
 }
 
 type FloorTab = { id: FloorView; label: string; badge?: number }
@@ -1371,14 +1417,22 @@ onUnmounted(() => {
       </div>
       <div v-else-if="floorLayout === 'canvas'" key="tables-canvas" class="flex flex-col gap-3 pb-32">
         <div v-if="unplacedTables.length" class="rounded-xl border border-border/60 bg-surface p-3">
-          <p class="mb-2 text-xs font-bold uppercase tracking-wide text-text-tertiary">Sin ubicar ({{ unplacedTables.length }})</p>
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">Sin ubicar ({{ unplacedTables.length }})</p>
+            <button
+              type="button"
+              class="rounded-md border border-border px-2 py-1 text-xs font-bold text-text-secondary hover:text-text-primary"
+              @click="placeAllOnCanvas"
+            >
+              Colocar todas
+            </button>
+          </div>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="table in unplacedTables"
               :key="table.id"
               type="button"
-              class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
-              :disabled="isPlacingTable"
+              class="rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-primary hover:bg-surface-secondary"
               :title="`Colocar ${table.name} en el plano`"
               @click="placeOnCanvas(table)"
             >
@@ -1386,8 +1440,40 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div class="h-[60vh] min-h-96 overflow-hidden rounded-xl border border-border/60">
+        <div
+          v-if="hasUnsavedCanvas || canvasError"
+          class="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-surface p-3"
+          role="status"
+        >
+          <p v-if="hasUnsavedCanvas" class="text-xs font-semibold text-text-secondary">
+            {{ stagedMoves.size }} cambio(s) sin guardar
+          </p>
+          <p v-if="canvasError" class="text-xs font-semibold text-state-danger-icon">{{ canvasError }}</p>
+          <div class="ms-auto flex gap-2">
+            <button
+              type="button"
+              class="text-xs font-semibold text-text-tertiary hover:text-text-primary disabled:opacity-50"
+              :disabled="isSavingCanvas"
+              @click="discardCanvas"
+            >
+              Descartar
+            </button>
+            <button
+              type="button"
+              class="rounded-md bg-shell-action-hover-bg px-3 py-1.5 text-xs font-bold disabled:opacity-50"
+              :disabled="isSavingCanvas || !hasUnsavedCanvas"
+              @click="saveCanvas"
+            >
+              {{ isSavingCanvas ? 'Guardando…' : 'Guardar plano' }}
+            </button>
+          </div>
+        </div>
+        <div class="overflow-hidden rounded-xl border border-border/60" style="height: 60vh; min-height: 480px;">
+          <div v-if="loadingTables" class="flex h-full items-center justify-center">
+            <CommonsTheCustomLoader size="large" />
+          </div>
           <VueFlow
+            v-else
             v-model:nodes="canvasNodes"
             :edges="[]"
             :min-zoom="0.3"
@@ -1400,7 +1486,7 @@ onUnmounted(() => {
             @node-drag-stop="onNodeDragStop"
             @node-click="onNodeCanvasClick"
           >
-            <Background variant="dots" :gap="28" :size="1.5" />
+            <Background variant="lines" :gap="28" />
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <button
@@ -1415,6 +1501,9 @@ onUnmounted(() => {
               </button>
             </template>
           </VueFlow>
+          <p v-if="!loadingTables && !canvasNodes.length" class="p-3 text-xs text-text-tertiary">
+            Sin mesas en el plano — colócalas desde Sin ubicar.
+          </p>
         </div>
       </div>
       </Transition>

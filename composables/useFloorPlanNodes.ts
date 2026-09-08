@@ -47,9 +47,72 @@ export function nodeToPayload(node: { position: { x: number; y: number } }): {
   return { pos_x: snap(node.position.x), pos_y: snap(node.position.y) }
 }
 
+export interface StagedCoords {
+  pos_x: number
+  pos_y: number
+  zona?: string | null
+}
+
 /**
- * First free cell (row-major scan) for auto-placing a tray table on canvas.
+ * Resolve effective coordinates: staged draft wins over stored.
+ * Returns null when the table has neither (stays in Sin ubicar).
+ * uno0uno/warocol.com#2620
  */
+export function resolveTableCoords(
+  table: ZoneTableItem,
+  staged: ReadonlyMap<string, StagedCoords>,
+): { pos_x: number; pos_y: number; zona: string | null } | null {
+  const draft = staged.get(String(table.id))
+  if (draft) {
+    return {
+      pos_x: draft.pos_x,
+      pos_y: draft.pos_y,
+      zona: draft.zona ?? (typeof table.zona === 'string' && table.zona.trim() ? table.zona : null),
+    }
+  }
+  if (!hasCoords(table)) return null
+  return {
+    pos_x: table.pos_x as number,
+    pos_y: table.pos_y as number,
+    zona: typeof table.zona === 'string' && table.zona.trim() ? table.zona : null,
+  }
+}
+
+/**
+ * Lay out unplaced tables into free matrix cells (row-major) for
+ * "Colocar todas" — pure, testable; caller stages the result.
+ * uno0uno/warocol.com#2620
+ */
+export function layoutUnplacedInMatrix(
+  unplaced: readonly ZoneTableItem[],
+  occupied: readonly ZoneTableItem[],
+  staged: ReadonlyMap<string, StagedCoords>,
+): Map<string, StagedCoords> {
+  const next = new Map(staged)
+  const taken = new Set<string>()
+  const key = (x: number, y: number) => `${x}:${y}`
+  for (const t of occupied) {
+    const c = resolveTableCoords(t, next)
+    if (c) taken.add(key(Math.round(c.pos_x), Math.round(c.pos_y)))
+  }
+  const freeCell = (): { pos_x: number; pos_y: number } => {
+    for (let y = 0; y < 100; y++) {
+      for (let x = 0; x < 100; x++) {
+        if (!taken.has(key(x, y))) {
+          taken.add(key(x, y))
+          return { pos_x: x, pos_y: y }
+        }
+      }
+    }
+    return { pos_x: 0, pos_y: 0 }
+  }
+  for (const table of unplaced) {
+    if (next.has(String(table.id))) continue
+    const cell = freeCell()
+    next.set(String(table.id), { ...cell, zona: typeof table.zona === 'string' && table.zona.trim() ? table.zona : 'Salon' })
+  }
+  return next
+}
 export function firstFreeCell(tables: readonly ZoneTableItem[]): { pos_x: number; pos_y: number } {
   const used = new Set(
     tables.filter(hasCoords).map((t) => `${Math.round(t.pos_x as number)}:${Math.round(t.pos_y as number)}`),

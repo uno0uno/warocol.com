@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { firstFreeCell, nodeToPayload, tablesToNodes } from './useFloorPlanNodes'
+import {
+  firstFreeCell,
+  layoutUnplacedInMatrix,
+  nodeToPayload,
+  resolveTableCoords,
+  tablesToNodes,
+} from './useFloorPlanNodes'
 
 const tables = [
   { id: 'm1', name: 'Mesa 1', status: 'free', zona: 'Salon', pos_x: 1, pos_y: 2 },
@@ -28,5 +34,38 @@ describe('firstFreeCell', () => {
   it('finds the first free row-major cell', () => {
     expect(firstFreeCell(tables)).toEqual({ pos_x: 1, pos_y: 0 })
     expect(firstFreeCell([])).toEqual({ pos_x: 0, pos_y: 0 })
+  })
+})
+
+describe('resolveTableCoords', () => {
+  it('prefers staged draft over stored coords', () => {
+    const staged = new Map([['m1', { pos_x: 5, pos_y: 5 }]])
+    expect(resolveTableCoords(tables[0], staged)).toMatchObject({ pos_x: 5, pos_y: 5, zona: 'Salon' })
+    expect(resolveTableCoords(tables[0], new Map())).toMatchObject({ pos_x: 1, pos_y: 2 })
+  })
+
+  it('returns null without stored coords nor draft', () => {
+    expect(resolveTableCoords(tables[1], new Map())).toBeNull()
+    const staged = new Map([['m2', { pos_x: 0, pos_y: 3 }]])
+    expect(resolveTableCoords(tables[1], staged)).toMatchObject({ pos_x: 0, pos_y: 3, zona: null })
+  })
+})
+
+describe('layoutUnplacedInMatrix', () => {
+  it('places all unplaced into free cells at once', () => {
+    const unplaced = [
+      { id: 'a', zona: null, pos_x: null, pos_y: null },
+      { id: 'b', zona: null, pos_x: null, pos_y: null },
+    ]
+    const next = layoutUnplacedInMatrix(unplaced, tables, new Map())
+    expect(next.get('a')).toMatchObject({ pos_x: 1, pos_y: 0 })
+    expect(next.get('b')).toMatchObject({ pos_x: 2, pos_y: 0 })
+  })
+
+  it('skips already staged tables', () => {
+    const unplaced = [{ id: 'a', zona: null, pos_x: null, pos_y: null }]
+    const staged = new Map([['a', { pos_x: 9, pos_y: 9 }]])
+    const next = layoutUnplacedInMatrix(unplaced, tables, staged)
+    expect(next.get('a')).toMatchObject({ pos_x: 9, pos_y: 9 })
   })
 })
