@@ -547,6 +547,32 @@ const toggleTableQrModule = async () => {
   }
 }
 
+// ── Toggle floor canvas (warocol.com#2622) ───────────────────────────────
+const isTogglingFloorCanvas = ref(false)
+const toggleFloorCanvas = async () => {
+  if (!businessProfile.value || isTogglingFloorCanvas.value) return
+  isTogglingFloorCanvas.value = true
+  const newState = !businessProfile.value.floor_canvas_enabled
+  try {
+    await $fetch('/api/operaciones/toggles/floor-canvas', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    await cache.invalidateQueries({ key: ['tables'] })
+    toast.success(
+      newState
+        ? t('operaciones.mesas.canvasTitle')
+        : t('operaciones.mesas.moduleOff'),
+      { title: newState ? t('operaciones.mesas.moduleActivated') : t('operaciones.mesas.moduleOff') },
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || t('operaciones.mesas.toggleError'), { title: 'Error' })
+  } finally {
+    isTogglingFloorCanvas.value = false
+  }
+}
+
 // Members embedded in the operaciones aggregator (no Module.EQUIPO required).
 // Used by MesaPanel to render the "Mesero por defecto" picker.
 const tenantMembers = computed<Array<{ id: string; name: string; role: string }>>(() =>
@@ -654,6 +680,32 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               :checked="!!businessProfile.table_qr_module_enabled"
               @change="toggleTableQrModule"
               :disabled="isTogglingTableQrModule"
+            >
+            <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+
+        <!-- Floor canvas (warocol.com#2622) -->
+        <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">
+              {{ t('operaciones.mesas.canvasTitle') }}
+            </p>
+            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+              {{ t('operaciones.mesas.canvasHelp') }}
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingFloorCanvas ? 'opacity-50 pointer-events-none' : ''"
+            aria-label="Plano canvas"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="!!businessProfile.floor_canvas_enabled"
+              @change="toggleFloorCanvas"
+              :disabled="isTogglingFloorCanvas"
             >
             <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
