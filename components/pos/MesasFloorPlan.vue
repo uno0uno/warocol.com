@@ -111,6 +111,11 @@ watch(
   },
   { immediate: true },
 )
+watch(floorLayouts, (layouts) => {
+  if (!layouts.includes(floorLayout.value)) {
+    floorLayout.value = layouts[0]!
+  }
+})
 const floorLayoutToggleTarget = computed<FloorLayout>(() => {
   const layouts = floorLayouts.value
   return layouts[(layouts.indexOf(floorLayout.value) + 1) % layouts.length]!
@@ -495,11 +500,13 @@ const isSavingCanvas = ref(false)
 const canvasError = ref('')
 
 const onNodeDragStart = () => {
+  if (floorMode.value !== 'order') return
   isDraggingNode.value = true
 }
 
 const onNodeDragStop = (event: NodeDragEvent) => {
   isDraggingNode.value = false
+  if (floorMode.value !== 'order') return
   const node = (event as unknown as { node?: { id?: string; position?: { x: number; y: number } } }).node
   if (!node?.id || !node.position) return
   const payload = nodeToPayload({ position: node.position })
@@ -776,6 +783,19 @@ onUnmounted(() => {
                   aria-hidden="true"
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+                <svg
+                  v-else-if="floorLayoutToggleTarget === 'canvas'"
+                  key="icon-canvas"
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.5-2.5v-13L9 7l6-2.5L20.5 7v13L15 17.5 9 20zm0 0v-13m6-2.5v13" />
                 </svg>
                 <svg
                   v-else
