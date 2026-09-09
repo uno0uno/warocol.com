@@ -60,10 +60,10 @@ const circleClass = (status: string) => ({
     <p v-else class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
       Libre
     </p>
-    <p class="max-w-[110px] truncate text-[11px] text-text-secondary">
-      <template v-if="table?.status !== 'free' && table?.session?.opened_at">
-        {{ formatDuration(table.session.opened_at) }} ·
-      </template>
+    <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
+      {{ formatDuration(table.session.opened_at) }}
+    </p>
+    <p class="max-w-[110px] truncate text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
     </p>
   </div>
