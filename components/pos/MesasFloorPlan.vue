@@ -107,6 +107,7 @@ const isSavingTablesLayout = ref(false)
 const layoutMenuOpen = ref(false)
 const layoutMenuWrap = ref<HTMLElement | null>(null)
 const isCoarsePointer = ref(false)
+const headerTargetFound = ref(true)
 
 onMounted(() => {
   if (typeof window !== 'undefined' && window.matchMedia) {
@@ -118,6 +119,7 @@ watch(
   [floorView, floorLayouts, () => props.canvasEnabled],
   ([view, layouts]) => {
     const target = typeof document !== 'undefined' ? document.querySelector('#dashboard-header-pos-tools') : null
+    headerTargetFound.value = !!target
     console.info('[floor-layout-selector]', {
       view,
       layouts,
@@ -743,7 +745,7 @@ onUnmounted(() => {
     <!-- Content -->
     <div v-else>
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools">
+        <Teleport to="#dashboard-header-pos-tools" :disabled="!headerTargetFound">
           <div
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             ref="layoutMenuWrap"
@@ -805,7 +807,7 @@ onUnmounted(() => {
       </ClientOnly>
 
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools">
+        <Teleport to="#dashboard-header-pos-tools" :disabled="!headerTargetFound">
           <div
             v-if="floorMode !== 'order' && floorTabs.length > 1"
             class="flex flex-shrink-0 flex-nowrap items-center gap-2"
