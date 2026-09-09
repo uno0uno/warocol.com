@@ -67,7 +67,7 @@ const circleClass = (status: string) => ({
     <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
       {{ formatDuration(table.session.opened_at) }}
     </p>
-    <div class="my-1 w-full border-t border-dashed border-border" aria-hidden="true" />
+    <div class="-mx-2 my-1 w-[calc(100%+16px)] border-t border-dashed border-border" aria-hidden="true" />
     <p class="max-w-[130px] truncate whitespace-nowrap text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
     </p>
