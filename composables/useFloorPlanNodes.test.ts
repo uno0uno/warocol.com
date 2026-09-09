@@ -38,8 +38,8 @@ describe('layoutUnplacedInMatrix', () => {
       { id: 'b', zona: null, pos_x: null, pos_y: null },
     ]
     const next = layoutUnplacedInMatrix(unplaced, tables, new Map())
-    expect(next.get('a')).toMatchObject({ pos_x: 2, pos_y: 0 })
-    expect(next.get('b')).toMatchObject({ pos_x: 4, pos_y: 0 })
+    expect(next.get('a')).toMatchObject({ pos_x: 1, pos_y: 0 })
+    expect(next.get('b')).toMatchObject({ pos_x: 2, pos_y: 0 })
   })
 
   it('skips already staged tables', () => {
@@ -70,8 +70,8 @@ describe('layoutUnplacedInMatrix', () => {
       { id: 'b', zona: null, pos_x: null, pos_y: null },
     ]
     const next = layoutUnplacedInMatrix(unplaced, tables, new Map())
-    expect(next.get('a')).toMatchObject({ pos_x: 2, pos_y: 0 })
-    expect(next.get('b')).toMatchObject({ pos_x: 4, pos_y: 0 })
+    expect(next.get('a')).toMatchObject({ pos_x: 1, pos_y: 0 })
+    expect(next.get('b')).toMatchObject({ pos_x: 2, pos_y: 0 })
   })
 
   it('skips already staged tables', () => {
@@ -81,9 +81,9 @@ describe('layoutUnplacedInMatrix', () => {
     expect(next.get('a')).toMatchObject({ pos_x: 9, pos_y: 9 })
   })
 
-  it('uses 2-unit footprint steps for full cards', () => {
-    expect(NODE_FOOTPRINT_W).toBe(2)
-    expect(NODE_FOOTPRINT_H).toBe(2)
+  it('uses 1-unit footprint steps for figures', () => {
+    expect(NODE_FOOTPRINT_W).toBe(1)
+    expect(NODE_FOOTPRINT_H).toBe(1)
   })
 })
 })
