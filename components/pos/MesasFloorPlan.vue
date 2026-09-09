@@ -714,28 +714,35 @@ onUnmounted(() => {
             class="flex items-center gap-2"
           >
             <span class="text-xs font-semibold text-text-tertiary">{{ t('pos.floor.viewTables') }}:</span>
-            <select
-              id="floor-layout-select"
-              :value="floorLayout"
-              :disabled="isSavingTablesLayout"
-              :aria-label="t('pos.floor.viewTables')"
-              class="h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-primary disabled:opacity-50"
-              @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
-            >
-              <option v-for="layout in floorLayouts" :key="layout" :value="layout">
-                {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
-              </option>
-            </select>
+            <div class="relative flex-shrink-0">
+              <select
+                id="floor-layout-select"
+                :value="floorLayout"
+                :disabled="isSavingTablesLayout"
+                :aria-label="t('pos.floor.viewTables')"
+                class="h-9 max-w-32 truncate appearance-none rounded-lg border border-border bg-surface pl-2 pr-8 text-xs font-semibold text-text-primary disabled:opacity-50"
+                @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
+              >
+                <option v-for="layout in floorLayouts" :key="layout" :value="layout">
+                  {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
+                </option>
+              </select>
+              <svg class="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </Teleport>
       </ClientOnly>
 
-      <div
-        v-if="floorMode !== 'order' && floorTabs.length > 1"
-        class="mb-4 flex flex-wrap items-center gap-2"
-        role="tablist"
-        :aria-label="t('pos.floor.mainPlan')"
-      >
+      <ClientOnly>
+        <Teleport to="#dashboard-header-pos-tools">
+          <div
+            v-if="floorMode !== 'order' && floorTabs.length > 1"
+            class="flex flex-wrap items-center gap-2"
+            role="tablist"
+            :aria-label="t('pos.floor.mainPlan')"
+          >
         <button
           v-for="tab in floorTabs"
           :key="tab.id"
@@ -756,7 +763,9 @@ onUnmounted(() => {
             {{ tab.badge > 9 ? '9+' : tab.badge }}
           </span>
         </button>
-      </div>
+        </div>
+        </Teleport>
+      </ClientOnly>
 
       <button
         v-if="floorMode !== 'order' && showBarEntryCard"
