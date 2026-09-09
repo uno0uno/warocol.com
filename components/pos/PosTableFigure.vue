@@ -1,56 +1,50 @@
 <script setup lang="ts">
-const props = defineProps<{ table: any }>()
+defineProps<{ table: any }>()
 
-const chairCount = computed(() => {
-  const n = Number(props.table?.capacity ?? 4)
-  if (!Number.isFinite(n) || n < 1) return 4
-  return Math.min(8, Math.round(n))
+const chairClass = (status: string) => ({
+  'bg-text-tertiary/20': status === 'free',
+  'bg-text-primary/70': status === 'open',
+  'bg-status-warning-text/70': status === 'bill_requested',
 })
 
-const circleClass = computed(() => {
-  if (props.table?.status === 'open') return 'bg-text-primary text-surface border-text-primary'
-  if (props.table?.status === 'bill_requested') return 'bg-status-warning-text text-surface border-status-warning-text'
-  return 'bg-surface text-text-primary border-border'
+const circleClass = (status: string) => ({
+  'bg-surface-secondary border-2 border-border/50': status === 'free',
+  'bg-text-primary shadow-lg shadow-black/20': status === 'open',
+  'bg-status-warning-text shadow-lg shadow-status-warning-text/30': status === 'bill_requested',
 })
-
-const chairClass = computed(() => {
-  if (props.table?.status === 'open') return 'bg-text-primary/70'
-  if (props.table?.status === 'bill_requested') return 'bg-status-warning-text/70'
-  return 'bg-text-tertiary/20'
-})
-
-const chairStyle = (index: number) => {
-  const angle = (index / chairCount.value) * Math.PI * 2 - Math.PI / 2
-  const radius = 46
-  return {
-    left: `${50 + (Math.cos(angle) * radius) / 76 * 50}%`,
-    top: `${50 + (Math.sin(angle) * radius) / 76 * 50}%`,
-  }
-}
 </script>
 
 <template>
-  <div class="flex w-[76px] flex-col items-center gap-1">
-    <div class="relative h-[76px] w-[76px]">
+  <!-- Circle + chair marks (historical floor-plan figure) -->
+  <div class="relative p-[14px]">
+    <!-- Chair marks: 4 cardinal positions -->
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
+      :class="chairClass(table?.status)"
+    />
+    <div
+      class="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
+      :class="chairClass(table?.status)"
+    />
+    <div
+      class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
+      :class="chairClass(table?.status)"
+    />
+    <div
+      class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
+      :class="chairClass(table?.status)"
+    />
+    <!-- Circle -->
+    <div
+      class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+      :class="circleClass(table?.status)"
+    >
       <span
-        v-for="i in chairCount"
-        :key="i"
-        class="absolute h-2 w-4 -translate-x-1/2 -translate-y-1/2 rounded-sm transition-colors duration-200"
-        :class="chairClass"
-        :style="chairStyle(i - 1)"
-        aria-hidden="true"
-      />
-      <div
-        class="absolute left-1/2 top-1/2 flex h-[52px] w-[52px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-200"
-        :class="circleClass"
+        class="text-sm font-bold leading-tight text-center px-2 line-clamp-2"
+        :class="table?.status === 'free' ? 'text-text-secondary' : 'text-white'"
       >
-        <span class="max-w-[44px] truncate px-1 text-center text-[11px] font-bold leading-tight">
-          {{ table?.code ?? table?.name }}
-        </span>
-      </div>
+        {{ table?.name }}
+      </span>
     </div>
-    <p class="max-w-[76px] truncate text-center text-[11px] font-semibold text-text-primary">
-      {{ table?.name }}
-    </p>
   </div>
 </template>
