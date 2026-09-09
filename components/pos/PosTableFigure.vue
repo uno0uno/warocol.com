@@ -41,7 +41,7 @@ const circleClass = (status: string) => ({
     />
     <!-- Circle -->
     <div
-      class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+      class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center"
       :class="circleClass(table?.status)"
     >
       <span

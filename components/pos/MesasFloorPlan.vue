@@ -724,7 +724,7 @@ onUnmounted(() => {
           <div
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             ref="layoutMenuWrap"
-            class="relative flex items-center gap-2"
+            class="relative flex flex-shrink-0 items-center gap-2"
           >
             <button
               type="button"
@@ -769,7 +769,7 @@ onUnmounted(() => {
         <Teleport to="#dashboard-header-pos-tools">
           <div
             v-if="floorMode !== 'order' && floorTabs.length > 1"
-            class="flex flex-wrap items-center gap-2"
+            class="flex flex-shrink-0 flex-nowrap items-center gap-2"
             role="tablist"
             :aria-label="t('pos.floor.mainPlan')"
           >
@@ -1168,7 +1168,7 @@ onUnmounted(() => {
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <div
-                class="rounded-xl border-2 border-dashed border-border px-3 py-4"
+                class="rounded-xl border-2 border-dashed border-border px-3 py-4 transition-colors duration-150 hover:bg-surface-secondary/40"
               >
                 <PosTableFigure
                   v-if="tableById(nodeProps.data.tableId)"
