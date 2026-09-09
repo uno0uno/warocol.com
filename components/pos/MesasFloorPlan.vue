@@ -114,6 +114,22 @@ onMounted(() => {
   }
 })
 
+watch(
+  [floorView, floorLayouts, () => props.canvasEnabled],
+  ([view, layouts]) => {
+    const target = typeof document !== 'undefined' ? document.querySelector('#dashboard-header-pos-tools') : null
+    console.info('[floor-layout-selector]', {
+      view,
+      layouts,
+      canvasEnabled: !!props.canvasEnabled,
+      coarse: isCoarsePointer.value,
+      headerTarget: !!target,
+      visible: view === 'mesas' && layouts.length > 1,
+    })
+  },
+  { immediate: true },
+)
+
 onClickOutside(layoutMenuWrap, () => {
   layoutMenuOpen.value = false
 })
