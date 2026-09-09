@@ -1180,6 +1180,14 @@ onUnmounted(() => {
   min-height: 8.75rem;
 }
 
+/* Vue Flow canvas nodes: transparent shell so our dotted wrapper + hover show */
+:deep(.vue-flow__node-mesa) {
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: auto;
+}
+
 /* status-bg tokens are too faint + Tailwind /opacity doesn't apply to var() colors */
 .table-card-body--free {
   background-color: color-mix(in oklch, var(--status-info-text) 5%, hsl(var(--surface)));
