@@ -144,6 +144,13 @@ onMounted(() => {
     error: !!tablesError.value,
     tables: tables.value.length,
   })
+  setTimeout(() => {
+    const late = document.querySelector('#dashboard-header-pos-tools')
+    console.info('[floor-layout-selector] +2s', {
+      targetChildren: late?.childElementCount ?? -1,
+      html: (late?.innerHTML ?? '').slice(0, 200),
+    })
+  }, 2000)
 })
 
 onClickOutside(layoutMenuWrap, () => {
