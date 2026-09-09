@@ -62,8 +62,8 @@ const circleClass = (status: string) => ({
       {{ table?.status !== 'free' && table?.session?.opened_at ? formatDuration(table.session.opened_at) : '0m' }}
     </p>
     <div class="-mx-2 my-1 w-[calc(100%+16px)] border-t border-dashed border-border" aria-hidden="true" />
-    <p v-if="table?.effective_waiter_member_name" class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
-      {{ table.effective_waiter_member_name }}
+    <p class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
+      {{ tableCardWaiterLine(table) }}
     </p>
     <p v-if="showZona !== false && table?.zona" class="w-full truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
       {{ table.zona }}
