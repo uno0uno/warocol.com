@@ -876,6 +876,7 @@ onUnmounted(() => {
             <div class="h-full">
 
           <!-- Card — uniform height across grid (shared PosTableCard) -->
+          <div class="h-full rounded-xl border-2 border-dashed border-border p-1">
           <PosTableCard
             :table="table"
             :disabled="openingTableId === table.id"
@@ -886,6 +887,7 @@ onUnmounted(() => {
             @open="handleTableClick"
             @move="({ table: t, event }) => handleMoveTable(t, event)"
           />
+          </div>
 
             </div>
           </template>
