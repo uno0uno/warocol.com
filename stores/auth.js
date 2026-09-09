@@ -28,7 +28,10 @@ export const useAuthStore = defineStore('auth', () => {
     const value = sessionProfile.value?.pos_catalog_layout_override
     return value === 'grid' || value === 'list' ? value : null
   })
-
+  const posTablesLayoutOverride = computed(() => {
+    const value = sessionProfile.value?.pos_tables_layout_override
+    return value === 'grid' || value === 'list' || value === 'canvas' ? value : null
+  })
   const hasProfile = computed(() => {
     return !!profile.value
   })
@@ -189,6 +192,7 @@ export const useAuthStore = defineStore('auth', () => {
     sessionProfile,
     preferredLocale,
     posCatalogLayoutOverride,
+    posTablesLayoutOverride,
     roleSpecificData,
     hasProfile,
     profileTags,

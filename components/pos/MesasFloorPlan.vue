@@ -10,12 +10,6 @@ import {
   groupTablesByZona,
   sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
-import {
-  groupWallsByZona,
-  isValidWallPayload,
-  type FloorWall,
-  type NewFloorWall,
-} from '~/composables/useFloorWalls'
 import { VueFlow, type NodeDragEvent } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -32,7 +26,6 @@ import {
 } from '~/composables/useFloorPlanNodes'
 import { tableSessionHasAlias } from '~/utils/tableSessionDisplayName'
 import {
-  shellHeaderToolButtonClass,
   shellHeaderToolButtonActiveClass,
   shellHeaderToolTextButtonClass,
 } from '~/utils/shellHeaderToolClasses'
@@ -104,24 +97,58 @@ const floorLayouts = computed<FloorLayout[]>(() => {
   return ['canvas']
 })
 const floorLayout = ref<FloorLayout>('grid')
-watch(
-  floorMode,
-  (mode) => {
-    floorLayout.value = mode === 'pos' ? 'grid' : 'canvas'
-  },
-  { immediate: true },
-)
+const authStore = useAuthStore()
+const toast = useToast()
+const tablesLayoutOverride = computed(() => authStore.posTablesLayoutOverride)
+const userChoseTablesLayout = ref(false)
+const isSavingTablesLayout = ref(false)
+
+const resolveTablesLayout = (): FloorLayout => {
+  const layouts = floorLayouts.value
+  const saved = tablesLayoutOverride.value
+  if (saved && (layouts as string[]).includes(saved)) return saved as FloorLayout
+  return floorMode.value === 'pos' ? 'grid' : 'canvas'
+}
+
+watch([floorMode, tablesLayoutOverride], () => {
+  if (!userChoseTablesLayout.value) floorLayout.value = resolveTablesLayout()
+}, { immediate: true })
 watch(floorLayouts, (layouts) => {
   if (!layouts.includes(floorLayout.value)) {
     floorLayout.value = layouts[0]!
   }
 })
-const floorLayoutToggleTarget = computed<FloorLayout>(() => {
-  const layouts = floorLayouts.value
-  return layouts[(layouts.indexOf(floorLayout.value) + 1) % layouts.length]!
-})
-const toggleFloorLayout = () => {
-  floorLayout.value = floorLayoutToggleTarget.value
+watch(
+  () => authStore.sessionProfile?.id,
+  () => {
+    userChoseTablesLayout.value = false
+    floorLayout.value = resolveTablesLayout()
+  },
+)
+
+const setTablesLayoutPreference = async (choice: FloorLayout) => {
+  if (isSavingTablesLayout.value) return
+  if (choice === tablesLayoutOverride.value && choice === floorLayout.value) return
+  userChoseTablesLayout.value = true
+  floorLayout.value = choice
+  if (choice === tablesLayoutOverride.value) return
+  const previous = tablesLayoutOverride.value
+  isSavingTablesLayout.value = true
+  authStore.patchSessionUser({ pos_tables_layout_override: choice })
+  try {
+    await $fetch('/api/auth/update-profile', {
+      method: 'PUT',
+      body: { pos_tables_layout_override: choice },
+    })
+  } catch (error: any) {
+    authStore.patchSessionUser({ pos_tables_layout_override: previous })
+    floorLayout.value = previous && (floorLayouts.value as string[]).includes(previous) ? previous as FloorLayout : resolveTablesLayout()
+    toast.error(error?.data?.detail || t('pos.catalog.layoutSaveError'), {
+      title: t('pos.banner.error'),
+    })
+  } finally {
+    isSavingTablesLayout.value = false
+  }
 }
 
 const setFloorView = (view: FloorView) => {
@@ -337,75 +364,6 @@ const zoneGroups = computed(() =>
   })),
 )
 
-// ── Floor walls (uno0uno/warocol.com#2614, visual reference only) ────────
-const { data: wallsData, refetch: refetchWalls } = useQuery({
-  key: () => ['tables', 'walls', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: FloorWall[] }>('/api/tables/walls'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 0,
-})
-
-const wallsByZona = computed(() => groupWallsByZona((wallsData.value?.data ?? []) as FloorWall[]))
-const zoneWalls = (zona: string): FloorWall[] => wallsByZona.value.get(zona) ?? []
-const isSavingWall = ref(false)
-const wallError = ref('')
-const editingWallId = ref<string | null>(null)
-const wallDraft = ref({ x1: 0, y1: 0, x2: 4, y2: 0 })
-
-const addWall = async (zona: string) => {
-  const payload: NewFloorWall = { zona, x1: 0, y1: 0, x2: 4, y2: 0 }
-  if (!isValidWallPayload(payload) || isSavingWall.value) return
-  isSavingWall.value = true
-  wallError.value = ''
-  try {
-    await $fetch('/api/tables/walls', { method: 'POST', body: payload })
-    await refetchWalls()
-  } catch {
-    wallError.value = 'No se pudo agregar la pared'
-  } finally {
-    isSavingWall.value = false
-  }
-}
-
-const removeWall = async (wallId: string) => {
-  if (isSavingWall.value) return
-  isSavingWall.value = true
-  wallError.value = ''
-  try {
-    await $fetch(`/api/tables/walls/${wallId}`, { method: 'DELETE' })
-    await refetchWalls()
-  } catch {
-    wallError.value = 'No se pudo quitar la pared'
-  } finally {
-    isSavingWall.value = false
-  }
-}
-
-const startEditWall = (wall: FloorWall) => {
-  editingWallId.value = wall.id
-  wallDraft.value = { x1: wall.x1, y1: wall.y1, x2: wall.x2, y2: wall.y2 }
-  wallError.value = ''
-}
-
-const saveWallEdit = async (wall: FloorWall) => {
-  const payload = { ...wallDraft.value }
-  if (isSavingWall.value) return
-  if (!['x1', 'y1', 'x2', 'y2'].every((k) => Number.isFinite((payload as any)[k]))) {
-    wallError.value = 'Coordenadas inválidas'
-    return
-  }
-  isSavingWall.value = true
-  wallError.value = ''
-  try {
-    await $fetch(`/api/tables/walls/${wall.id}`, { method: 'PATCH', body: payload })
-    editingWallId.value = null
-    await refetchWalls()
-  } catch {
-    wallError.value = 'No se pudo mover la pared'
-  } finally {
-    isSavingWall.value = false
-  }
-}
 const isDraggingZone = ref(false)
 const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -759,62 +717,25 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools">
-          <button
-            v-if="floorView === 'mesas' && floorLayouts.length > 1"
-            type="button"
-            :class="shellHeaderToolButtonClass"
-            :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutSwitchToCanvas') : t('pos.catalog.layoutSwitchToGrid')"
-            :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid')"
-            @click="toggleFloorLayout"
-          >
-            <span class="inline-flex h-4 w-4 items-center justify-center">
-              <Transition name="pos-layout-icon" mode="out-in">
-                <svg
-                  v-if="floorLayoutToggleTarget === 'list'"
-                  key="icon-list"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                <svg
-                  v-else-if="floorLayoutToggleTarget === 'canvas'"
-                  key="icon-canvas"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.5-2.5v-13L9 7l6-2.5L20.5 7v13L15 17.5 9 20zm0 0v-13m6-2.5v13" />
-                </svg>
-                <svg
-                  v-else
-                  key="icon-grid"
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
-                </svg>
-              </Transition>
-            </span>
-          </button>
-        </Teleport>
-      </ClientOnly>
+      <div
+        v-if="floorView === 'mesas' && floorLayouts.length > 1"
+        class="mb-3 flex items-center gap-2"
+      >
+        <label class="text-xs font-semibold text-text-tertiary" for="floor-layout-select">
+          {{ t('pos.catalog.layoutViewLabel') }}
+        </label>
+        <select
+          id="floor-layout-select"
+          :value="floorLayout"
+          :disabled="isSavingTablesLayout"
+          class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-50"
+          @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
+        >
+          <option v-for="layout in floorLayouts" :key="layout" :value="layout">
+            {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
+          </option>
+        </select>
+      </div>
 
       <div
         v-if="floorMode !== 'order' && floorTabs.length > 1"
@@ -954,88 +875,6 @@ onUnmounted(() => {
       <!-- Table grid — zone matrix (uno0uno/warocol.com#2610) -->
       <div v-if="floorLayout === 'grid'" key="tables-grid" class="flex flex-col gap-6 pb-32">
         <section v-for="zone in zoneGroups" :key="zone.zona" :aria-label="zone.zona">
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <p class="text-xs font-bold uppercase tracking-wide text-text-tertiary">{{ zone.zona }}</p>
-            <button
-              type="button"
-              class="text-[11px] font-semibold text-text-tertiary hover:text-text-primary disabled:opacity-50"
-              :disabled="isSavingWall"
-              @click="addWall(zone.zona)"
-            >
-              + Pared
-            </button>
-          </div>
-          <p v-if="wallError" class="mb-2 text-[11px] font-semibold text-state-danger-icon">{{ wallError }}</p>
-          <svg
-            v-if="zoneWalls(zone.zona).length"
-            class="mb-2 h-16 w-full rounded-md border border-border/60 bg-surface-secondary/40"
-            viewBox="0 0 4 3"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <line
-              v-for="wall in zoneWalls(zone.zona)"
-              :key="wall.id"
-              :x1="wall.x1"
-              :y1="wall.y1"
-              :x2="wall.x2"
-              :y2="wall.y2"
-              stroke="currentColor"
-              stroke-width="0.12"
-              stroke-linecap="round"
-              class="text-text-primary"
-            />
-          </svg>
-          <ul v-if="zoneWalls(zone.zona).length" class="mb-2 flex flex-col gap-1">
-            <li
-              v-for="wall in zoneWalls(zone.zona)"
-              :key="wall.id"
-              class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/60 bg-surface-secondary/50 px-2 py-1 text-[11px] tabular-nums text-text-secondary"
-            >
-              <template v-if="editingWallId === wall.id">
-                <label class="flex items-center gap-1">x1<input v-model.number="wallDraft.x1" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
-                <label class="flex items-center gap-1">y1<input v-model.number="wallDraft.y1" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
-                <label class="flex items-center gap-1">x2<input v-model.number="wallDraft.x2" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
-                <label class="flex items-center gap-1">y2<input v-model.number="wallDraft.y2" type="number" step="0.5" class="w-12 rounded border border-border bg-surface px-1 py-0.5" /></label>
-                <button
-                  type="button"
-                  class="font-bold text-text-primary hover:underline disabled:opacity-50"
-                  :disabled="isSavingWall"
-                  @click="saveWallEdit(wall)"
-                >
-                  Guardar
-                </button>
-                <button
-                  type="button"
-                  class="hover:text-text-primary disabled:opacity-50"
-                  :disabled="isSavingWall"
-                  @click="editingWallId = null"
-                >
-                  Cancelar
-                </button>
-              </template>
-              <template v-else>
-                <span>Pared ({{ wall.x1 }},{{ wall.y1 }})→({{ wall.x2 }},{{ wall.y2 }})</span>
-                <button
-                  type="button"
-                  class="font-semibold hover:text-text-primary disabled:opacity-50"
-                  :disabled="isSavingWall"
-                  @click="startEditWall(wall)"
-                >
-                  Mover
-                </button>
-                <button
-                  type="button"
-                  class="font-bold hover:text-text-primary disabled:opacity-50"
-                  :disabled="isSavingWall"
-                  :aria-label="`Quitar pared en ${zone.zona}`"
-                  @click="removeWall(wall.id)"
-                >
-                  ×
-                </button>
-              </template>
-            </li>
-          </ul>
           <Draggable
             :list="zone.tables"
             item-key="id"
