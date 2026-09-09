@@ -2,7 +2,7 @@
 import { useTableCard } from '~/composables/useTableCard'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 
-defineProps<{ table: any }>()
+defineProps<{ table: any; showZona?: boolean }>()
 
 const { formatCurrency, formatDuration, tableCardWaiterLine } = useTableCard()
 
@@ -20,7 +20,7 @@ const circleClass = (status: string) => ({
 </script>
 
 <template>
-  <div class="flex w-[96px] flex-col items-center">
+  <div class="flex w-full flex-col items-center">
   <!-- Circle + chair marks (historical floor-plan figure) -->
   <div class="relative h-[96px] w-[96px] p-[14px]">
     <!-- Chair marks: 4 cardinal positions -->
@@ -55,23 +55,20 @@ const circleClass = (status: string) => ({
   </div>
   <!-- Info under the table: single section like BARRA -->
   <div class="flex w-full flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
-    <p class="max-w-[130px] truncate whitespace-nowrap text-center text-xs font-bold text-text-primary" :title="table?.name">
+    <p class="w-full truncate whitespace-nowrap text-center text-xs font-bold text-text-primary" :title="table?.name">
       {{ table?.name }}
     </p>
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
-    <p v-else class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
-      Libre
-    </p>
     <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
       {{ formatDuration(table.session.opened_at) }}
     </p>
     <div class="-mx-2 my-1 w-[calc(100%+16px)] border-t border-dashed border-border" aria-hidden="true" />
-    <p class="max-w-[130px] truncate whitespace-nowrap text-[11px] text-text-tertiary">
+    <p class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
     </p>
-    <p v-if="table?.zona" class="max-w-[130px] truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
+    <p v-if="showZona !== false && table?.zona" class="w-full truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
       {{ table.zona }}
     </p>
   </div>
