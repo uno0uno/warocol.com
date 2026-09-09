@@ -67,7 +67,7 @@ const circleClass = (status: string) => ({
     <p class="max-w-[110px] truncate text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
     </p>
-    <p class="max-w-[110px] truncate text-xs font-bold text-text-primary">
+    <p class="text-center text-xs font-bold break-words text-text-primary">
       {{ table?.name }}
     </p>
   </div>

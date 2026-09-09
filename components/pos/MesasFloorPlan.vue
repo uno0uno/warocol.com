@@ -1,12 +1,9 @@
 <script setup lang="ts">
 const { t } = useI18n({ useScope: 'global' })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import Draggable from 'vuedraggable'
 import { $fetch } from 'ofetch'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import {
-  UNPLACED_ZONE,
-  buildFreePositionPayload,
   sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
 import { VueFlow, type NodeDragEvent } from '@vue-flow/core'
@@ -232,7 +229,7 @@ const isFloorRefreshing = computed(() => isRefreshing.value || isRefreshingDeliv
 registerProgressiveLoading(isFloorRefreshing)
 
 const refreshFloor = async () => {
-  if (isDraggingZone.value || isDraggingNode.value) return
+  if (isDraggingNode.value) return
   await Promise.all([refetch(), refetchPendingDeliveries()])
 }
 
@@ -412,51 +409,6 @@ const regularTables = computed(() => tables.value.filter((t: any) => !t.is_bar))
 // ── Flat grid (uno0uno/warocol.com#2636, clásico; free x/y #2613) ─────────
 // Single list in API/position order; reorder persists x/y, zona preserved.
 const flatTables = computed(() => sortTablesByPosition(regularTables.value as any[]))
-
-const isDraggingZone = ref(false)
-const zoneDropTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-const onZoneDragStart = () => {
-  isDraggingZone.value = true
-}
-
-const onZoneDragEnd = () => {
-  isDraggingZone.value = false
-}
-
-const persistFlatDrop = async (tableId: string, payload: { pos_x: number; pos_y: number; zona: string | null }) => {
-  try {
-    await $fetch(`/api/tables/${tableId}/position`, { method: 'PATCH', body: payload })
-  } finally {
-    // Reload keeps layout (or reverts on error)
-    await refetch()
-  }
-}
-
-const scheduleFlatDrop = (table: any, payload: { pos_x: number; pos_y: number; zona: string | null }) => {
-  // Debounce: one PATCH per drop
-  const prev = zoneDropTimers.get(table.id)
-  if (prev) clearTimeout(prev)
-  zoneDropTimers.set(
-    table.id,
-    setTimeout(() => {
-      zoneDropTimers.delete(table.id)
-      void persistFlatDrop(table.id, payload)
-    }, 300),
-  )
-}
-
-const onFlatChange = (evt: any) => {
-  isDraggingZone.value = false
-  const moved = evt?.moved
-  if (moved?.element?.id && typeof moved.newIndex === 'number') {
-    // Flat reorder: persist x/y from drop index, keep current zona untouched.
-    const table = moved.element
-    const zona = typeof table.zona === 'string' && table.zona.trim() ? table.zona : null
-    const payload = { ...buildFreePositionPayload(zona ?? UNPLACED_ZONE, moved.newIndex), zona }
-    scheduleFlatDrop(table, payload)
-  }
-}
 
 // ── Free canvas (uno0uno/warocol.com#2617, Vue Flow) ─────────────────────
 const canvasNodes = ref<FloorPlanNode[]>([])
@@ -764,8 +716,6 @@ onMounted(() => {
 onUnmounted(() => {
   clearRefreshHandler(refreshFloor)
   if (pollInterval) clearInterval(pollInterval)
-  for (const timer of zoneDropTimers.values()) clearTimeout(timer)
-  zoneDropTimers.clear()
 })
 </script>
 
@@ -943,26 +893,14 @@ onUnmounted(() => {
       <Transition name="pos-floor-layout" mode="out-in">
       <!-- Table grid — flat classic grid, API/position order (uno0uno/warocol.com#2636) -->
       <div v-if="floorLayout === 'grid'" key="tables-grid" class="pb-32">
-        <Draggable
-          :list="flatTables"
-          item-key="id"
-          group="floor-flat"
-          handle=".table-zone-handle"
-          ghost-class="opacity-50"
-          chosen-class="shadow-lg"
-          class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch"
-          @start="onZoneDragStart"
-          @end="onZoneDragEnd"
-          @change="onFlatChange"
-        >
-          <template #item="{ element: table }">
-            <div class="h-full">
+        <div class="pos-floor-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch">
+          <div v-for="table in flatTables" :key="table.id" class="h-full">
 
           <!-- Figure — historical circle (shared PosTableFigure) -->
           <div class="h-full rounded-xl border-2 border-dashed border-border px-3 py-4">
           <button
             type="button"
-            class="table-zone-handle flex h-full w-full flex-col items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 disabled:opacity-60 cursor-grab active:cursor-grabbing"
+            class="flex h-full w-full flex-col items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 disabled:opacity-60"
             :disabled="openingTableId === table.id"
             :aria-label="table.name"
             @click="handleTableClick(table)"
@@ -971,9 +909,8 @@ onUnmounted(() => {
           </button>
           </div>
 
-            </div>
-          </template>
-        </Draggable>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="floorLayout === 'list'" key="tables-list" class="pos-floor-list">
