@@ -55,21 +55,21 @@ const circleClass = (status: string) => ({
   </div>
   <!-- Info under the table: single section like BARRA -->
   <div class="flex w-full flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
-    <p class="w-full truncate whitespace-nowrap text-center text-xs font-bold text-text-primary" :title="table?.name">
-      {{ table?.name }}
-    </p>
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
-    <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
-      {{ formatDuration(table.session.opened_at) }}
+    <p class="text-[11px] tabular-nums text-text-secondary">
+      {{ table?.status !== 'free' && table?.session?.opened_at ? formatDuration(table.session.opened_at) : '0m' }}
     </p>
     <div class="-mx-2 my-1 w-[calc(100%+16px)] border-t border-dashed border-border" aria-hidden="true" />
-    <p class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
-      {{ tableCardWaiterLine(table) }}
+    <p v-if="table?.effective_waiter_member_name" class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
+      {{ table.effective_waiter_member_name }}
     </p>
     <p v-if="showZona !== false && table?.zona" class="w-full truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
       {{ table.zona }}
+    </p>
+    <p class="w-full truncate whitespace-nowrap text-center text-xs font-bold text-text-primary" :title="table?.name">
+      {{ table?.name }}
     </p>
   </div>
   </div>
