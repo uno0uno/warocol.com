@@ -714,7 +714,7 @@ onUnmounted(() => {
               :value="floorLayout"
               :disabled="isSavingTablesLayout"
               :aria-label="t('pos.catalog.layoutViewLabel')"
-              class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-50"
+              class="h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-primary disabled:opacity-50"
               @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
             >
               <option v-for="layout in floorLayouts" :key="layout" :value="layout">
