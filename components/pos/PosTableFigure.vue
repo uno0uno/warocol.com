@@ -2,7 +2,7 @@
 import { useTableCard } from '~/composables/useTableCard'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 
-defineProps<{ table: any }>()
+defineProps<{ table: any; showZona?: boolean }>()
 
 const { formatCurrency, formatDuration, tableCardWaiterLine } = useTableCard()
 
@@ -68,7 +68,7 @@ const circleClass = (status: string) => ({
     <p class="w-full truncate whitespace-nowrap text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
     </p>
-    <p v-if="table?.zona" class="w-full truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
+    <p v-if="showZona !== false && table?.zona" class="w-full truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
       {{ table.zona }}
     </p>
   </div>

@@ -905,7 +905,7 @@ onUnmounted(() => {
             :aria-label="table.name"
             @click="handleTableClick(table)"
           >
-            <PosTableFigure :table="table" />
+            <PosTableFigure :table="table" :show-zona="false" />
           </button>
           </div>
 
