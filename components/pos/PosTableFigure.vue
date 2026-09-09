@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTableCard } from '~/composables/useTableCard'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 defineProps<{ table: any }>()
 
@@ -48,7 +49,7 @@ const circleClass = (status: string) => ({
         class="text-sm font-bold leading-tight text-center px-2 line-clamp-2"
         :class="table?.status === 'free' ? 'text-text-secondary' : 'text-white'"
       >
-        {{ table?.name }}
+        {{ displayTableCode(table) || table?.name }}
       </span>
     </div>
   </div>
@@ -65,6 +66,9 @@ const circleClass = (status: string) => ({
     </p>
     <p class="max-w-[110px] truncate text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
+    </p>
+    <p class="max-w-[110px] truncate text-xs font-bold text-text-primary">
+      {{ table?.name }}
     </p>
   </div>
   </div>
