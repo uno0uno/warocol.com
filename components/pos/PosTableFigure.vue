@@ -19,8 +19,9 @@ const circleClass = (status: string) => ({
 </script>
 
 <template>
+  <div class="flex w-[96px] flex-col items-center">
   <!-- Circle + chair marks (historical floor-plan figure) -->
-  <div class="relative p-[14px]">
+  <div class="relative h-[96px] w-[96px] p-[14px]">
     <!-- Chair marks: 4 cardinal positions -->
     <div
       class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
@@ -65,5 +66,6 @@ const circleClass = (status: string) => ({
       </template>
       {{ tableCardWaiterLine(table) }}
     </p>
+  </div>
   </div>
 </template>
