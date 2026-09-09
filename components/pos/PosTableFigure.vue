@@ -52,7 +52,7 @@ const circleClass = (status: string) => ({
     </div>
   </div>
   <!-- Info under the table -->
-  <div class="flex flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
+  <div class="flex flex-col items-center gap-1 px-2 pb-4 pt-2 text-center">
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
