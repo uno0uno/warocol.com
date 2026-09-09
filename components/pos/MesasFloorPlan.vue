@@ -754,6 +754,7 @@ onUnmounted(() => {
               :placeholder="t('pos.floor.viewTables')"
               :aria-label="t('pos.floor.viewTables')"
               hide-placeholder
+              never-active
               @update:model-value="chooseTablesLayout($event as FloorLayout)"
             />
           </div>

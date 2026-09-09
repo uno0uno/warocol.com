@@ -16,10 +16,12 @@ const props = withDefaults(
     ariaLabel?: string
     /** Sort and search-field selects are always considered active. */
     alwaysActive?: boolean
+    /** Never show the active (primary border) state. */
+    neverActive?: boolean
     /** No placeholder row (e.g. sort always has a value). */
     hidePlaceholder?: boolean
   }>(),
-  { alwaysActive: false, hidePlaceholder: false },
+  { alwaysActive: false, neverActive: false, hidePlaceholder: false },
 )
 
 const emit = defineEmits<{
@@ -27,7 +29,7 @@ const emit = defineEmits<{
 }>()
 
 const isActive = computed(
-  () => props.alwaysActive || (props.modelValue != null && props.modelValue !== ''),
+  () => !props.neverActive && (props.alwaysActive || (props.modelValue != null && props.modelValue !== '')),
 )
 
 const displayLabel = computed(() => {
@@ -47,7 +49,7 @@ watch(() => props.options, remeasure, { deep: true })
   <div class="relative inline-flex shrink-0 max-w-full">
     <select
       :value="modelValue"
-      :class="filterSelectClassFor(modelValue, { active: alwaysActive || undefined })"
+      :class="filterSelectClassFor(modelValue, { active: neverActive ? false : (alwaysActive || undefined) })"
       :style="widthPx ? { width: `${widthPx}px`, minWidth: `${widthPx}px` } : undefined"
       :aria-label="ariaLabel ?? placeholder"
       @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
