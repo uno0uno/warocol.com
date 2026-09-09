@@ -573,6 +573,31 @@ const toggleFloorCanvas = async () => {
   }
 }
 
+// ── Tenant default tables view (uno0uno/warocol.com#2641, global) ──────────
+const isSavingTablesDefault = ref(false)
+const tenantTablesDefault = computed(() => {
+  const value = (businessProfile.value as any)?.pos_tables_layout_default
+  return value === 'grid' || value === 'list' || value === 'canvas' ? value : 'grid'
+})
+
+const setTablesDefault = async (layout: string) => {
+  if (!businessProfile.value || isSavingTablesDefault.value) return
+  if (layout === tenantTablesDefault.value) return
+  isSavingTablesDefault.value = true
+  try {
+    await $fetch('/api/operaciones/pos-tables-layout', {
+      method: 'PATCH',
+      body: { layout },
+    })
+    await invalidateContextCaches()
+    await refreshProfile()
+  } catch (error: any) {
+    toast.error(error.data?.detail || t('operaciones.mesas.toggleError'), { title: 'Error' })
+  } finally {
+    isSavingTablesDefault.value = false
+  }
+}
+
 // Members embedded in the operaciones aggregator (no Module.EQUIPO required).
 // Used by MesaPanel to render the "Mesero por defecto" picker.
 const tenantMembers = computed<Array<{ id: string; name: string; role: string }>>(() =>
@@ -709,6 +734,28 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             >
             <div class="w-10 h-6 bg-control-toggle-track-off rounded-full peer peer-checked:bg-control-toggle-track-on peer-focus:ring-2 peer-focus:ring-control-toggle-focus-ring after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-control-toggle-thumb after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
+        </div>
+
+        <!-- Tenant default tables view (uno0uno/warocol.com#2641, global) -->
+        <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">
+              {{ t('operaciones.mesas.canvasTitle') }} · {{ t('pos.floor.viewTables') }}
+            </p>
+            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+              {{ t('operaciones.mesas.canvasHelp') }}
+            </p>
+          </div>
+          <select
+            :value="tenantTablesDefault"
+            :disabled="isSavingTablesDefault"
+            class="h-9 max-w-32 flex-shrink-0 truncate rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-primary disabled:opacity-50"
+            @change="setTablesDefault(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="grid">{{ t('pos.catalog.layoutGrid') }}</option>
+            <option value="list">{{ t('pos.catalog.layoutList') }}</option>
+            <option value="canvas">{{ t('pos.catalog.layoutCanvas') }}</option>
+          </select>
         </div>
       </div>
 

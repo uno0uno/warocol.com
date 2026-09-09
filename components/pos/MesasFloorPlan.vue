@@ -43,6 +43,8 @@ const props = defineProps<{
   mode?: 'pos' | 'order'
   /** uno0uno/warocol.com#2631 — flag ON adds canvas as 3rd layout in pos mode. */
   canvasEnabled?: boolean
+  /** uno0uno/warocol.com#2641 — tenant global default (override > global > grid). */
+  tenantDefaultLayout?: string | null
 }>()
 
 const floorMode = computed(() => props.mode ?? 'pos')
@@ -106,10 +108,12 @@ const resolveTablesLayout = (): FloorLayout => {
   const layouts = floorLayouts.value
   const saved = tablesLayoutOverride.value
   if (saved && (layouts as string[]).includes(saved)) return saved as FloorLayout
+  const global = (props.tenantDefaultLayout ?? '').trim().toLowerCase()
+  if (global && (layouts as string[]).includes(global)) return global as FloorLayout
   return floorMode.value === 'pos' ? 'grid' : 'canvas'
 }
 
-watch([floorMode, tablesLayoutOverride], () => {
+watch([floorMode, tablesLayoutOverride, () => props.tenantDefaultLayout], () => {
   if (!userChoseTablesLayout.value) floorLayout.value = resolveTablesLayout()
 }, { immediate: true })
 watch(floorLayouts, (layouts) => {
@@ -709,6 +713,7 @@ onUnmounted(() => {
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             class="flex items-center gap-2"
           >
+            <span class="text-xs font-semibold text-text-tertiary">{{ t('pos.floor.viewTables') }}:</span>
             <select
               id="floor-layout-select"
               :value="floorLayout"
