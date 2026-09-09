@@ -33,7 +33,7 @@ const emit = defineEmits<{
 const selectClass = computed(() =>
   props.shell
     ? 'h-9 max-w-full min-w-0 whitespace-nowrap px-2.5 rounded-lg border border-shell-action-border bg-shell-action-bg text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring cursor-pointer flex-shrink-0 transition-colors'
-    : filterSelectClassFor(modelValue, { active: neverActive ? false : (alwaysActive || undefined) }),
+    : filterSelectClassFor(props.modelValue, { active: props.neverActive ? false : (props.alwaysActive || undefined) }),
 )
 
 const displayLabel = computed(() => {
