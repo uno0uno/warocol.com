@@ -1117,18 +1117,13 @@ onUnmounted(() => {
             @node-drag-stop="onNodeDragStop"
             @node-click="onNodeCanvasClick"
           >
-            <Background variant="lines" :gap="28" />
+            <Background v-if="floorMode === 'order'" variant="lines" :gap="28" />
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
-              <div class="min-w-56">
-                <PosTableCard
-                  v-if="tableById(nodeProps.data.tableId)"
-                  :table="tableById(nodeProps.data.tableId)"
-                  :disabled="openingTableId === nodeProps.data.tableId"
-                  :comandas-enabled="props.comandasEnabled"
-                  :waiter-attribution-enabled="props.waiterAttributionEnabled"
-                />
-              </div>
+              <PosTableFigure
+                v-if="tableById(nodeProps.data.tableId)"
+                :table="tableById(nodeProps.data.tableId)"
+              />
             </template>
           </VueFlow>
           <p v-if="!loadingTables && !canvasNodes.length" class="p-3 text-xs text-text-tertiary">

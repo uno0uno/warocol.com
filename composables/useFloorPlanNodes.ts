@@ -79,12 +79,12 @@ export function resolveTableCoords(
 }
 
 /**
- * Card footprint in grid units (full PosTableCard ≈ 224px wide on 140px units).
+ * Figure footprint in grid units (PosTableFigure ≈ 76px on 140px units).
  * Auto-place steps by footprint so fresh nodes never overlap.
- * uno0uno/warocol.com#2629
+ * uno0uno/warocol.com#2638
  */
-export const NODE_FOOTPRINT_W = 2
-export const NODE_FOOTPRINT_H = 2
+export const NODE_FOOTPRINT_W = 1
+export const NODE_FOOTPRINT_H = 1
 
 /**
  * Lay out unplaced tables into free matrix cells (row-major, footprint steps) for
