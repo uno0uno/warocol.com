@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTableCard } from '~/composables/useTableCard'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 defineProps<{ table: any }>()
 
@@ -48,12 +49,15 @@ const circleClass = (status: string) => ({
         class="text-sm font-bold leading-tight text-center px-2 line-clamp-2"
         :class="table?.status === 'free' ? 'text-text-secondary' : 'text-white'"
       >
-        {{ table?.name }}
+        {{ displayTableCode(table) || table?.name }}
       </span>
     </div>
   </div>
-  <!-- Info under the table -->
-  <div class="flex flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
+  <!-- Info under the table: single section like BARRA -->
+  <div class="flex w-full flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
+    <p class="max-w-[130px] truncate whitespace-nowrap text-center text-xs font-bold text-text-primary" :title="table?.name">
+      {{ table?.name }}
+    </p>
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
@@ -63,8 +67,12 @@ const circleClass = (status: string) => ({
     <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
       {{ formatDuration(table.session.opened_at) }}
     </p>
-    <p class="max-w-[110px] truncate text-[11px] text-text-tertiary">
+    <div class="-mx-2 my-1 w-[calc(100%+16px)] border-t border-dashed border-border" aria-hidden="true" />
+    <p class="max-w-[130px] truncate whitespace-nowrap text-[11px] text-text-tertiary">
       {{ tableCardWaiterLine(table) }}
+    </p>
+    <p v-if="table?.zona" class="max-w-[130px] truncate whitespace-nowrap text-[11px] font-semibold text-text-secondary">
+      {{ table.zona }}
     </p>
   </div>
   </div>
