@@ -9,6 +9,7 @@ import {
   buildFreePositionPayload,
   sortTablesByPosition,
 } from '~/composables/useTableZoneMatrix'
+import { onClickOutside } from '@vueuse/core'
 import { VueFlow, type NodeDragEvent } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -103,6 +104,17 @@ const toast = useToast()
 const tablesLayoutOverride = computed(() => authStore.posTablesLayoutOverride)
 const userChoseTablesLayout = ref(false)
 const isSavingTablesLayout = ref(false)
+const layoutMenuOpen = ref(false)
+const layoutMenuWrap = ref<HTMLElement | null>(null)
+
+onClickOutside(layoutMenuWrap, () => {
+  layoutMenuOpen.value = false
+})
+
+const chooseTablesLayout = (choice: FloorLayout) => {
+  layoutMenuOpen.value = false
+  void setTablesLayoutPreference(choice)
+}
 
 const resolveTablesLayout = (): FloorLayout => {
   const layouts = floorLayouts.value
@@ -711,25 +723,43 @@ onUnmounted(() => {
         <Teleport to="#dashboard-header-pos-tools">
           <div
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
-            class="flex items-center gap-2"
+            ref="layoutMenuWrap"
+            class="relative flex items-center gap-2"
           >
-            <span class="text-xs font-semibold text-text-tertiary">{{ t('pos.floor.viewTables') }}:</span>
-            <div class="relative flex-shrink-0">
-              <select
-                id="floor-layout-select"
-                :value="floorLayout"
-                :disabled="isSavingTablesLayout"
-                :aria-label="t('pos.floor.viewTables')"
-                class="h-9 max-w-32 truncate appearance-none rounded-lg border border-border bg-surface pl-2 pr-8 text-xs font-semibold text-text-primary disabled:opacity-50"
-                @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
-              >
-                <option v-for="layout in floorLayouts" :key="layout" :value="layout">
-                  {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
-                </option>
-              </select>
-              <svg class="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <button
+              type="button"
+              class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+              :disabled="isSavingTablesLayout"
+              :aria-label="t('pos.floor.viewTables')"
+              :aria-expanded="layoutMenuOpen"
+              aria-haspopup="menu"
+              @click="layoutMenuOpen = !layoutMenuOpen"
+            >
+              <span>{{ floorLayout === 'list' ? t('pos.catalog.layoutList') : floorLayout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}</span>
+              <svg class="h-3.5 w-3.5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
+            </button>
+            <div
+              v-if="layoutMenuOpen"
+              role="menu"
+              class="absolute left-0 top-full z-50 mt-1 min-w-36 overflow-hidden rounded-xl border border-border bg-surface shadow-xl"
+            >
+              <button
+                v-for="layout in floorLayouts"
+                :key="layout"
+                type="button"
+                role="menuitemradio"
+                :aria-checked="floorLayout === layout"
+                class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-semibold hover:bg-surface-secondary"
+                :class="floorLayout === layout ? 'text-text-primary' : 'text-text-secondary'"
+                @click="chooseTablesLayout(layout)"
+              >
+                <span>{{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}</span>
+                <svg v-if="floorLayout === layout" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </Teleport>
