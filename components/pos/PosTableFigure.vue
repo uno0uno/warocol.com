@@ -40,9 +40,9 @@ const circleClass = (status: string) => ({
       class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
       :class="chairClass(table?.status)"
     />
-    <!-- Circle -->
+    <!-- Rectangle -->
     <div
-      class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center"
+      class="relative w-[88px] h-[64px] rounded-2xl flex items-center justify-center transition-colors duration-150"
       :class="circleClass(table?.status)"
     >
       <span
