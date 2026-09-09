@@ -118,11 +118,19 @@ watch(floorLayouts, (layouts) => {
     floorLayout.value = layouts[0]!
   }
 })
+watch(
+  () => authStore.sessionProfile?.id,
+  () => {
+    userChoseTablesLayout.value = false
+    floorLayout.value = resolveTablesLayout()
+  },
+)
 
 const setTablesLayoutPreference = async (choice: FloorLayout) => {
+  if (isSavingTablesLayout.value) return
+  if (choice === tablesLayoutOverride.value && choice === floorLayout.value) return
   userChoseTablesLayout.value = true
   floorLayout.value = choice
-  if (isSavingTablesLayout.value) return
   if (choice === tablesLayoutOverride.value) return
   const previous = tablesLayoutOverride.value
   isSavingTablesLayout.value = true
@@ -134,6 +142,7 @@ const setTablesLayoutPreference = async (choice: FloorLayout) => {
     })
   } catch (error: any) {
     authStore.patchSessionUser({ pos_tables_layout_override: previous })
+    floorLayout.value = previous && (floorLayouts.value as string[]).includes(previous) ? previous as FloorLayout : resolveTablesLayout()
     toast.error(error?.data?.detail || t('pos.catalog.layoutSaveError'), {
       title: t('pos.banner.error'),
     })
@@ -713,7 +722,7 @@ onUnmounted(() => {
         class="mb-3 flex items-center gap-2"
       >
         <label class="text-xs font-semibold text-text-tertiary" for="floor-layout-select">
-          {{ t('pos.floor.viewTables') }}
+          {{ t('pos.catalog.layoutViewLabel') }}
         </label>
         <select
           id="floor-layout-select"
