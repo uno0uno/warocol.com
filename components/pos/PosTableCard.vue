@@ -54,7 +54,7 @@ const onMove = (event: Event) => {
 
 <template>
   <button
-    class="table-card group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-surface-secondary/40"
+    class="table-card group w-full h-full flex flex-col rounded-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-[0.97] active:brightness-[0.95]"
     :class="[cardClass(table.status), focusRingClass(table.status), dragHandle ? 'table-zone-handle cursor-grab active:cursor-grabbing' : '']"
     :disabled="disabled"
     :aria-label="tableCardAriaLabel(table)"
