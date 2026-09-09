@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { useTableCard } from '~/composables/useTableCard'
+
 defineProps<{ table: any }>()
+
+const { formatCurrency, formatDuration, tableCardWaiterLine } = useTableCard()
 
 const chairClass = (status: string) => ({
   'bg-text-tertiary/20': status === 'free',
@@ -46,5 +50,20 @@ const circleClass = (status: string) => ({
         {{ table?.name }}
       </span>
     </div>
+  </div>
+  <!-- Info under the table -->
+  <div class="flex flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
+    <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
+      {{ formatCurrency(table?.session?.running_total ?? 0) }}
+    </p>
+    <p v-else class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+      Libre
+    </p>
+    <p class="max-w-[110px] truncate text-[11px] text-text-secondary">
+      <template v-if="table?.status !== 'free' && table?.session?.opened_at">
+        {{ formatDuration(table.session.opened_at) }} ·
+      </template>
+      {{ tableCardWaiterLine(table) }}
+    </p>
   </div>
 </template>
