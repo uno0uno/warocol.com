@@ -754,17 +754,20 @@ onUnmounted(() => {
               :value="floorLayout"
               :disabled="isSavingTablesLayout"
               :aria-label="t('pos.floor.viewTables')"
-              class="h-9 max-w-32 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-primary disabled:opacity-50"
+              class="h-9 max-w-32 flex-shrink-0 truncate appearance-none rounded-lg border border-shell-action-border bg-shell-action-bg pl-2.5 pr-8 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
               @change="chooseTablesLayout(($event.target as HTMLSelectElement).value as FloorLayout)"
             >
               <option v-for="layout in floorLayouts" :key="layout" :value="layout">
                 {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
               </option>
             </select>
+            <svg v-if="isCoarsePointer" class="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-shell-action-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
             <button
               v-else
               type="button"
-              class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+              class="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-lg border border-shell-action-border bg-shell-action-bg px-2.5 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
               :disabled="isSavingTablesLayout"
               :aria-label="t('pos.floor.viewTables')"
               :aria-expanded="layoutMenuOpen"
