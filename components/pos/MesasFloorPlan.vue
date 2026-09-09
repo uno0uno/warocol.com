@@ -703,25 +703,27 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <div
-        v-if="floorView === 'mesas' && floorLayouts.length > 1"
-        class="mb-3 flex items-center gap-2"
-      >
-        <label class="text-xs font-semibold text-text-tertiary" for="floor-layout-select">
-          {{ t('pos.catalog.layoutViewLabel') }}
-        </label>
-        <select
-          id="floor-layout-select"
-          :value="floorLayout"
-          :disabled="isSavingTablesLayout"
-          class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-50"
-          @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
-        >
-          <option v-for="layout in floorLayouts" :key="layout" :value="layout">
-            {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
-          </option>
-        </select>
-      </div>
+      <ClientOnly>
+        <Teleport to="#dashboard-header-pos-tools">
+          <div
+            v-if="floorView === 'mesas' && floorLayouts.length > 1"
+            class="flex items-center gap-2"
+          >
+            <select
+              id="floor-layout-select"
+              :value="floorLayout"
+              :disabled="isSavingTablesLayout"
+              :aria-label="t('pos.catalog.layoutViewLabel')"
+              class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-50"
+              @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
+            >
+              <option v-for="layout in floorLayouts" :key="layout" :value="layout">
+                {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
+              </option>
+            </select>
+          </div>
+        </Teleport>
+      </ClientOnly>
 
       <div
         v-if="floorMode !== 'order' && floorTabs.length > 1"
