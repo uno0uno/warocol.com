@@ -61,9 +61,6 @@ const circleClass = (status: string) => ({
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
-    <p v-else class="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
-      Libre
-    </p>
     <p v-if="table?.status !== 'free' && table?.session?.opened_at" class="text-[11px] tabular-nums text-text-secondary">
       {{ formatDuration(table.session.opened_at) }}
     </p>
