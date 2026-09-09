@@ -106,6 +106,52 @@ const userChoseTablesLayout = ref(false)
 const isSavingTablesLayout = ref(false)
 const layoutMenuOpen = ref(false)
 const layoutMenuWrap = ref<HTMLElement | null>(null)
+const isCoarsePointer = ref(false)
+const headerTargetFound = ref(true)
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    isCoarsePointer.value = window.matchMedia('(pointer: coarse)').matches
+  }
+})
+
+watch(
+  [floorView, floorLayouts, () => props.canvasEnabled],
+  ([view, layouts]) => {
+    const target = typeof document !== 'undefined' ? document.querySelector('#dashboard-header-pos-tools') : null
+    headerTargetFound.value = !!target
+    console.info('[floor-layout-selector]', {
+      view,
+      layouts,
+      canvasEnabled: !!props.canvasEnabled,
+      coarse: isCoarsePointer.value,
+      headerTarget: !!target,
+      visible: view === 'mesas' && layouts.length > 1,
+    })
+  },
+  { immediate: true },
+)
+
+onMounted(() => {
+  const target = document.querySelector('#dashboard-header-pos-tools')
+  const tabs = floorTabs.value.length
+  console.info('[floor-layout-selector] mounted', {
+    target: !!target,
+    targetChildren: target?.childElementCount ?? -1,
+    tabs,
+    floorView: floorView.value,
+    loading: loadingTables.value,
+    error: !!tablesError.value,
+    tables: tables.value.length,
+  })
+  setTimeout(() => {
+    const late = document.querySelector('#dashboard-header-pos-tools')
+    console.info('[floor-layout-selector] +2s', {
+      targetChildren: late?.childElementCount ?? -1,
+      html: (late?.innerHTML ?? '').slice(0, 200),
+    })
+  }, 2000)
+})
 
 onClickOutside(layoutMenuWrap, () => {
   layoutMenuOpen.value = false
@@ -720,15 +766,28 @@ onUnmounted(() => {
     <!-- Content -->
     <div v-else>
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools">
+        <Teleport to="#dashboard-header-pos-tools" defer>
           <div
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             ref="layoutMenuWrap"
-            class="relative flex items-center gap-2"
+            class="relative flex flex-shrink-0 items-center gap-2"
           >
+            <select
+              v-if="isCoarsePointer"
+              :value="floorLayout"
+              :disabled="isSavingTablesLayout"
+              :aria-label="t('pos.floor.viewTables')"
+              class="h-9 max-w-32 flex-shrink-0 truncate appearance-none rounded-lg border border-shell-action-border bg-shell-action-bg pl-2.5 pr-8 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
+              @change="chooseTablesLayout(($event.target as HTMLSelectElement).value as FloorLayout)"
+            >
+              <option v-for="layout in floorLayouts" :key="layout" :value="layout">
+                {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
+              </option>
+            </select>
             <button
+              v-else
               type="button"
-              class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
+              class="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-lg border border-shell-action-border bg-shell-action-bg px-2.5 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
               :disabled="isSavingTablesLayout"
               :aria-label="t('pos.floor.viewTables')"
               :aria-expanded="layoutMenuOpen"
@@ -766,10 +825,10 @@ onUnmounted(() => {
       </ClientOnly>
 
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools">
+        <Teleport to="#dashboard-header-pos-tools" defer>
           <div
             v-if="floorMode !== 'order' && floorTabs.length > 1"
-            class="flex flex-wrap items-center gap-2"
+            class="flex flex-shrink-0 flex-nowrap items-center gap-2"
             role="tablist"
             :aria-label="t('pos.floor.mainPlan')"
           >
@@ -1168,7 +1227,7 @@ onUnmounted(() => {
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <div
-                class="rounded-xl border-2 border-dashed border-border px-3 py-4"
+                class="rounded-xl border-2 border-dashed border-border px-3 py-4 transition-colors duration-150 hover:bg-surface-secondary/40"
               >
                 <PosTableFigure
                   v-if="tableById(nodeProps.data.tableId)"
