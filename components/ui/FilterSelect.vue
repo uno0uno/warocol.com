@@ -18,10 +18,12 @@ const props = withDefaults(
     alwaysActive?: boolean
     /** Never show the active (primary border) state. */
     neverActive?: boolean
+    /** Shell-action tone (header buttons): border/focus tokens instead of primary. */
+    shell?: boolean
     /** No placeholder row (e.g. sort always has a value). */
     hidePlaceholder?: boolean
   }>(),
-  { alwaysActive: false, neverActive: false, hidePlaceholder: false },
+  { alwaysActive: false, neverActive: false, shell: false, hidePlaceholder: false },
 )
 
 const emit = defineEmits<{
@@ -49,7 +51,10 @@ watch(() => props.options, remeasure, { deep: true })
   <div class="relative inline-flex shrink-0 max-w-full">
     <select
       :value="modelValue"
-      :class="filterSelectClassFor(modelValue, { active: neverActive ? false : (alwaysActive || undefined) })"
+      :class="[
+        filterSelectClassFor(modelValue, { active: neverActive ? false : (alwaysActive || undefined) }),
+        shell ? 'border-shell-action-border bg-shell-action-bg text-shell-action-text hover:bg-shell-action-hover-bg focus:ring-shell-action-focus-ring' : '',
+      ]"
       :style="widthPx ? { width: `${widthPx}px`, minWidth: `${widthPx}px` } : undefined"
       :aria-label="ariaLabel ?? placeholder"
       @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"

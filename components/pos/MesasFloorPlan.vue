@@ -755,6 +755,7 @@ onUnmounted(() => {
               :aria-label="t('pos.floor.viewTables')"
               hide-placeholder
               never-active
+              shell
               @update:model-value="chooseTablesLayout($event as FloorLayout)"
             />
           </div>
