@@ -740,10 +740,10 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              {{ t('operaciones.mesas.canvasTitle') }} · {{ t('pos.floor.viewTables') }}
+              {{ t('operaciones.mesas.tablesDefaultTitle') }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              {{ t('operaciones.mesas.canvasHelp') }}
+              {{ t('operaciones.mesas.tablesDefaultHelp') }}
             </p>
           </div>
           <select
