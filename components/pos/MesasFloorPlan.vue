@@ -730,12 +730,14 @@ onUnmounted(() => {
         </Teleport>
       </ClientOnly>
 
-      <div
-        v-if="floorMode !== 'order' && floorTabs.length > 1"
-        class="mb-4 flex flex-wrap items-center gap-2"
-        role="tablist"
-        :aria-label="t('pos.floor.mainPlan')"
-      >
+      <ClientOnly>
+        <Teleport to="#dashboard-header-pos-tools">
+          <div
+            v-if="floorMode !== 'order' && floorTabs.length > 1"
+            class="flex flex-wrap items-center gap-2"
+            role="tablist"
+            :aria-label="t('pos.floor.mainPlan')"
+          >
         <button
           v-for="tab in floorTabs"
           :key="tab.id"
@@ -756,7 +758,9 @@ onUnmounted(() => {
             {{ tab.badge > 9 ? '9+' : tab.badge }}
           </span>
         </button>
-      </div>
+        </div>
+        </Teleport>
+      </ClientOnly>
 
       <button
         v-if="floorMode !== 'order' && showBarEntryCard"
