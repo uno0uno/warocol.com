@@ -121,6 +121,13 @@ watch(floorLayouts, (layouts) => {
     floorLayout.value = layouts[0]!
   }
 })
+const floorLayoutToggleTarget = computed<FloorLayout>(() => {
+  const layouts = floorLayouts.value
+  return layouts[(layouts.indexOf(floorLayout.value) + 1) % layouts.length]!
+})
+const cycleTablesLayout = () => {
+  void setTablesLayoutPreference(floorLayoutToggleTarget.value)
+}
 watch(
   () => authStore.sessionProfile?.id,
   () => {
@@ -713,24 +720,56 @@ onUnmounted(() => {
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             class="flex items-center gap-2"
           >
-            <span class="text-xs font-semibold text-text-tertiary">{{ t('pos.floor.viewTables') }}:</span>
-            <div class="relative flex-shrink-0">
-              <select
-                id="floor-layout-select"
-                :value="floorLayout"
-                :disabled="isSavingTablesLayout"
-                :aria-label="t('pos.floor.viewTables')"
-                class="h-9 max-w-32 truncate appearance-none rounded-lg border border-border bg-surface pl-2 pr-8 text-xs font-semibold text-text-primary disabled:opacity-50"
-                @change="setTablesLayoutPreference(($event.target as HTMLSelectElement).value as FloorLayout)"
-              >
-                <option v-for="layout in floorLayouts" :key="layout" :value="layout">
-                  {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
-                </option>
-              </select>
-              <svg class="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <button
+              type="button"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-secondary hover:text-text-primary disabled:opacity-50"
+              :disabled="isSavingTablesLayout"
+              :aria-label="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutSwitchToList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutSwitchToCanvas') : t('pos.catalog.layoutSwitchToGrid')"
+              :title="floorLayoutToggleTarget === 'list' ? t('pos.catalog.layoutList') : floorLayoutToggleTarget === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid')"
+              @click="cycleTablesLayout"
+            >
+              <span class="inline-flex h-4 w-4 items-center justify-center">
+                <svg
+                  v-if="floorLayoutToggleTarget === 'list'"
+                  key="icon-list"
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+                <svg
+                  v-else-if="floorLayoutToggleTarget === 'canvas'"
+                  key="icon-canvas"
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.5-2.5v-13L9 7l6-2.5L20.5 7v13L15 17.5 9 20zm0 0v-13m6-2.5v13" />
+                </svg>
+                <svg
+                  v-else
+                  key="icon-grid"
+                  class="h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 8.25 20.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+                </svg>
+              </span>
+            </button>
           </div>
         </Teleport>
       </ClientOnly>
