@@ -875,18 +875,17 @@ onUnmounted(() => {
           <template #item="{ element: table }">
             <div class="h-full">
 
-          <!-- Card — uniform height across grid (shared PosTableCard) -->
+          <!-- Figure — historical circle (shared PosTableFigure) -->
           <div class="h-full rounded-xl border-2 border-dashed border-border p-1">
-          <PosTableCard
-            :table="table"
+          <button
+            type="button"
+            class="table-zone-handle flex h-full w-full flex-col items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 disabled:opacity-60 cursor-grab active:cursor-grabbing"
             :disabled="openingTableId === table.id"
-            drag-handle
-            show-move
-            :comandas-enabled="props.comandasEnabled"
-            :waiter-attribution-enabled="props.waiterAttributionEnabled"
-            @open="handleTableClick"
-            @move="({ table: t, event }) => handleMoveTable(t, event)"
-          />
+            :aria-label="table.name"
+            @click="handleTableClick(table)"
+          >
+            <PosTableFigure :table="table" />
+          </button>
           </div>
 
             </div>
@@ -1123,14 +1122,11 @@ onUnmounted(() => {
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <div
-                v-if="tableById(nodeProps.data.tableId)"
-                class="min-w-56 rounded-xl border-2 border-dashed border-border p-1"
+                class="rounded-xl border-2 border-dashed border-border p-1"
               >
-                <PosTableCard
+                <PosTableFigure
+                  v-if="tableById(nodeProps.data.tableId)"
                   :table="tableById(nodeProps.data.tableId)"
-                  :disabled="openingTableId === nodeProps.data.tableId"
-                  :comandas-enabled="props.comandasEnabled"
-                  :waiter-attribution-enabled="props.waiterAttributionEnabled"
                 />
               </div>
             </template>
