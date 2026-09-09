@@ -1228,7 +1228,7 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div class="overflow-hidden rounded-xl border border-border/60" style="height: 60vh; min-height: 480px;">
+        <div class="overflow-hidden rounded-xl border border-border/60" style="height: calc(100dvh - 220px); min-height: 480px;">
           <div v-if="loadingTables" class="flex h-full items-center justify-center">
             <CommonsTheCustomLoader size="large" />
           </div>
