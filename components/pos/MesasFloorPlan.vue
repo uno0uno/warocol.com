@@ -396,8 +396,8 @@ const onFlatChange = (evt: any) => {
   if (moved?.element?.id && typeof moved.newIndex === 'number') {
     // Flat reorder: persist x/y from drop index, keep current zona untouched.
     const table = moved.element
-    const payload = { ...buildFreePositionPayload(table.zona ?? UNPLACED_ZONE, moved.newIndex) }
-    if (table.zona == null) payload.zona = null
+    const zona = typeof table.zona === 'string' && table.zona.trim() ? table.zona : null
+    const payload = { ...buildFreePositionPayload(zona ?? UNPLACED_ZONE, moved.newIndex), zona }
     scheduleFlatDrop(table, payload)
   }
 }
