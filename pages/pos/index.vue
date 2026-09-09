@@ -2038,6 +2038,7 @@ onUnmounted(() => {
         :waiter-attribution-enabled="waiterAttributionEnabled"
         mode="pos"
         :canvas-enabled="floorCanvasEnabled"
+        :tenant-default-layout="settingsData.value?.data?.pos_tables_layout_default ?? null"
         @enter-table="handleEnterTable"
         @no-tables="noTablesConfigured = true"
         @move-table="handleMoveTable"
