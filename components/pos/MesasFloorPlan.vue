@@ -106,6 +106,13 @@ const userChoseTablesLayout = ref(false)
 const isSavingTablesLayout = ref(false)
 const layoutMenuOpen = ref(false)
 const layoutMenuWrap = ref<HTMLElement | null>(null)
+const isCoarsePointer = ref(false)
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    isCoarsePointer.value = window.matchMedia('(pointer: coarse)').matches
+  }
+})
 
 onClickOutside(layoutMenuWrap, () => {
   layoutMenuOpen.value = false
@@ -726,7 +733,20 @@ onUnmounted(() => {
             ref="layoutMenuWrap"
             class="relative flex flex-shrink-0 items-center gap-2"
           >
+            <select
+              v-if="isCoarsePointer"
+              :value="floorLayout"
+              :disabled="isSavingTablesLayout"
+              :aria-label="t('pos.floor.viewTables')"
+              class="h-9 max-w-32 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-primary disabled:opacity-50"
+              @change="chooseTablesLayout(($event.target as HTMLSelectElement).value as FloorLayout)"
+            >
+              <option v-for="layout in floorLayouts" :key="layout" :value="layout">
+                {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
+              </option>
+            </select>
             <button
+              v-else
               type="button"
               class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-primary hover:bg-surface-secondary disabled:opacity-50"
               :disabled="isSavingTablesLayout"
