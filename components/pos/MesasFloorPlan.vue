@@ -96,6 +96,17 @@ const floorLayouts = computed<FloorLayout[]>(() => {
   if (floorMode.value === 'pos') return props.canvasEnabled ? ['grid', 'list', 'canvas'] : ['grid', 'list']
   return ['canvas']
 })
+const floorLayoutOptions = computed(() =>
+  floorLayouts.value.map((layout) => ({
+    label:
+      layout === 'list'
+        ? t('pos.catalog.layoutList')
+        : layout === 'canvas'
+          ? t('pos.catalog.layoutCanvas')
+          : t('pos.catalog.layoutGrid'),
+    value: layout,
+  })),
+)
 const floorLayout = ref<FloorLayout>('grid')
 const authStore = useAuthStore()
 const toast = useToast()
@@ -737,17 +748,15 @@ onUnmounted(() => {
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             class="flex flex-shrink-0 items-center gap-2"
           >
-            <select
-              :value="floorLayout"
-              :disabled="isSavingTablesLayout"
+            <UiFilterSelect
+              :model-value="floorLayout"
+              :options="floorLayoutOptions"
+              :placeholder="t('pos.floor.viewTables')"
               :aria-label="t('pos.floor.viewTables')"
-              class="h-9 max-w-36 truncate appearance-none rounded-lg border border-shell-action-border bg-shell-action-bg px-2.5 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
-              @change="chooseTablesLayout(($event.target as HTMLSelectElement).value as FloorLayout)"
-            >
-              <option v-for="layout in floorLayouts" :key="layout" :value="layout">
-                {{ layout === 'list' ? t('pos.catalog.layoutList') : layout === 'canvas' ? t('pos.catalog.layoutCanvas') : t('pos.catalog.layoutGrid') }}
-              </option>
-            </select>
+              hide-placeholder
+              always-active
+              @update:model-value="chooseTablesLayout($event as FloorLayout)"
+            />
           </div>
         </Teleport>
       </ClientOnly>
