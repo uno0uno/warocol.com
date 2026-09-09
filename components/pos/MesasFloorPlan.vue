@@ -17,9 +17,11 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import {
   NODE_PX,
+  findTooCloseTables,
   hasCoords,
   layoutUnplacedInMatrix,
   nodeToPayload,
+  positionOverlaps,
   resolveTableCoords,
   type FloorPlanNode,
   type StagedCoords,
@@ -471,22 +473,31 @@ const stagedMoves = ref(new Map<string, StagedCoords>())
 
 const syncCanvasNodes = () => {
   if (isDraggingNode.value) return
-  const nodes: FloorPlanNode[] = []
+  const placed: { id: string; table: any; coords: { pos_x: number; pos_y: number; zona: string | null } }[] = []
   for (const table of regularTables.value as any[]) {
     const coords = resolveTableCoords(table, stagedMoves.value)
     if (!coords) continue
+    placed.push({ id: String(table.id), table, coords })
+  }
+  const tooClose = findTooCloseTables(placed.map((p) => ({ id: p.id, ...p.coords })))
+  if (tooClose.size) {
+    console.warn('[floor-canvas] solape:', JSON.stringify(placed.filter((p) => tooClose.has(p.id)).map((p) => ({ id: p.id.slice(0, 8), ...p.coords }))))
+  }
+  const nodes: FloorPlanNode[] = []
+  for (const p of placed) {
     nodes.push({
-      id: String(table.id),
+      id: p.id,
       type: 'mesa',
-      position: { x: coords.pos_x * NODE_PX, y: coords.pos_y * NODE_PX },
+      position: { x: p.coords.pos_x * NODE_PX, y: p.coords.pos_y * NODE_PX },
       data: {
-        tableId: String(table.id),
-        title: String(table.name ?? table.id),
-        status: String(table.status ?? 'free'),
-        zona: coords.zona,
-        runningTotal: Number(table.session?.running_total ?? 0),
-        openedAt: (table.session?.opened_at as string | undefined) ?? null,
-        waiterName: (table.effective_waiter_member_name as string | undefined)?.trim() || null,
+        tableId: p.id,
+        title: String(p.table.name ?? p.id),
+        status: String(p.table.status ?? 'free'),
+        zona: p.coords.zona,
+        tooClose: tooClose.has(p.id),
+        runningTotal: Number(p.table.session?.running_total ?? 0),
+        openedAt: (p.table.session?.opened_at as string | undefined) ?? null,
+        waiterName: (p.table.effective_waiter_member_name as string | undefined)?.trim() || null,
       },
     })
   }
@@ -516,6 +527,19 @@ const onNodeDragStop = (event: NodeDragEvent) => {
   const node = (event as unknown as { node?: { id?: string; position?: { x: number; y: number } } }).node
   if (!node?.id || !node.position) return
   const payload = nodeToPayload({ position: node.position })
+  const others = (regularTables.value as any[])
+    .map((t) => {
+      const c = resolveTableCoords(t, stagedMoves.value)
+      return c ? { id: String(t.id), ...c } : null
+    })
+    .filter((c): c is { id: string; pos_x: number; pos_y: number; zona: string | null } => c !== null)
+  if (positionOverlaps(others, node.id, payload.pos_x, payload.pos_y)) {
+    console.warn('[floor-canvas] drop encima de otra mesa, rebote:', node.id, payload)
+    toast.error('Muy cerca de otra mesa', { title: 'Sin espacio' })
+    syncCanvasNodes()
+    return
+  }
+  console.info('[floor-canvas] drop:', node.id, payload)
   const table = (regularTables.value as any[]).find((t) => String(t.id) === node.id)
   const next = new Map(stagedMoves.value)
   next.set(node.id, { ...payload, zona: table?.zona ?? null })
@@ -1204,7 +1228,7 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div class="overflow-hidden rounded-xl border border-border/60" style="height: 60vh; min-height: 480px;">
+        <div class="overflow-hidden rounded-xl border border-border/60" style="height: calc(100dvh - 220px); min-height: 480px;">
           <div v-if="loadingTables" class="flex h-full items-center justify-center">
             <CommonsTheCustomLoader size="large" />
           </div>
@@ -1228,6 +1252,7 @@ onUnmounted(() => {
             <template #node-mesa="nodeProps">
               <div
                 class="rounded-xl border-2 border-dashed border-border px-3 py-4 transition-colors duration-150 hover:bg-surface-secondary/40"
+                :class="nodeProps.data.tooClose ? 'ring-2 ring-red-500/60' : ''"
               >
                 <PosTableFigure
                   v-if="tableById(nodeProps.data.tableId)"

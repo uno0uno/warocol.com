@@ -37,14 +37,62 @@ export function tablesToNodes(tables: readonly ZoneTableItem[]): FloorPlanNode[]
 
 /**
  * Convert a dropped node position back to floor-plan units for PATCH.
- * Snapped to integers so occupancy checks stay exact.
+ * Keeps 1-decimal precision so the card stays where it was dropped
+ * (no snap-jump onto another cell). Negatives allowed (infinite canvas).
  */
 export function nodeToPayload(node: { position: { x: number; y: number } }): {
   pos_x: number
   pos_y: number
 } {
-  const snap = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.round(n / NODE_PX)) : 0)
-  return { pos_x: snap(node.position.x), pos_y: snap(node.position.y) }
+  const round1 = (n: number): number => {
+    if (typeof n !== 'number' || Number.isNaN(n) || !Number.isFinite(n)) return 0
+    return Math.round((n / NODE_PX) * 10) / 10
+  }
+  return { pos_x: round1(node.position.x), pos_y: round1(node.position.y) }
+}
+
+export interface PlacedPoint {
+  id: string
+  pos_x: number
+  pos_y: number
+}
+
+/**
+ * Whether (x, y) would overlap another placed table (AABB on footprint).
+ */
+export function positionOverlaps(
+  points: readonly PlacedPoint[],
+  id: string,
+  x: number,
+  y: number,
+): boolean {
+  return points.some(
+    (p) =>
+      p.id !== id &&
+      Math.abs(p.pos_x - x) < NODE_FOOTPRINT_W &&
+      Math.abs(p.pos_y - y) < NODE_FOOTPRINT_H,
+  )
+}
+
+/**
+ * Ids of tables whose footprints currently overlap (for highlight).
+ */
+export function findTooCloseTables(points: readonly PlacedPoint[]): Set<string> {
+  const bad = new Set<string>()
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i]
+      const b = points[j]
+      if (
+        Math.abs(a.pos_x - b.pos_x) < NODE_FOOTPRINT_W &&
+        Math.abs(a.pos_y - b.pos_y) < NODE_FOOTPRINT_H
+      ) {
+        bad.add(a.id)
+        bad.add(b.id)
+      }
+    }
+  }
+  return bad
 }
 
 export interface StagedCoords {

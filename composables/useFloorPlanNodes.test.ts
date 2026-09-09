@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   NODE_FOOTPRINT_H,
   NODE_FOOTPRINT_W,
+  findTooCloseTables,
   layoutUnplacedInMatrix,
   nodeToPayload,
+  positionOverlaps,
   resolveTableCoords,
   tablesToNodes,
 } from './useFloorPlanNodes'
@@ -25,9 +27,33 @@ describe('tablesToNodes', () => {
 })
 
 describe('nodeToPayload', () => {
-  it('converts pixels back to integer units', () => {
-    expect(nodeToPayload({ position: { x: 210, y: 70 } })).toEqual({ pos_x: 2, pos_y: 1 })
-    expect(nodeToPayload({ position: { x: NaN, y: 10 } })).toEqual({ pos_x: 0, pos_y: 0 })
+  it('keeps 1-decimal precision so the card stays where dropped', () => {
+    expect(nodeToPayload({ position: { x: 210, y: 70 } })).toEqual({ pos_x: 1.5, pos_y: 0.5 })
+    expect(nodeToPayload({ position: { x: NaN, y: 10 } })).toEqual({ pos_x: 0, pos_y: 0.1 })
+    expect(nodeToPayload({ position: { x: -70, y: -140 } })).toEqual({ pos_x: -0.5, pos_y: -1 })
+  })
+})
+
+describe('positionOverlaps', () => {
+  const pts = [
+    { id: 'a', pos_x: 0, pos_y: 0 },
+    { id: 'b', pos_x: 5, pos_y: 5 },
+  ]
+  it('detects overlap excluding self', () => {
+    expect(positionOverlaps(pts, 'c', 0.2, 0)).toBe(true)
+    expect(positionOverlaps(pts, 'a', 0, 0)).toBe(false)
+    expect(positionOverlaps(pts, 'c', 2, 0)).toBe(false)
+  })
+})
+
+describe('findTooCloseTables', () => {
+  it('flags only overlapping cards', () => {
+    const pts = [
+      { id: 'a', pos_x: 0, pos_y: 0 },
+      { id: 'b', pos_x: 0.5, pos_y: 0 },
+      { id: 'c', pos_x: 5, pos_y: 5 },
+    ]
+    expect([...findTooCloseTables(pts)].sort()).toEqual(['a', 'b'])
   })
 })
 
