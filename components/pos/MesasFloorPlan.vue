@@ -745,7 +745,7 @@ onUnmounted(() => {
     <!-- Content -->
     <div v-else>
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools" :disabled="!headerTargetFound">
+        <Teleport to="#dashboard-header-pos-tools" defer>
           <div
             v-if="floorView === 'mesas' && floorLayouts.length > 1"
             ref="layoutMenuWrap"
@@ -807,7 +807,7 @@ onUnmounted(() => {
       </ClientOnly>
 
       <ClientOnly>
-        <Teleport to="#dashboard-header-pos-tools" :disabled="!headerTargetFound">
+        <Teleport to="#dashboard-header-pos-tools" defer>
           <div
             v-if="floorMode !== 'order' && floorTabs.length > 1"
             class="flex flex-shrink-0 flex-nowrap items-center gap-2"
