@@ -907,10 +907,10 @@ onUnmounted(() => {
           <div v-for="table in flatTables" :key="table.id" class="h-full">
 
           <!-- Figure — historical circle (shared PosTableFigure) -->
-          <div class="h-full rounded-xl border-2 border-dashed border-border px-3 py-4">
+          <div class="h-full rounded-xl border-2 border-dashed border-border px-3 py-4 transition-colors duration-150 hover:border-primary/60 hover:bg-surface-secondary/30">
           <button
             type="button"
-            class="flex h-full w-full flex-col items-center justify-center rounded-lg transition-colors duration-150 hover:bg-surface-secondary/40 focus:outline-none focus-visible:ring-2 disabled:opacity-60"
+            class="flex h-full w-full flex-col items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 disabled:opacity-60"
             :disabled="openingTableId === table.id"
             :aria-label="table.name"
             @click="handleTableClick(table)"
