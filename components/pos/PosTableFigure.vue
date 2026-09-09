@@ -20,7 +20,7 @@ const circleClass = (status: string) => ({
 
 <template>
   <!-- Circle + chair marks (historical floor-plan figure) -->
-  <div class="relative p-[14px]">
+  <div class="relative px-[14px] pb-4 pt-6">
     <!-- Chair marks: 4 cardinal positions -->
     <div
       class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
