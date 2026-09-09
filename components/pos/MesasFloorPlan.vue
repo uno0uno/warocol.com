@@ -1121,7 +1121,7 @@ onUnmounted(() => {
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <div
-                class="rounded-xl border-2 border-dashed border-border bg-surface-secondary/60 p-1"
+                class="rounded-xl border-2 border-dashed border-border p-1"
               >
                 <PosTableFigure
                   v-if="tableById(nodeProps.data.tableId)"
