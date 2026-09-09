@@ -1123,11 +1123,14 @@ onUnmounted(() => {
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
               <div
-                class="rounded-xl border-2 border-dashed border-border p-1"
+                v-if="tableById(nodeProps.data.tableId)"
+                class="min-w-56 rounded-xl border-2 border-dashed border-border p-1"
               >
-                <PosTableFigure
-                  v-if="tableById(nodeProps.data.tableId)"
+                <PosTableCard
                   :table="tableById(nodeProps.data.tableId)"
+                  :disabled="openingTableId === nodeProps.data.tableId"
+                  :comandas-enabled="props.comandasEnabled"
+                  :waiter-attribution-enabled="props.waiterAttributionEnabled"
                 />
               </div>
             </template>
