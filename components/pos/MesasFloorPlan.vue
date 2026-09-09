@@ -741,7 +741,7 @@ onUnmounted(() => {
               :value="floorLayout"
               :disabled="isSavingTablesLayout"
               :aria-label="t('pos.floor.viewTables')"
-              class="h-9 max-w-36 truncate rounded-lg border border-shell-action-border bg-shell-action-bg px-2.5 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
+              class="h-9 max-w-36 truncate appearance-none rounded-lg border border-shell-action-border bg-shell-action-bg px-2.5 text-sm font-medium text-shell-action-text hover:bg-shell-action-hover-bg focus:outline-none focus:ring-2 focus:ring-shell-action-focus-ring disabled:opacity-50"
               @change="chooseTablesLayout(($event.target as HTMLSelectElement).value as FloorLayout)"
             >
               <option v-for="layout in floorLayouts" :key="layout" :value="layout">
