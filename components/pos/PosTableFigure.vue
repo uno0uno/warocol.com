@@ -20,7 +20,7 @@ const circleClass = (status: string) => ({
 
 <template>
   <!-- Circle + chair marks (historical floor-plan figure) -->
-  <div class="relative px-[14px] pb-4 pt-6">
+  <div class="relative p-[14px]">
     <!-- Chair marks: 4 cardinal positions -->
     <div
       class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
@@ -52,7 +52,7 @@ const circleClass = (status: string) => ({
     </div>
   </div>
   <!-- Info under the table -->
-  <div class="flex flex-col items-center gap-1 px-2 pb-4 pt-2 text-center">
+  <div class="flex flex-col items-center gap-0.5 px-2 pb-2 pt-1 text-center">
     <p v-if="table?.status !== 'free'" class="text-xs font-bold tabular-nums text-text-primary">
       {{ formatCurrency(table?.session?.running_total ?? 0) }}
     </p>
