@@ -132,6 +132,20 @@ watch(
   { immediate: true },
 )
 
+onMounted(() => {
+  const target = document.querySelector('#dashboard-header-pos-tools')
+  const tabs = floorTabs.value.length
+  console.info('[floor-layout-selector] mounted', {
+    target: !!target,
+    targetChildren: target?.childElementCount ?? -1,
+    tabs,
+    floorView: floorView.value,
+    loading: loadingTables.value,
+    error: !!tablesError.value,
+    tables: tables.value.length,
+  })
+})
+
 onClickOutside(layoutMenuWrap, () => {
   layoutMenuOpen.value = false
 })
