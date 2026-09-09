@@ -1120,10 +1120,14 @@ onUnmounted(() => {
             <Background v-if="floorMode === 'order'" variant="lines" :gap="28" />
             <Controls position="bottom-right" />
             <template #node-mesa="nodeProps">
-              <PosTableFigure
-                v-if="tableById(nodeProps.data.tableId)"
-                :table="tableById(nodeProps.data.tableId)"
-              />
+              <div
+                class="rounded-xl border-2 border-dashed border-border bg-surface-secondary/60 p-1"
+              >
+                <PosTableFigure
+                  v-if="tableById(nodeProps.data.tableId)"
+                  :table="tableById(nodeProps.data.tableId)"
+                />
+              </div>
             </template>
           </VueFlow>
           <p v-if="!loadingTables && !canvasNodes.length" class="p-3 text-xs text-text-tertiary">
