@@ -20,6 +20,7 @@ export function draftHasChanges(d: ProductDraft): boolean {
     d.name !== d.originalName
     || d.category_id !== d.originalCategoryId
     || d.price !== d.originalPrice
+    || d.es_cortesia !== d.originalEsCortesia
     || d.costo_percibido !== d.originalCostoPercibido
     || d.is_available !== d.originalIsAvailable
     || d.is_available_online !== d.originalIsAvailableOnline
@@ -42,10 +43,12 @@ export function createDraftFromProduct(
   const is_available = !!product.is_available
   const is_available_online = !!product.is_available_online
   const is_available_table_qr = !!product.is_available_table_qr
+  const es_cortesia = !!product.es_cortesia
   return {
     name: String(product.name),
     category_id,
     price,
+    es_cortesia,
     costo_percibido: costo,
     is_available,
     is_available_online,
@@ -54,6 +57,7 @@ export function createDraftFromProduct(
     originalName: String(product.name),
     originalCategoryId: category_id,
     originalPrice: price,
+    originalEsCortesia: es_cortesia,
     originalCostoPercibido: costo,
     originalIsAvailable: is_available,
     originalIsAvailableOnline: is_available_online,
@@ -186,7 +190,9 @@ export function useMenuCatalogEditMode(options: UseMenuCatalogEditModeOptions) {
     if (drafts.length === 0 && hasBulkPendingOnSelection.value) {
       return true
     }
-    return drafts.every((d) => !!d.name.trim() && !!d.category_id && d.price > 0)
+    return drafts.every(
+    (d) => !!d.name.trim() && !!d.category_id && (d.price > 0 || (d.price === 0 && d.es_cortesia)),
+  )
   })
 
   const displayProducts = computed(() =>
@@ -200,6 +206,7 @@ export function useMenuCatalogEditMode(options: UseMenuCatalogEditModeOptions) {
         category_id: draft.category_id,
         category_name: cat?.name ?? p.category_name,
         price: draft.price,
+        es_cortesia: draft.es_cortesia,
         costo_percibido: draft.costo_percibido,
         is_available: draft.is_available,
         is_available_online: draft.is_available_online,
@@ -254,6 +261,9 @@ export function useMenuCatalogEditMode(options: UseMenuCatalogEditModeOptions) {
       category_id: draft.category_id,
       price: draft.price,
       costo_percibido: draft.costo_percibido,
+    }
+    if (draft.es_cortesia !== draft.originalEsCortesia) {
+      body.es_cortesia = draft.es_cortesia
     }
     if (draft.is_available !== draft.originalIsAvailable) {
       body.is_available = draft.is_available
