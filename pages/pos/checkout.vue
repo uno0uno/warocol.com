@@ -2567,6 +2567,10 @@ const processWompiCollection = async () => {
     isProcessing.value = true
     processingError.value = ''
     const amount = finalAmountToCollect.value
+    if (!(amount > 0)) {
+      processingError.value = 'Wompi no admite cobros con total 0.'
+      return
+    }
     if (isPendingDeliveryMode.value && pendingOrderId.value) {
       if (!selectedCustomer.value) {
         processingError.value = t('pos.checkout.errors.selectCustomer')
@@ -3145,6 +3149,9 @@ const isWompiTender = computed(() => {
   if ((group.methods?.length ?? 0) === 1) return isWompiPaymentMethod(group.methods[0])
   return isWompiPaymentMethod(group)
 })
+const isWompiZeroDisabled = computed(
+  () => isWompiTender.value && !(finalAmountToCollect.value > 0),
+)
 const canDeferDeliveryPayment = computed(() =>
   isDeliveryEligible.value && !isPendingDeliveryMode.value
 )
@@ -5333,7 +5340,7 @@ onUnmounted(() => {
           <button
             @click="processOrder"
             v-if="!splitMode"
-            :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
+            :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || isWompiZeroDisabled"
             class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -5698,7 +5705,7 @@ onUnmounted(() => {
         <button
           @click="processOrder"
           v-if="!splitMode"
-          :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage"
+          :disabled="isProcessing || showWompiSlideover || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid || !manualDiscountIsValid || !!walletTenderValidationMessage || isWompiZeroDisabled"
           class="w-full bg-primary hover:bg-action-primary-hover-bg text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
