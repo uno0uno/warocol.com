@@ -100,6 +100,14 @@
               />
             </div>
             <p v-if="errors.price" class="text-xs text-destructive">{{ errors.price }}</p>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input
+                v-model="form.es_cortesia"
+                type="checkbox"
+                class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
+              />
+              <span class="text-sm font-medium text-text-primary">Es cortesía (permite precio 0)</span>
+            </label>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -253,6 +261,7 @@ const form = ref({
   name: '',
   category_id: '',
   price: 0,
+  es_cortesia: false,
   costo_percibido: null as number | null,
   is_available: true,
 })
@@ -262,6 +271,7 @@ function resetForm() {
     name: props.initialName.trim(),
     category_id: '',
     price: 0,
+    es_cortesia: false,
     costo_percibido: null,
     is_available: true,
   }
@@ -311,8 +321,10 @@ function validate() {
   const name = form.value.name.trim()
   if (!name) e.name = 'El nombre es obligatorio'
   if (!form.value.category_id) e.category_id = 'Selecciona una categoría del menú'
-  if (!Number.isFinite(form.value.price) || form.value.price <= 0) {
-    e.price = 'Indica un precio mayor que 0'
+  if (!Number.isFinite(form.value.price) || form.value.price < 0) {
+    e.price = 'Indica un precio mayor o igual que 0'
+  } else if (form.value.price === 0 && !form.value.es_cortesia) {
+    e.price = 'Precio 0 solo para cortesías: marca Es cortesía'
   }
   const weight = Number(unitWeightGr.value)
   if (!Number.isFinite(weight) || weight <= 0) {
@@ -346,6 +358,7 @@ async function submit() {
       description: '',
       image_url: null,
       price: form.value.price,
+      es_cortesia: form.value.es_cortesia,
       category_id: form.value.category_id,
       preparation_time: 0,
       is_available: form.value.is_available,

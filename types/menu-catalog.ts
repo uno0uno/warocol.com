@@ -20,6 +20,7 @@ export type ProductDraft = {
   name: string
   category_id: string
   price: number
+  es_cortesia: boolean
   costo_percibido: number | null
   is_available: boolean
   is_available_online: boolean
@@ -28,6 +29,7 @@ export type ProductDraft = {
   originalName: string
   originalCategoryId: string
   originalPrice: number
+  originalEsCortesia: boolean
   originalCostoPercibido: number | null
   originalIsAvailable: boolean
   originalIsAvailableOnline: boolean
@@ -42,6 +44,7 @@ export type ProductDraftSource = {
   category_id?: string
   category_name?: string
   price: number
+  es_cortesia?: boolean
   costo_percibido?: number | string | null
   is_available?: boolean
   is_available_online?: boolean
