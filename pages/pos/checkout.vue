@@ -2567,6 +2567,10 @@ const processWompiCollection = async () => {
     isProcessing.value = true
     processingError.value = ''
     const amount = finalAmountToCollect.value
+    if (!(amount > 0)) {
+      processingError.value = 'Wompi no admite cobros con total 0.'
+      return
+    }
     if (isPendingDeliveryMode.value && pendingOrderId.value) {
       if (!selectedCustomer.value) {
         processingError.value = t('pos.checkout.errors.selectCustomer')
