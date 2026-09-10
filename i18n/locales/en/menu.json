@@ -263,6 +263,8 @@
       "nameRequiredError": "Name is required.",
       "categoryRequiredError": "Select a category.",
       "priceRequiredError": "Enter a sale price greater than 0.",
+      "esCortesia": "Courtesy (allows price 0)",
+      "priceZeroRequiresCortesia": "For price 0, check Courtesy.",
       "nameExistsError": "A product with that name already exists.",
       "equivalenceRequiredError": "Enter the gr or ml equivalence per sold unit.",
       "stationAssigned": "Station assigned to {category}.",
