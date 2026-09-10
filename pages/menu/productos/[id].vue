@@ -193,6 +193,14 @@
                     placeholder="15000"
                   />
                 </div>
+                <label class="mt-2 flex items-center gap-2 cursor-pointer">
+                  <input
+                    v-model="form.es_cortesia"
+                    type="checkbox"
+                    class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <span class="text-xs font-medium text-text-primary">{{ t('menu.productos.esCortesia') }}</span>
+                </label>
               </div>
 
               <div v-if="tracksInventory || isResaleProduct">
@@ -1422,6 +1430,7 @@ const form = ref({
   description: '',
   image_url: '',
   price: 0,
+  es_cortesia: false,
   category_id: '',
   preparation_time: 15,
   controla_stock: true,
@@ -1465,6 +1474,7 @@ watch(productData, (data) => {
       description: product.description || '',
       image_url: product.image_url || '',
       price: Number(product.price),
+      es_cortesia: !!product.es_cortesia,
       category_id: product.category_id,
       preparation_time: product.preparation_time || 15,
       controla_stock: product.controla_stock,

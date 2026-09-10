@@ -210,6 +210,14 @@
                       placeholder="15000"
                     />
                   </div>
+                  <label class="mt-2 flex items-center gap-2 cursor-pointer">
+                    <input
+                      v-model="form.es_cortesia"
+                      type="checkbox"
+                      class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                    />
+                    <span class="text-xs font-medium text-text-primary">{{ t('menu.productos.esCortesia') }}</span>
+                  </label>
                 </div>
 
                 <div v-if="!isResaleDirectMode">
@@ -954,6 +962,7 @@ const form = ref({
   description: '',
   image_url: '',
   price: 0,
+  es_cortesia: false,
   category_id: '',
   recipe_bases: [] as Array<{ recipe_base_id: string; quantity: number }>,
   preparation_time: null as number | null,
@@ -1261,8 +1270,11 @@ async function validateForm(): Promise<boolean> {
     submitError.value = t('menu.productos.categoryRequiredError')
     return false
   }
-  if (!form.value.price || form.value.price <= 0) {
-    submitError.value = t('menu.productos.priceRequiredError')
+  const _price = Number(form.value.price)
+  if (form.value.price == null || _price < 0 || (_price === 0 && !form.value.es_cortesia)) {
+    submitError.value = _price === 0
+      ? t('menu.productos.priceZeroRequiresCortesia')
+      : t('menu.productos.priceRequiredError')
     return false
   }
 
@@ -1490,6 +1502,7 @@ async function submitProduct() {
         description: form.value.description,
         image_url: form.value.image_url || null,
         price: form.value.price,
+        es_cortesia: form.value.es_cortesia,
         category_id: form.value.category_id,
         preparation_time: form.value.preparation_time,
         is_available: form.value.is_available,

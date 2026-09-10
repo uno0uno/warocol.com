@@ -263,6 +263,8 @@
       "nameRequiredError": "El nombre es obligatorio.",
       "categoryRequiredError": "Selecciona una categoría.",
       "priceRequiredError": "Indica un precio de venta mayor a 0.",
+      "esCortesia": "Es cortesía (permite precio 0)",
+      "priceZeroRequiresCortesia": "Para precio 0 marca Es cortesía.",
       "nameExistsError": "Ya existe un producto con ese nombre.",
       "equivalenceRequiredError": "Indica la equivalencia en gr o ml por unidad vendida.",
       "stationAssigned": "Estación asignada a {category}.",
