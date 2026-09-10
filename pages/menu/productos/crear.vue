@@ -1271,8 +1271,8 @@ async function validateForm(): Promise<boolean> {
     return false
   }
   const _price = Number(form.value.price)
-  if (form.value.price == null || _price < 0 || (_price === 0 && !form.value.es_cortesia)) {
-    submitError.value = _price === 0
+  if (form.value.price == null || Number.isNaN(_price) || _price < 0 || (_price === 0 && !form.value.es_cortesia)) {
+    submitError.value = _price === 0 && form.value.price != null
       ? t('menu.productos.priceZeroRequiresCortesia')
       : t('menu.productos.priceRequiredError')
     return false
