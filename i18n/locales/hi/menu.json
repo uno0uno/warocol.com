@@ -236,6 +236,8 @@
       "nameRequiredError": "नाम अनिवार्य है।",
       "categoryRequiredError": "एक श्रेणी चुनें।",
       "priceRequiredError": "0 से अधिक विक्रय मूल्य दर्ज करें।",
+      "esCortesia": "सौजन्य (मूल्य 0 की अनुमति)",
+      "priceZeroRequiresCortesia": "मूल्य 0 के लिए सौजन्य चुनें।",
       "nameExistsError": "उस नाम का एक उत्पाद पहले से मौजूद है।",
       "equivalenceRequiredError": "बेची गई प्रति यूनिट ग्राम या मिलीलीटर में समतुल्यता दर्ज करें।",
       "stationAssigned": "स्टेशन {category} को असाइन किया गया।",

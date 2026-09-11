@@ -236,6 +236,8 @@
       "nameRequiredError": "Name ist erforderlich.",
       "categoryRequiredError": "Wählen Sie eine Kategorie aus.",
       "priceRequiredError": "Geben Sie einen Verkaufspreis größer als 0 ein.",
+      "esCortesia": "Gratis-Artikel (Preis 0 erlaubt)",
+      "priceZeroRequiresCortesia": "Für Preis 0 Gratis-Artikel markieren.",
       "nameExistsError": "Ein Produkt mit diesem Namen existiert bereits.",
       "equivalenceRequiredError": "Geben Sie die Äquivalenz in g oder ml pro verkaufter Einheit an.",
       "stationAssigned": "Station {category} zugewiesen.",

@@ -236,6 +236,8 @@
       "nameRequiredError": "名称为必填项。",
       "categoryRequiredError": "请选择一个类别。",
       "priceRequiredError": "请输入大于0的销售价格。",
+      "esCortesia": "赠送（允许价格 0）",
+      "priceZeroRequiresCortesia": "价格为 0 时请勾选赠送。",
       "nameExistsError": "已存在同名产品。",
       "equivalenceRequiredError": "请输入每售出单位的克或毫升换算值。",
       "stationAssigned": "工作站已分配给{category}。",
