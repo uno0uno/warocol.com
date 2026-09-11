@@ -236,6 +236,8 @@
       "nameRequiredError": "الاسم إلزامي.",
       "categoryRequiredError": "اختر فئة.",
       "priceRequiredError": "أدخل سعر بيع أكبر من 0.",
+      "esCortesia": "مجاملة (يسمح بسعر 0)",
+      "priceZeroRequiresCortesia": "للسعر 0، حدد مجاملة.",
       "nameExistsError": "يوجد بالفعل منتج بهذا الاسم.",
       "equivalenceRequiredError": "أدخل معادلة الجرام أو المليلتر لكل وحدة مباعة.",
       "stationAssigned": "تم تعيين المحطة إلى {category}.",
