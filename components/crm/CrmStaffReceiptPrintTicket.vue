@@ -181,7 +181,7 @@ const platformLegalResolved = computed(() => props.platformLegal ?? EMPTY_PLATFO
     visibility: hidden !important;
   }
 
-  body.printing-receipt-ticket .receipt-print-ticket {
+  body.printing-receipt-ticket .receipt-print-ticket.crm-staff-receipt-print-ticket {
     display: none !important;
     visibility: hidden !important;
   }
