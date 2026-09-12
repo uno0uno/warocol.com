@@ -2393,7 +2393,8 @@ const prefacturaTaxBulletLine = (label: string, amount: number | string) =>
 
 const prefacturaProductBlock = (item: any) =>
   formatReceiptProductBlock({
-    name: `${item.product?.name || item.name || 'Item'}${isKitchenServiceMode.value && item.fired === false ? ' *' : ''}`,
+    // Cortesias (#2669): marca visible en prefactura/termica.
+    name: `${item.product?.name || item.name || 'Item'}${item.is_courtesy ? ' (Cortesía)' : ''}${isKitchenServiceMode.value && item.fired === false ? ' *' : ''}`,
     quantity: item.quantity,
     unitPriceLabel: formatCurrencyThermal(getItemUnitPrice(item)),
     lineTotalLabel: formatCurrencyThermal(getItemTotal(item)),
@@ -2420,6 +2421,8 @@ const receiptPrintLineGuards = (item: any) => [
   item.tax_category,
   item.tax_label,
   item.included_in_price,
+  // Cortesias (#2669): nunca fusionar linea cortesia con linea paga.
+  item.is_courtesy,
 ]
 
 const checkoutProductKey = (item: any) =>
@@ -2455,6 +2458,15 @@ const consolidateCheckoutPrintItems = (items: any[]) =>
 
 const printablePrefacturaItems = computed(() =>
   consolidateCheckoutPrintItems(cartItems.value)
+)
+
+// Cortesias (#2669): seccion separada $0, excluida del total a pagar.
+const isCourtesyPrintLine = (item: any) => !!(item?.is_courtesy ?? item?.isCourtesy)
+const prefacturaPayableItems = computed(() =>
+  printablePrefacturaItems.value.filter(item => !isCourtesyPrintLine(item)),
+)
+const prefacturaCourtesyItems = computed(() =>
+  printablePrefacturaItems.value.filter(item => isCourtesyPrintLine(item)),
 )
 
 const printableReceiptItems = computed(() =>
@@ -6324,7 +6336,7 @@ onUnmounted(() => {
     <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
-    <template v-for="(item, idx) in printablePrefacturaItems" :key="item.id ?? item.orderItemId">
+    <template v-for="(item, idx) in prefacturaPayableItems" :key="item.id ?? item.orderItemId">
       <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ prefacturaItemSep }}</div>
       <pre class="receipt-plain-pre">{{ prefacturaProductBlock(item) }}</pre>
       <pre
@@ -6332,6 +6344,14 @@ onUnmounted(() => {
         :key="`${item.id ?? item.orderItemId}-${mod.id}`"
         class="receipt-plain-pre"
       >{{ prefacturaModifierBlock(mod) }}</pre>
+    </template>
+    <template v-if="prefacturaCourtesyItems.length > 0">
+      <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
+      <div class="receipt-plain-line receipt-small">{{ padReceiptLine('Cortesías $0', '') }}</div>
+      <template v-for="(item, idx) in prefacturaCourtesyItems" :key="item.id ?? item.orderItemId">
+        <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ prefacturaItemSep }}</div>
+        <pre class="receipt-plain-pre">{{ prefacturaProductBlock(item) }}</pre>
+      </template>
     </template>
     <div class="receipt-plain-line receipt-small">{{ prefacturaSectionSep }}</div>
 

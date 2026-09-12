@@ -101,6 +101,34 @@ describe('buildComandaTicketPlainText', () => {
     )
     expect(text).toContain('  - Extra - $1000')
   })
+
+  it('marks courtesy lines with CORTESIA (#2669)', () => {
+    const text = buildComandaTicketPlainText(
+      [
+        {
+          comanda_number: 2,
+          items: [
+            { kitchen_name: 'Café', quantity: 2, is_courtesy: true },
+            { kitchen_name: 'Almuerzo', quantity: 1 },
+          ],
+        },
+      ],
+      { formatTime: () => 't' },
+    )
+    expect(text).toContain('2x Café ** CORTESIA **')
+    expect(text).toContain('1x Almuerzo')
+    expect(text).not.toContain('Almuerzo ** CORTESIA **')
+  })
+
+  it('mapComandasForPrint carries is_courtesy (#2669)', () => {
+    const mapped = mapComandasForPrint([
+      {
+        comanda_number: 3,
+        items: [{ kitchen_name: 'Café', quantity: 1, is_courtesy: true }],
+      },
+    ])
+    expect(mapped[0]!.items[0]!.is_courtesy).toBe(true)
+  })
 })
 
 describe('formatComandaModifierLabel', () => {

@@ -38,6 +38,7 @@ export type ReceiptTicketItem = {
   taxLabel?: string | null
   taxAmount?: number | string | null
   includedInPrice?: boolean | null
+  is_courtesy?: boolean | null
 }
 
 type ReceiptTicketSourceItem = {
@@ -80,6 +81,8 @@ type ReceiptTicketSourceItem = {
   tax_amount?: number | string | null
   includedInPrice?: boolean | null
   included_in_price?: boolean | null
+  is_courtesy?: boolean | null
+  isCourtesy?: boolean | null
 }
 
 type ConsolidateOptions<T> = {
@@ -169,6 +172,7 @@ export function buildReceiptTicketItems(
       taxLabel: item.taxLabel ?? item.tax_label ?? null,
       taxAmount: item.taxAmount ?? item.tax_amount ?? null,
       includedInPrice: item.includedInPrice ?? item.included_in_price ?? null,
+      is_courtesy: item.is_courtesy ?? item.isCourtesy ?? null,
     }
   })
 }
