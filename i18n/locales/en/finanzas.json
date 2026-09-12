@@ -235,7 +235,9 @@
       "loadPeriodSummaryError": "The period summary could not be loaded.",
       "otherMethods": "Other methods",
       "summary": "Summary",
-      "reported": "Reported"
+      "reported": "Reported",
+      "courtesiesShort": "Courtesies ({orders} orders)",
+      "courtesiesUnits": "{units} units"
     },
     "cartera": {
       "totalReceivable": "Total receivable",
@@ -764,13 +766,34 @@
         "lineCounterpart": "Balance adjustment counterpart",
         "updateError": "Error updating balance",
         "reasons": {
-          "capital_aporte": { "label": "Partner contribution / capital", "description": "A partner put money into the business" },
-          "prestamo": { "label": "Loan received", "description": "A bank or third party lent money to the business" },
-          "saldo_historico": { "label": "Historical balance not previously recorded", "description": "Money that was already there before starting to use the platform" },
-          "cliente_directo": { "label": "Customer paid directly to the bank", "description": "A customer transferred or deposited without going through POS" },
-          "no_seguro_positivo": { "label": "I'm not sure", "description": "Money came in but I do not know exactly from where — an accountant will review it later" },
-          "comision_bancaria": { "label": "Bank fee / GMF (4×1000)", "description": "The bank charged fees, withholding, or GMF" },
-          "no_seguro_negativo": { "label": "I'm not sure", "description": "Money went out but I do not know exactly where — an accountant will review it later" }
+          "capital_aporte": {
+            "label": "Partner contribution / capital",
+            "description": "A partner put money into the business"
+          },
+          "prestamo": {
+            "label": "Loan received",
+            "description": "A bank or third party lent money to the business"
+          },
+          "saldo_historico": {
+            "label": "Historical balance not previously recorded",
+            "description": "Money that was already there before starting to use the platform"
+          },
+          "cliente_directo": {
+            "label": "Customer paid directly to the bank",
+            "description": "A customer transferred or deposited without going through POS"
+          },
+          "no_seguro_positivo": {
+            "label": "I'm not sure",
+            "description": "Money came in but I do not know exactly from where — an accountant will review it later"
+          },
+          "comision_bancaria": {
+            "label": "Bank fee / GMF (4×1000)",
+            "description": "The bank charged fees, withholding, or GMF"
+          },
+          "no_seguro_negativo": {
+            "label": "I'm not sure",
+            "description": "Money went out but I do not know exactly where — an accountant will review it later"
+          }
         }
       },
       "classes": {
