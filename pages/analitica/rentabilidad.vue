@@ -89,6 +89,8 @@ const menuSummary = computed(() => menuAnalysisData.value?.data?.summary ?? {
   puzzles: 0,
   dogs: 0,
   avg_profit_margin_pct: 0,
+  courtesy_units: 0,
+  courtesy_orders: 0,
 })
 
 const hasOperativeFoodCost = computed(() => foodCostCurrent.value?.food_cost_operativo_pct != null)
@@ -272,6 +274,10 @@ onUnmounted(() => {
           hide-header
           hide-food-cost-summary
         />
+        <!-- Cortesias (#2670): fuera de clasificacion, columna propia. -->
+        <p v-if="(menuSummary.courtesy_units ?? 0) > 0" class="text-xs text-text-secondary">
+          Cortesías: {{ menuSummary.courtesy_units }} uds en {{ menuSummary.courtesy_orders ?? 0 }} pedidos — no suman a ingresos ni margen.
+        </p>
       </section>
     </template>
   </div>

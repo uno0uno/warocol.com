@@ -276,6 +276,8 @@ const metrics = computed(() => {
     return {
       total_sales: data.total_sales ?? 0,
       avg_ticket: data.avg_ticket ?? 0,
+      courtesy_units: data.courtesy_units ?? 0,
+      courtesy_orders: data.courtesy_orders ?? 0,
       completed_orders: data.completed_orders ?? 0,
       discount_count: data.discount_count ?? 0,
       total_discount_amount: data.total_discount_amount ?? 0,
@@ -288,6 +290,8 @@ const metrics = computed(() => {
   return {
     total_sales: main.total_sales ?? 0,
     avg_ticket: main.avg_ticket ?? 0,
+    courtesy_units: main.courtesy_units ?? 0,
+    courtesy_orders: main.courtesy_orders ?? 0,
     completed_orders: main.completed_orders ?? 0,
     discount_count: main.discount_count ?? 0,
     total_discount_amount: main.total_discount_amount ?? 0,
@@ -314,7 +318,9 @@ const metrics = computed(() => {
       <section>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', tipEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard :title="t('analitica.ventas.grossSales')" :value="metrics.total_sales" format="currency" variant="primary" />
-          <MetricCard :title="t('analitica.ventas.avgTicket')" :value="metrics.avg_ticket" format="currency" variant="primary" />
+          <MetricCard :title="t('analitica.ventas.avgTicket')" :value="metrics.avg_ticket" format="currency" variant="primary" subtitle="Sin pedidos $0" />
+          <!-- Cortesias (#2670): fuera de ingresos/ticket, columna propia. -->
+          <MetricCard v-if="(metrics.courtesy_units ?? 0) > 0" title="Cortesías" :value="metrics.courtesy_units" format="number" variant="primary" :subtitle="`en ${metrics.courtesy_orders ?? 0} pedidos · $0`" />
           <!-- warocol.com#641 — Tips card with deep-link to /ventas/propinas -->
           <NuxtLink
             v-if="tipEnabled"
