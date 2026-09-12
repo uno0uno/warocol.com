@@ -235,7 +235,9 @@
       "loadPeriodSummaryError": "No se pudo cargar el resumen del período.",
       "otherMethods": "Otros métodos",
       "summary": "Resumen",
-      "reported": "Reportado"
+      "reported": "Reportado",
+      "courtesiesShort": "Cortesías ({orders} pedidos)",
+      "courtesiesUnits": "{units} uds"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",
@@ -764,13 +766,34 @@
         "lineCounterpart": "Contraparte ajuste saldo",
         "updateError": "Error al actualizar el saldo",
         "reasons": {
-          "capital_aporte": { "label": "Aporte de socio / capital", "description": "Un socio puso plata en la empresa" },
-          "prestamo": { "label": "Préstamo recibido", "description": "Un banco o tercero le prestó al negocio" },
-          "saldo_historico": { "label": "Saldo histórico que no había registrado", "description": "Plata que ya estaba antes de empezar a usar la plataforma" },
-          "cliente_directo": { "label": "Cliente pagó directo al banco", "description": "Un cliente transfirió o consignó sin pasar por el POS" },
-          "no_seguro_positivo": { "label": "No estoy seguro", "description": "Entró plata pero no sé exactamente de dónde — un contador lo revisará después" },
-          "comision_bancaria": { "label": "Comisión bancaria / GMF (4×1000)", "description": "El banco cobró comisiones, retención o GMF" },
-          "no_seguro_negativo": { "label": "No estoy seguro", "description": "Salió plata pero no sé exactamente a dónde — un contador lo revisará después" }
+          "capital_aporte": {
+            "label": "Aporte de socio / capital",
+            "description": "Un socio puso plata en la empresa"
+          },
+          "prestamo": {
+            "label": "Préstamo recibido",
+            "description": "Un banco o tercero le prestó al negocio"
+          },
+          "saldo_historico": {
+            "label": "Saldo histórico que no había registrado",
+            "description": "Plata que ya estaba antes de empezar a usar la plataforma"
+          },
+          "cliente_directo": {
+            "label": "Cliente pagó directo al banco",
+            "description": "Un cliente transfirió o consignó sin pasar por el POS"
+          },
+          "no_seguro_positivo": {
+            "label": "No estoy seguro",
+            "description": "Entró plata pero no sé exactamente de dónde — un contador lo revisará después"
+          },
+          "comision_bancaria": {
+            "label": "Comisión bancaria / GMF (4×1000)",
+            "description": "El banco cobró comisiones, retención o GMF"
+          },
+          "no_seguro_negativo": {
+            "label": "No estoy seguro",
+            "description": "Salió plata pero no sé exactamente a dónde — un contador lo revisará después"
+          }
         }
       },
       "classes": {

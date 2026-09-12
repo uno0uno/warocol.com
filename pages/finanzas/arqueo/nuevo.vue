@@ -239,8 +239,8 @@
                 <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.tipTax') }}</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
                 <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">{{ t('finanzas.arqueo.totalCharged') }}</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.closeOrders') }}</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
-                <!-- Cortesias (#2670): informativas, no tocan caja. -->
-                <div v-if="(xPreviewData.courtesyUnits ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Cortesías ({{ xPreviewData.courtesyOrders ?? 0 }} pedidos)</span><span class="font-medium">{{ xPreviewData.courtesyUnits }} uds · $0</span></div>
+                <!-- Cortesias (#2670, #2683): tenant currency + i18n, no tocan caja. -->
+                <div v-if="(xPreviewData.courtesyUnits ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">{{ t('finanzas.arqueo.courtesiesShort', { orders: xPreviewData.courtesyOrders ?? 0 }) }}</span><span class="font-medium">{{ t('finanzas.arqueo.courtesiesUnits', { units: xPreviewData.courtesyUnits }) }} · {{ (xPreviewData.courtesyCost ?? 0) > 0 ? formatCurrency(xPreviewData.courtesyCost) : formatCurrency(0) }}</span></div>
               </div>
             </div>
             <!-- Caja -->
