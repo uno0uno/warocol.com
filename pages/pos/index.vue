@@ -2672,7 +2672,8 @@ onUnmounted(() => {
                 </span>
               </template>
               <template #cell-price="{ item }">
-                <span class="text-sm font-semibold tabular-nums text-text-primary/80">{{ formatCurrency(item.price) }}</span>
+                <span v-if="item.es_cortesia" class="inline-flex items-center gap-1 text-sm font-semibold tabular-nums"><span class="rounded-full bg-badge-success-bg px-1.5 py-0.5 text-[10px] font-bold text-badge-success-text">Cortesía</span><span class="text-text-primary/80">$0</span></span>
+                <span v-else class="text-sm font-semibold tabular-nums text-text-primary/80">{{ formatCurrency(item.price) }}</span>
               </template>
             </UiResponsiveDataView>
           </div>
