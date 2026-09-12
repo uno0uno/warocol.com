@@ -1,0 +1,58 @@
+# Replica override for warocol-nuxt (issue #2664, companion of
+# warolabs-server-infra#13). Include AFTER prod on warolabs-hostinger:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.replicas.yml up -d
+# Ports 3004/3005 verified free on server (3002/3003 taken by
+# sksoluciones / warotickets-prod). Each replica gets its own storage
+# volume so they never lock a shared nuxt-data. Without this file the
+# deploy stays single-replica on :3001.
+services:
+  warocol-2:
+    image: frontwarocolombia-warocol:latest
+    container_name: warocol-nuxt-2
+    ports:
+      - "127.0.0.1:3004:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - nuxt-data-2:/app/storage
+    networks:
+      - warolabs-network
+    restart: unless-stopped
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -T 3 -O- http://127.0.0.1:3001/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  warocol-3:
+    image: frontwarocolombia-warocol:latest
+    container_name: warocol-nuxt-3
+    ports:
+      - "127.0.0.1:3005:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - nuxt-data-3:/app/storage
+    networks:
+      - warolabs-network
+    restart: unless-stopped
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -T 3 -O- http://127.0.0.1:3001/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  nuxt-data-2:
+  nuxt-data-3:
