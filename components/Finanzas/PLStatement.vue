@@ -24,6 +24,7 @@ interface PLRevenue {
 
 interface PLCogs {
   foodCost: number
+  courtesyCost?: number
   total: number
 }
 
@@ -342,6 +343,21 @@ const prevPeriodLabel = computed(() => {
               class="w-36 text-end tabular-nums text-text-secondary"
             >
               {{ formatCurrency(previous!.cogs.foodCost) }}
+            </span>
+          </div>
+          <div
+            v-if="(current.cogs.courtesyCost ?? 0) > 0"
+            class="flex items-center px-4 py-2.5 text-sm"
+          >
+            <span class="flex-1 text-text-secondary">Cortesías</span>
+            <span class="w-36 text-end tabular-nums text-text-secondary">
+              {{ formatCurrency(current.cogs.courtesyCost) }}
+            </span>
+            <span
+              v-if="hasPrevious"
+              class="w-36 text-end tabular-nums text-text-secondary"
+            >
+              {{ formatCurrency(previous!.cogs.courtesyCost ?? 0) }}
             </span>
           </div>
           <div class="flex items-center px-4 py-2.5 text-sm font-semibold bg-surface-secondary/20">
