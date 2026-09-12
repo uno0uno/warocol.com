@@ -365,6 +365,15 @@ const printableItems = computed(() =>
     }),
   })
 )
+
+// Cortesias (#2669): seccion separada $0, excluida del total a pagar.
+const isCourtesyReceiptItem = (item: ReceiptItem) => !!item.is_courtesy
+const payableReceiptItems = computed(() =>
+  printableItems.value.filter(item => !isCourtesyReceiptItem(item)),
+)
+const courtesyReceiptItems = computed(() =>
+  printableItems.value.filter(item => isCourtesyReceiptItem(item)),
+)
 </script>
 
 <template>
@@ -406,7 +415,7 @@ const printableItems = computed(() =>
     <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
     <div class="receipt-plain-line receipt-small">{{ padReceiptLine(t('pos.receipt.description'), t('pos.receipt.total')) }}</div>
 
-    <template v-for="(item, idx) in printableItems" :key="item.id ?? item.name">
+    <template v-for="(item, idx) in payableReceiptItems" :key="item.id ?? item.name">
       <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ itemSeparator }}</div>
       <pre class="receipt-plain-pre">{{ productBlock(item) }}</pre>
       <pre
@@ -414,6 +423,14 @@ const printableItems = computed(() =>
         :key="`${item.id ?? item.name}-${modifier.id ?? modifier.name}`"
         class="receipt-plain-pre receipt-modifier-pre"
       >{{ modifierBlock(modifier) }}</pre>
+    </template>
+    <template v-if="courtesyReceiptItems.length > 0">
+      <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
+      <div class="receipt-plain-line receipt-small">{{ padReceiptLine('Cortesías $0', '') }}</div>
+      <template v-for="(item, idx) in courtesyReceiptItems" :key="item.id ?? item.name">
+        <div v-if="idx > 0" class="receipt-plain-line receipt-small">{{ itemSeparator }}</div>
+        <pre class="receipt-plain-pre">{{ productBlock(item) }}</pre>
+      </template>
     </template>
 
     <div class="receipt-plain-line receipt-small">{{ sectionSeparator }}</div>
