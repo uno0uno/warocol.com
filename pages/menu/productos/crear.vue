@@ -1488,6 +1488,14 @@ async function submitProduct() {
 
     form.value.tenant_id = currentTenant.value?.id || ''
 
+    // Cortesias (#2667): precio 0, sin modificadores, solo POS/manual.
+    if (form.value.es_cortesia) {
+      form.value.price = 0
+      form.value.allow_modifiers = false
+      form.value.is_available_online = false
+      form.value.is_available_table_qr = false
+    }
+
     if (isResaleDirectMode.value) {
       const weight = Number(resaleUnitWeightGr.value)
       if (!Number.isFinite(weight) || weight <= 0) {

@@ -50,6 +50,7 @@ interface LineItem {
   display_name?: string | null
   notes?: string | null
   is_open_sale?: boolean
+  is_courtesy?: boolean
 }
 
 interface SelectedCustomer {
@@ -294,12 +295,14 @@ function normalizeSelectedModifier(modifier: ModifierOption): ModifierOption {
 }
 
 function buildLineItem(product: any, selectedModifiers: ModifierOption[] = []): LineItem {
+  const isCourtesy = !!product.es_cortesia
   return {
     product_id: product.id,
     quantity: 1,
-    unit_price: Number(product.price) || 0,
-    modifier_groups: normalizeModifierGroups(product.modifier_groups || []),
-    selected_modifiers: selectedModifiers.map(normalizeSelectedModifier)
+    unit_price: isCourtesy ? 0 : (Number(product.price) || 0),
+    modifier_groups: isCourtesy ? [] : normalizeModifierGroups(product.modifier_groups || []),
+    selected_modifiers: selectedModifiers.map(normalizeSelectedModifier),
+    is_courtesy: isCourtesy || undefined
   }
 }
 
@@ -311,7 +314,7 @@ function addProductToCart(product: any, selectedModifiers: ModifierOption[] = []
 
 function selectProduct(product: any) {
   if (!product) return
-  if (product.is_resale === true) {
+  if (product.is_resale === true || product.es_cortesia === true) {
     closeProductDetail()
     addProductToCart(product)
     return
@@ -1233,6 +1236,7 @@ async function submit() {
               <div class="flex items-start gap-2">
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-text-primary leading-snug">{{ itemDisplayName(item) }}</p>
+                  <span v-if="item.is_courtesy" class="inline-block mt-0.5 rounded px-1.5 py-px text-[10px] font-semibold leading-tight text-badge-success-text bg-badge-success-bg">Cortesía</span>
                   <p class="text-xs text-text-secondary mt-0.5">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
                   <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
                 </div>
@@ -1468,6 +1472,7 @@ async function submit() {
               <div class="flex items-start gap-2">
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-text-primary leading-snug">{{ itemDisplayName(item) }}</p>
+                  <span v-if="item.is_courtesy" class="inline-block mt-0.5 rounded px-1.5 py-px text-[10px] font-semibold leading-tight text-badge-success-text bg-badge-success-bg">Cortesía</span>
                   <p class="text-xs text-text-secondary mt-0.5">{{ t('ventas.crear.unitPrice', { amount: formatCurrency(item.unit_price) }) }}</p>
                   <p v-if="item.notes" class="text-xs text-text-tertiary mt-0.5 truncate">{{ item.notes }}</p>
                 </div>

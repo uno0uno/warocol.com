@@ -1569,6 +1569,7 @@ watch(() => productsData.value, (data) => {
       category_color: p.category_color ?? null,
       is_available: p.is_available,
       is_resale: p.is_resale || false,
+      es_cortesia: p.es_cortesia || false,
       modifier_groups: p.modifier_groups || []
     }))
     posStore.setProducts(productsToCache)
@@ -1591,7 +1592,8 @@ const products = computed(() => {
     image: '🍽️',
     image_url: p.image_url || null,
     available: p.is_available,
-    is_resale: p.is_resale || false
+    is_resale: p.is_resale || false,
+    es_cortesia: p.es_cortesia || false
   }))
 })
 
@@ -1655,19 +1657,21 @@ watch(showMobileCartSheet, (open) => {
 
 // Navigate to product customization page or add directly to cart
 const selectProduct = async (product: any) => {
-  // Resale products don't need modifiers - add directly to cart
-  if (product.is_resale) {
+  // Resale and courtesy products don't need modifiers - add directly to cart (#2667)
+  if (product.is_resale || product.es_cortesia) {
+    const isCourtesy = !!product.es_cortesia
     await posStore.addToCart({
       product: {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: isCourtesy ? 0 : product.price,
         image: product.image,
         category: product.category
       },
       quantity: 1,
       modifiers: [],
-      is_resale: true
+      is_resale: !!product.is_resale,
+      is_courtesy: isCourtesy
     })
     return
   }
@@ -1680,7 +1684,7 @@ const selectProduct = async (product: any) => {
 // Navigate to edit cart item
 const editCartItem = (cartIndex: number, productId: string) => {
   const item = posStore.cart[cartIndex]
-  if (item?.is_open_sale) return
+  if (item?.is_open_sale || item?.is_courtesy) return
   sessionStorage.setItem('posNavigation', 'true')
   router.push(`/pos/producto/${productId}?edit=${cartIndex}`)
 }

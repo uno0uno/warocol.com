@@ -42,6 +42,11 @@
                   class="shrink-0 max-w-full rounded px-2 py-0.5 text-[10px] font-semibold leading-tight text-badge-success-text bg-badge-success-bg"
                   :title="promoTitle || promoLabel"
                 >{{ promoLabel }}</span>
+                <span
+                  v-if="item.is_courtesy"
+                  class="shrink-0 max-w-full rounded px-2 py-0.5 text-[10px] font-semibold leading-tight text-badge-success-text bg-badge-success-bg"
+                  title="Cortesía $0"
+                >Cortesía</span>
               </div>
               <p v-if="item.sentAt" class="mt-0.5 text-[10px] text-text-tertiary">{{ t('pos.cartItem.firedAt') }} {{ formatTime(item.sentAt) }}</p>
             </div>
@@ -128,7 +133,7 @@
         </button>
 
         <button
-          v-if="!hideEdit && !item.is_resale && !item.is_open_sale"
+          v-if="!hideEdit && !item.is_resale && !item.is_courtesy && !item.is_open_sale"
           type="button"
           class="cart-item-tool rounded-lg text-text-secondary transition-colors hover:bg-primary/10 hover:text-primary"
           :aria-label="t('pos.cartItem.editAria')"
@@ -177,6 +182,7 @@ interface CartItem {
   quantity: number
   notes?: string
   is_resale?: boolean
+  is_courtesy?: boolean
   is_open_sale?: boolean
   fulfillmentStatus?: 'new' | 'sent' | 'hold' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
   sentAt?: string | null
