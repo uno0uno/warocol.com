@@ -1279,7 +1279,6 @@ const printReceipt = async () => {
   // iPad/Android transient: check cached caja sync BEFORE any await; if no printer, fire window.print in same tick (#2448).
   // QR CUFE precargado via watch(invoiceData.cufe) #476-483, no bloquear gesto Safari aquí.
   const cachedCaja = getCachedCajaPrinterName()
-  console.log('[print] ventas detail click, order=' + (order.value?.order_number||'none') + ' cachedCaja=' + JSON.stringify(cachedCaja) + ' cufe=' + (invoiceData.value?.cufe ? 'yes' : 'no') + ' qr=' + (invoiceQrDataUrl.value ? 'yes' : 'no'))
   if (typeof cachedCaja !== 'undefined' && !String(cachedCaja || '').trim()) {
     document.body.classList.add('printing-receipt-ticket')
     await nextTick()
@@ -1300,7 +1299,6 @@ const printReceipt = async () => {
     window.removeEventListener('afterprint', cleanup)
   }
   await nextTick()
-  console.log('[print] ventas: before printTicketElement, cachedCaja=' + JSON.stringify(cachedCaja))
   let browserPrintFiredSync = false
   const printResult = await printTicketElement('pos-receipt', {
     browserPrint: () => { browserPrintFiredSync = true; syncBrowserPrint() },
@@ -1328,9 +1326,8 @@ const printReceipt = async () => {
     cleanup()
     return
   }
-  console.log('[print] ventas after printTicketElement mode=' + (printResult?.mode) + ' firedSync=' + browserPrintFiredSync)
   window.addEventListener('afterprint', cleanup)
-  if (!browserPrintFiredSync) { console.log('[print] ventas fallback window.print'); syncBrowserPrint() }
+  if (!browserPrintFiredSync) { syncBrowserPrint() }
   window.setTimeout(cleanup, 1500)
 }
 

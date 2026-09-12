@@ -50,7 +50,13 @@
 
     <!-- Price — pinned to bottom for equal card bottoms -->
     <div class="mt-auto w-full pt-1.5 md:pt-2.5 border-t border-border/60">
-      <p class="text-[10px] md:text-sm font-semibold text-text-primary/80 text-center">
+      <p v-if="product.es_cortesia" class="text-[10px] md:text-sm font-semibold text-center">
+        <span class="inline-flex items-center gap-1 justify-center">
+          <span class="rounded-full bg-badge-success-bg px-1.5 py-0.5 text-[9px] font-bold text-badge-success-text">Cortesía</span>
+          <span class="text-text-primary/80">$0</span>
+        </span>
+      </p>
+      <p v-else class="text-[10px] md:text-sm font-semibold text-text-primary/80 text-center">
         {{ formatCurrency(product.price) }}
       </p>
     </div>
@@ -72,6 +78,7 @@ interface Product {
   image: string
   image_url?: string | null
   available: boolean
+  es_cortesia?: boolean
 }
 
 interface PromoBadge {
