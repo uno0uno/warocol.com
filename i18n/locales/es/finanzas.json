@@ -237,7 +237,7 @@
       "summary": "Resumen",
       "reported": "Reportado",
       "courtesiesShort": "Cortesías ({orders} pedidos)",
-      "courtesiesUnits": "{units} uds"
+      "courtesiesUnits": "{units} unidades"
     },
     "cartera": {
       "totalReceivable": "Total por cobrar",
