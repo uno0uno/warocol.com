@@ -25,6 +25,7 @@ export interface PosCartItem {
     modifiers: CartModifier[]
     notes?: string
     is_resale?: boolean // Productos de reventa no permiten modificadores
+    is_courtesy?: boolean // Cortesias: precio 0, sin modificadores, sin edicion (#2667)
     /** Venta libre (#796): custom unit price; do not merge with catalog lines */
     is_open_sale?: boolean
     /** warocol.com#1003 — cashier opted out of automatic promotion for this line */
@@ -241,7 +242,7 @@ export const usePOSStore = defineStore('pos', () => {
     const addCartItemsBatch = async (
         product: PosCartItem['product'],
         units: Array<{ modifiers: CartModifier[]; notes?: string }>,
-        extra?: Pick<PosCartItem, 'is_resale' | 'is_open_sale' | 'promo_opt_out'>,
+        extra?: Pick<PosCartItem, 'is_resale' | 'is_courtesy' | 'is_open_sale' | 'promo_opt_out'>,
     ) => {
         for (const unit of units) {
             await addToCart({
@@ -294,6 +295,7 @@ export const usePOSStore = defineStore('pos', () => {
                 modifiers: [...originalItem.modifiers],
                 notes: originalItem.notes,
                 is_resale: originalItem.is_resale,
+                is_courtesy: originalItem.is_courtesy,
                 is_open_sale: originalItem.is_open_sale,
             })
         }

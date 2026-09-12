@@ -408,6 +408,7 @@ interface CartItem {
   quantity: number
   notes?: string
   is_resale?: boolean
+  is_courtesy?: boolean
   promo_opt_out?: boolean
   promotionName?: string | null
   promoType?: string | null

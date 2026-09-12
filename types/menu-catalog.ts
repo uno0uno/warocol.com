@@ -3,6 +3,7 @@ export type MenuProductBulkPatch = {
   name?: string
   category_id?: string
   price?: number
+  es_cortesia?: boolean
   costo_percibido?: number | null
   is_available?: boolean
   is_available_online?: boolean

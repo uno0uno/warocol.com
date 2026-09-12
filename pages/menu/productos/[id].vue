@@ -1781,6 +1781,14 @@ const handleSubmit = async () => {
       seenIds.add(link.recipe_base_id)
     }
 
+    // Cortesias (#2667): precio 0, sin modificadores, solo POS/manual.
+    if (form.value.es_cortesia) {
+      form.value.price = 0
+      form.value.allow_modifiers = false
+      form.value.is_available_online = false
+      form.value.is_available_table_qr = false
+    }
+
     // Resale: never send ingredients/recipe_bases — empty arrays DELETE product_recipes (#861).
     const {
       ingredients: _ingredients,
