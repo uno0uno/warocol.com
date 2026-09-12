@@ -300,7 +300,7 @@ function buildLineItem(product: any, selectedModifiers: ModifierOption[] = []): 
     product_id: product.id,
     quantity: 1,
     unit_price: isCourtesy ? 0 : (Number(product.price) || 0),
-    modifier_groups: normalizeModifierGroups(product.modifier_groups || []),
+    modifier_groups: isCourtesy ? [] : normalizeModifierGroups(product.modifier_groups || []),
     selected_modifiers: selectedModifiers.map(normalizeSelectedModifier),
     is_courtesy: isCourtesy || undefined
   }

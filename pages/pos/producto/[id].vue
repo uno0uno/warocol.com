@@ -91,6 +91,7 @@ const product = computed(() => {
     image: p.image,
     image_url: p.image_url || null,
     available: p.is_available,
+    es_cortesia: (p as any).es_cortesia || false,
     modifier_groups: p.modifier_groups || []
   }
 })
@@ -676,6 +677,30 @@ const isModifierSelected = (modifierId: string) => getModifierQty(modifierId) > 
 
 const addToCart = async () => {
   if (!product.value || isAdding.value) return
+
+  // Cortesias (#2667): directo $0 sin modificadores aunque se abra por URL.
+  if ((product.value as any).es_cortesia && !isTabItemEditMode.value && !(isEditMode.value && editCartIndex.value !== null)) {
+    isAdding.value = true
+    try {
+      await posStore.addToCart({
+        product: {
+          id: product.value.id,
+          name: product.value.name,
+          price: 0,
+          image: product.value.image,
+          category: product.value.category,
+        },
+        quantity: quantity.value || 1,
+        modifiers: [],
+        notes: notes.value || undefined,
+        is_courtesy: true,
+      })
+      router.push('/pos')
+    } finally {
+      isAdding.value = false
+    }
+    return
+  }
 
   if (wizardMode.value) {
     const invalidUnitIndex = wizardUnits.value.findIndex(unit =>

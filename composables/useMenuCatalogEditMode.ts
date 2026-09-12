@@ -265,8 +265,12 @@ export function useMenuCatalogEditMode(options: UseMenuCatalogEditModeOptions) {
     if (draft.es_cortesia !== draft.originalEsCortesia) {
       body.es_cortesia = draft.es_cortesia
     }
-    // Cortesias (#2667): solo POS/manual — forzar apagado online/QR al guardar.
+    // Cortesias (#2667): solo POS/manual — forzar precio 0, sin modificadores, apagado online/QR.
     if (draft.es_cortesia) {
+      if (draft.price !== 0) {
+        body.price = 0
+      }
+      body.allow_modifiers = false
       if (draft.is_available_online) {
         body.is_available_online = false
       }

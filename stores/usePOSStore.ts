@@ -125,6 +125,7 @@ export interface CachedProduct {
     category_color?: string | null
     is_available: boolean
     is_resale: boolean
+    es_cortesia: boolean // Cortesias #2667: quick-add $0 sin modificadores
     modifier_groups: any[] // Grupos de modificadores con todas sus opciones
 }
 
@@ -213,27 +214,31 @@ export const usePOSStore = defineStore('pos', () => {
 
     const addToCart = async (item: Omit<PosCartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
+        // Cortesias (#2667): endurecer en el store — $0 y sin modificadores venga de donde venga.
+        const normalized = item.is_courtesy
+            ? { ...item, product: { ...item.product, price: 0 }, modifiers: [] }
+            : item
         const existingIndex = cart.value.findIndex((c) => {
-            if (item.is_open_sale || c.is_open_sale) {
+            if (normalized.is_open_sale || c.is_open_sale) {
                 return (
-                    !!item.is_open_sale &&
+                    !!normalized.is_open_sale &&
                     !!c.is_open_sale &&
-                    c.product.id === item.product.id &&
-                    Number(c.product.price) === Number(item.product.price) &&
-                    c.notes === (item.notes ?? undefined)
+                    c.product.id === normalized.product.id &&
+                    Number(c.product.price) === Number(normalized.product.price) &&
+                    c.notes === (normalized.notes ?? undefined)
                 )
             }
             return (
-                c.product.id === item.product.id &&
-                c.notes === (item.notes ?? undefined) &&
-                modifiersSignature(c.modifiers) === modifiersSignature(item.modifiers ?? [])
+                c.product.id === normalized.product.id &&
+                c.notes === (normalized.notes ?? undefined) &&
+                modifiersSignature(c.modifiers) === modifiersSignature(normalized.modifiers ?? [])
             )
         })
         if (existingIndex !== -1) {
             cart.value[existingIndex].quantity += quantity
             clearPromoFields(cart.value[existingIndex])
         } else {
-            cart.value.push({ ...item, quantity })
+            cart.value.push({ ...normalized, quantity })
         }
         invalidateSyncedCart()
     }
@@ -303,7 +308,10 @@ export const usePOSStore = defineStore('pos', () => {
 
     const updateCartItem = async (index: number, updatedItem: Omit<PosCartItem, 'quantity'> & { quantity?: number }) => {
         if (index >= 0 && index < cart.value.length) {
-            cart.value[index] = { ...updatedItem, quantity: updatedItem.quantity || 1 }
+            const normalizedUpdate = updatedItem.is_courtesy
+                ? { ...updatedItem, product: { ...updatedItem.product, price: 0 }, modifiers: [] }
+                : updatedItem
+            cart.value[index] = { ...normalizedUpdate, quantity: normalizedUpdate.quantity || 1 }
             clearPromoFields(cart.value[index])
             invalidateSyncedCart()
         }
@@ -438,6 +446,7 @@ export const usePOSStore = defineStore('pos', () => {
                     })),
                     notes: item.notes,
                     is_resale: item.is_resale || false,
+                    is_courtesy: item.is_courtesy || false,
                     promo_opt_out: Boolean(item.promo_opt_out),
                     ...promoFieldsFromApiLine(item),
                 }))
@@ -536,6 +545,7 @@ export const usePOSStore = defineStore('pos', () => {
             category_color: (p.category_color as string | null | undefined) ?? null,
             is_available: p.is_available !== false,
             is_resale: Boolean(p.is_resale),
+            es_cortesia: Boolean(p.es_cortesia),
             modifier_groups: Array.isArray(p.modifier_groups) ? p.modifier_groups : [],
         }
     }
