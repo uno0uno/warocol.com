@@ -41,6 +41,7 @@ interface ReceiptItem {
   taxLabel?: string | null
   taxAmount?: number | string | null
   includedInPrice?: boolean | null
+  is_courtesy?: boolean | number | string | null
 }
 
 interface ReceiptPaymentLine {
@@ -169,7 +170,8 @@ const productTaxCue = (item: ReceiptItem) => {
 
 const productBlock = (item: ReceiptItem) =>
   formatReceiptProductBlock({
-    name: item.name,
+    // Cortesias (#2669): rotulo visible en HTML, termica y ESC/POS.
+    name: item.is_courtesy ? `${item.name} (Cortesía)` : item.name,
     quantity: item.quantity,
     unitPriceLabel: money(item.unitPrice),
     lineTotalLabel: money(item.total),
@@ -352,6 +354,8 @@ const printableItems = computed(() =>
       item.taxCategory,
       item.taxLabel,
       item.includedInPrice,
+      // Cortesias (#2669): nunca fusionar linea cortesia con linea paga.
+      item.is_courtesy,
     ],
     merge: (item, aggregate) => ({
       ...item,

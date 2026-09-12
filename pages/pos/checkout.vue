@@ -2420,6 +2420,8 @@ const receiptPrintLineGuards = (item: any) => [
   item.tax_category,
   item.tax_label,
   item.included_in_price,
+  // Cortesias (#2669): nunca fusionar linea cortesia con linea paga.
+  item.is_courtesy,
 ]
 
 const checkoutProductKey = (item: any) =>

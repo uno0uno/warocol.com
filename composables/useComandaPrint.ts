@@ -18,6 +18,8 @@ export type ComandaPrintItem = {
   quantity: number
   modifiers_snapshot?: ComandaModifierSnapshot[] | null
   notes?: string | null
+  /** Cortesias (#2669): cocina produce, caja no cobra. */
+  is_courtesy?: boolean | null
 }
 
 export function formatComandaModifierLabel(
@@ -101,7 +103,8 @@ export function buildComandaTicketPlainText(
     lines.push(stationLabel(section.stationName))
     for (const item of section.items) {
       const qty = Number(item.quantity) || 1
-      lines.push(`${qty}x ${item.kitchen_name}`)
+      // Cortesias (#2669): marca visible para cocina.
+      lines.push(item.is_courtesy ? `${qty}x ${item.kitchen_name} ** CORTESIA **` : `${qty}x ${item.kitchen_name}`)
       for (const mod of item.modifiers_snapshot || []) {
         lines.push(
           `  - ${formatComandaModifierLabel(mod, {
@@ -187,6 +190,7 @@ export function mapComandasForPrint(rawComandas: unknown[]): ComandaPrintPayload
       quantity: Number(i.quantity ?? 1),
       modifiers_snapshot: i.modifiers_snapshot as ComandaPrintItem['modifiers_snapshot'],
       notes: (i.notes as string) ?? null,
+      is_courtesy: Boolean(i.is_courtesy),
     })),
   }))
     .filter(c => c.items.length > 0)
