@@ -1,6 +1,6 @@
 <template>
   <AuthSplitShell
-    image-src="/brand/auth-login-trattoria.webp"
+    image-src="https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/brand/auth-login-2026.webp"
     image-position="62% center"
   >
         <!-- Logo -->
