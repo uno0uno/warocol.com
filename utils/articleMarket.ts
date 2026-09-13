@@ -83,11 +83,11 @@ const CO_MARKET: ArticleMarket = Object.freeze({
   localeTag: 'es-CO',
   ogLocale: 'es_CO',
   inLanguage: 'es-CO',
-  currency: 'USD',
-  annualPrice: '',
-  monthlyPrice: '9',
-  annualPriceLabel: 'USD $9/mes',
-  monthlyOfferDescription: 'Plan mensual USD $9',
+  currency: 'COP',
+  annualPrice: '360000',
+  monthlyPrice: '30000',
+  annualPriceLabel: 'COP $30.000/mes',
+  monthlyOfferDescription: 'Plan mensual COP $30.000',
   isUsEn: false,
   areaServedName: 'Colombia',
 })
@@ -178,18 +178,17 @@ function localeTags(lang: string | null | undefined, countryCode: string) {
 function marketFor(countryCode: string, lang?: string | null): ArticleMarket {
   const tags = localeTags(lang, countryCode)
   const currency = currencyFromCountry(countryCode)
+  // CO → COP 30k; US → 30 USD; resto → 9 USD (#2689)
+  if (countryCode === 'CO') return { ...CO_MARKET, ...tags, market: 'CO', currency: CO_MARKET.currency, areaServedName: DISPLAY_NAMES[countryCode] || 'Colombia' }
+  if (countryCode === 'US') return { ...US_MARKET, ...tags, market: 'US' }
   return {
     market: countryCode,
     ...tags,
-    currency,
-    annualPrice: countryCode === 'CO' ? CO_MARKET.annualPrice : countryCode === 'US' ? US_MARKET.annualPrice : '',
-    monthlyPrice: countryCode === 'CO' ? CO_MARKET.monthlyPrice : countryCode === 'US' ? US_MARKET.monthlyPrice : '',
-    annualPriceLabel: countryCode === 'CO' ? CO_MARKET.annualPriceLabel : countryCode === 'US' ? US_MARKET.annualPriceLabel : `${currency}`,
-    monthlyOfferDescription: countryCode === 'CO'
-      ? CO_MARKET.monthlyOfferDescription
-      : countryCode === 'US'
-        ? US_MARKET.monthlyOfferDescription
-        : '',
+    currency: 'USD',
+    annualPrice: '',
+    monthlyPrice: '9',
+    annualPriceLabel: 'USD $9/mes',
+    monthlyOfferDescription: 'Plan mensual USD $9',
     isUsEn: false,
     areaServedName: DISPLAY_NAMES[countryCode] || countryCode,
   }
