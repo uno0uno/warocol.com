@@ -558,7 +558,9 @@
     "thankYouTimeoutTitle": "Pago recibido — activación en curso",
     "thankYouTimeoutDescription": "Aún no vemos el plan activo. Espera un momento y pulsa Actualizar, o vuelve a Mi Plan.",
     "thankYouRefresh": "Actualizar estado",
-    "thankYouPollError": "No pudimos confirmar el estado todavía. Intenta de nuevo en unos segundos."
+    "thankYouPollError": "No pudimos confirmar el estado todavía. Intenta de nuevo en unos segundos.",
+    "secureCheckoutPaymentMP": "Pago seguro procesado por MercadoPago",
+    "secureCheckoutPaymentLS": "Pago seguro procesado por Lemon Squeezy"
   },
   "terms": {
     "title": "Términos y Condiciones",

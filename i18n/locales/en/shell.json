@@ -558,7 +558,9 @@
     "thankYouTimeoutTitle": "Payment received — still activating",
     "thankYouTimeoutDescription": "We do not see an active plan yet. Wait a moment and tap Refresh, or go back to My Plan.",
     "thankYouRefresh": "Refresh status",
-    "thankYouPollError": "We could not confirm status yet. Try again in a few seconds."
+    "thankYouPollError": "We could not confirm status yet. Try again in a few seconds.",
+    "secureCheckoutPaymentMP": "Secure payment processed by MercadoPago",
+    "secureCheckoutPaymentLS": "Secure payment processed by Lemon Squeezy"
   },
   "terms": {
     "title": "Terms and Conditions",
