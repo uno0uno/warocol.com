@@ -483,8 +483,12 @@
                             :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                             :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
                           />
-                          <div class="input-base flex items-center justify-center w-36 min-h-[44px] px-3 py-2 text-sm bg-surface-secondary text-text-secondary truncate">
-                            {{ getRecipeYieldUnit(link.recipe_base_id) ? (getRecipeYieldUnit(link.recipe_base_id) === 'gr' ? 'Gramos (g)' : getRecipeYieldUnit(link.recipe_base_id) === 'ml' ? 'Mililitros (ml)' : getRecipeYieldUnit(link.recipe_base_id)) : t('menu.productos.recipeUnit') }}
+                          <div class="relative w-full sm:w-36">
+                            <select disabled class="input-base w-full min-h-[44px] py-2 pe-3 text-sm disabled:opacity-50 ps-3 bg-surface-secondary" aria-label="Unidad">
+                              <option :value="getRecipeYieldUnit(link.recipe_base_id) || ''" selected>
+                                {{ getRecipeYieldUnit(link.recipe_base_id) === 'gr' ? 'Gramos (gr)' : getRecipeYieldUnit(link.recipe_base_id) === 'g' ? 'Gramos (g)' : getRecipeYieldUnit(link.recipe_base_id) === 'ml' ? 'Mililitros (ml)' : getRecipeYieldUnit(link.recipe_base_id) || t('menu.productos.recipeUnit') }}
+                              </option>
+                            </select>
                           </div>
                         </div>
                       </div>
