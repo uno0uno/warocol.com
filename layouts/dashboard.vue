@@ -105,6 +105,7 @@ const accessStore = useAccessStore()
 const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
 )
+const { currentTenant } = useTenantReactive()
 const { accessStatus, fetchAccessStatus, subscription } = useBilling({ overview: false })
 const { profile: financialProfile } = useTenantFinancialProfile()
 const isBillingBlocked = computed(() =>
