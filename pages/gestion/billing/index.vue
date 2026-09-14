@@ -20,6 +20,8 @@ import {
   billingEventProviderLabelKey,
   normalizeLocalCheckoutUrl,
 } from '~/utils/billingPresentation'
+import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
+import { resolveArticleMarket } from '~/utils/articleMarket'
 
 const {
   openCheckoutUrl,
@@ -57,6 +59,7 @@ const {
 
 const { currentTenant } = useTenantReactive()
 const accessStore = useAccessStore()
+const { profile: financialProfile } = useTenantFinancialProfile()
 const {
   statusData: termsStatus,
   refreshTermsStatus,
@@ -648,8 +651,22 @@ const formatOffer = (amount: number, currency?: string) =>
   )
 
 const offerMonthlyLabel = computed(() => {
-  if (!priceOffer.value) return '—'
-  return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
+  const cc = String(financialProfile.value?.country_code || '').toUpperCase()
+  const curr = String(financialProfile.value?.base_currency_code || '').toUpperCase()
+  // Country-aware: CO/COP → COP 30.000 (reuse articleMarket, no migration) #2694
+  if (cc === 'CO' || cc === 'COL' || curr === 'COP') {
+    const market = resolveArticleMarket({ country_code: cc || 'CO', lang: locale.value })
+    return market.annualPriceLabel
+  }
+  // If profile still loading (no cc/curr), keep API offer to avoid flash
+  if (!cc && !curr) {
+    if (!priceOffer.value) return '—'
+    return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
+  }
+  // Non-CO: keep segment offer from API, fallback to USD 9 via articleMarket for consistency
+  if (priceOffer.value) return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
+  const fallback = resolveArticleMarket({ country_code: cc || 'MX', lang: locale.value })
+  return fallback.annualPriceLabel
 })
 
 const planPriceLabel = (plan: BillingPlan) => {
