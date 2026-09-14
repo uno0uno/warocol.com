@@ -462,10 +462,10 @@
                     class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
                   >
                     <div class="flex-1">
-                      <div class="flex flex-col sm:flex-row gap-2">
+                      <div class="flex gap-2">
                         <select
                           v-model="link.recipe_base_id"
-                          class="input-base flex-1 min-h-[44px] px-3 py-2 text-sm"
+                          class="input-base flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm"
                           @change="onRecipeBaseChange"
                           :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                         >
@@ -474,16 +474,16 @@
                             {{ recipe.name }}
                           </option>
                         </select>
-                        <div class="flex items-center gap-1.5 sm:w-40">
+                        <div class="flex-1 flex items-center gap-1.5 min-w-0">
                           <UiDecimalInput
                             v-model="link.quantity"
                             :min="0"
                             :precision="6"
-                            class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
+                            class="input-base flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm"
                             :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                             :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
                           />
-                          <div class="input-base w-full sm:w-44 flex-shrink-0 min-h-[44px] px-3 py-2 text-sm bg-white border-border flex items-center whitespace-nowrap">
+                          <div class="input-base shrink-0 min-h-[44px] px-3 py-2 text-sm bg-white border-border flex items-center whitespace-nowrap">
                             {{ getRecipeYieldUnit(link.recipe_base_id) === 'gr' ? 'Gramos (gr)' : getRecipeYieldUnit(link.recipe_base_id) === 'g' ? 'Gramos (g)' : getRecipeYieldUnit(link.recipe_base_id) === 'ml' ? 'Mililitros (ml)' : getRecipeYieldUnit(link.recipe_base_id) || t('menu.productos.recipeUnit') }}
                           </div>
                         </div>
