@@ -217,7 +217,9 @@ export const getPreExpiryGraceDays = (currentPeriodEnd: string | null | undefine
   const end = Date.parse(currentPeriodEnd)
   if (!Number.isFinite(end)) return null
   const diff = end - nowMs
-  if (diff <= 0) return null
+  // Incluir día de vencimiento aún con diff levemente negativo (<24h) para que hoy siga mostrando "1 día"
+  if (diff <= -24 * 60 * 60 * 1000) return null
+  if (diff <= 0) return 1
   const days = Math.ceil(diff / (24 * 60 * 60 * 1000))
   if (days < 1 || days > PRE_EXPIRY_GRACE_WINDOW_DAYS) return null
   return days
