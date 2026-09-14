@@ -1708,16 +1708,13 @@ const onRecipeBaseChange = () => {
 function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }): string {
   const recipe: any = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
   if (!recipe || !link.quantity) return ''
-  const qty = Number(link.quantity) || 0
-  // If recipe has rendimiento (yield) use it, else assume 1000 ml/gr for hint
-  const yieldAmount = Number(recipe.rendimiento_total ?? recipe.yield_amount ?? 1000) || 1000
+  const rawYield = recipe.rendimiento_total ?? recipe.yield_amount
+  if (rawYield == null) return ''
+  const yieldAmount = Number(rawYield) || 0
+  if (!yieldAmount) return ''
   const yieldUnit = recipe.unidad_rendimiento ?? recipe.yield_unit ?? 'ml'
-  const portion = qty * yieldAmount
-  // Legacy: qty is multiplier (0.015 = 15ml of 1000ml); show conversion help
-  if (qty < 1) {
-    return `≈ ${formatDomainQuantity(portion, 2)} ${yieldUnit} de ${yieldAmount} ${yieldUnit} (usa ${portion} ${yieldUnit}: pon ${qty})`
-  }
-  return ''
+  const portion = Number(link.quantity) * yieldAmount
+  return `≈ ${formatDomainQuantity(portion, 2)} ${yieldUnit} de ${yieldAmount} ${yieldUnit}`
 }
 
 const addIngredient = () => {
@@ -1782,6 +1779,11 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    if (calculatedCost.value !== null && calculatedCost.value >= 1e8) {
+      quantityError.value = 'El costo calculado supera el limite permitido. Revisa la cantidad de receta (ej. usa 0.015 para 15 ml de 1.000 ml).'
+      isSubmitting.value = false
+      return
+    }
     // Validate no duplicate recipe bases and positive quantity (Issue #517)
     const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
     const seenIds = new Set<string>()
@@ -1793,12 +1795,6 @@ const handleSubmit = async () => {
       }
       if (!Number.isFinite(Number(link.quantity)) || Number(link.quantity) <= 0) {
         quantityError.value = t('menu.productos.recipeQuantityError')
-        isSubmitting.value = false
-        return
-      }
-      // Prevent NUMERIC(10,2) overflow (1e8) - show friendly error instead of 500
-      if (calculatedCost.value !== null && calculatedCost.value >= 1e8) {
-        quantityError.value = 'El costo calculado supera el limite permitido. Revisa la cantidad de receta (ej. usa 0.015 para 15 ml de 1.000 ml).'
         isSubmitting.value = false
         return
       }
