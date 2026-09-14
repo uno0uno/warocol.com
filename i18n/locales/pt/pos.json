@@ -395,7 +395,8 @@
       "noActiveConsumption": "Sem consumo ativo",
       "barAlwaysOpenAria": "Bar — sempre aberta",
       "remaining": "{amount} restante",
-      "accumulated": "{amount} acumulado"
+      "accumulated": "{amount} acumulado",
+      "counter": "Balcão"
     },
     "delivery": {
       "notesPlaceholder": "Ex: portaria na rua 51, prédio amarelo",

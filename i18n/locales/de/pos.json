@@ -395,7 +395,8 @@
       "noActiveConsumption": "Kein aktiver Verzehr",
       "barAlwaysOpenAria": "Bar — immer geöffnet",
       "remaining": "{amount} ausstehend",
-      "accumulated": "{amount} angesammelt"
+      "accumulated": "{amount} angesammelt",
+      "counter": "Theke"
     },
     "delivery": {
       "notesPlaceholder": "Z.B. Pförtner an der 51. Straße, gelbes Gebäude",

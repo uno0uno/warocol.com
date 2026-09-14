@@ -395,7 +395,8 @@
       "noActiveConsumption": "无活跃消费",
       "barAlwaysOpenAria": "吧台 — 始终开放",
       "remaining": "剩余 {amount}",
-      "accumulated": "累计 {amount}"
+      "accumulated": "累计 {amount}",
+      "counter": "柜台"
     },
     "delivery": {
       "notesPlaceholder": "例如：51街门房，黄色建筑",

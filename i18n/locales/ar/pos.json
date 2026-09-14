@@ -395,7 +395,8 @@
       "noActiveConsumption": "لا يوجد استهلاك نشط",
       "barAlwaysOpenAria": "البار — مفتوح دائمًا",
       "remaining": "{amount} متبقي",
-      "accumulated": "{amount} متراكم"
+      "accumulated": "{amount} متراكم",
+      "counter": "كاونتر"
     },
     "delivery": {
       "notesPlaceholder": "مثال: البوابة في شارع 51، المبنى الأصفر",

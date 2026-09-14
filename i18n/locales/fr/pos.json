@@ -395,7 +395,8 @@
       "noActiveConsumption": "Aucune consommation active",
       "barAlwaysOpenAria": "Bar — toujours ouvert",
       "remaining": "{amount} restant",
-      "accumulated": "{amount} accumulé"
+      "accumulated": "{amount} accumulé",
+      "counter": "Comptoir"
     },
     "delivery": {
       "notesPlaceholder": "Ex: conciergerie rue 51, bâtiment jaune",

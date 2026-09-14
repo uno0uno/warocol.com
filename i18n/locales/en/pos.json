@@ -446,7 +446,8 @@
       "deliveriesEmptyTitle": "No deferred deliveries",
       "deliveriesEmptyBody": "Orders left as pending delivery show up here so you can collect payment.",
       "unknownCustomer": "Customer",
-      "noAddress": "No address"
+      "noAddress": "No address",
+      "counter": "Counter"
     },
     "delivery": {
       "notesPlaceholder": "e.g. gate on 51st street, yellow building",
@@ -671,7 +672,10 @@
       "layoutGrid": "Grid",
       "layoutList": "List",
       "layoutSwitchToList": "Switch to list",
-      "layoutSwitchToGrid": "Switch to grid","layoutCanvas": "Canvas","layoutViewLabel": "View","layoutSwitchToCanvas": "Switch to canvas",
+      "layoutSwitchToGrid": "Switch to grid",
+      "layoutCanvas": "Canvas",
+      "layoutViewLabel": "View",
+      "layoutSwitchToCanvas": "Switch to canvas",
       "layoutDefault": "Default",
       "layoutDefaultHelp": "Use the layout set in Operations → POS",
       "layoutSaveError": "Could not save your catalog layout"

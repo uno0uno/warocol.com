@@ -446,7 +446,8 @@
       "deliveriesEmptyTitle": "No hay domicilios diferidos",
       "deliveriesEmptyBody": "Los pedidos dejados como domicilio pendiente aparecen aquí para cobrarlos.",
       "unknownCustomer": "Cliente",
-      "noAddress": "Sin dirección"
+      "noAddress": "Sin dirección",
+      "counter": "Mostrador"
     },
     "delivery": {
       "notesPlaceholder": "Ej: portería en la calle 51, edificio amarillo",
@@ -671,7 +672,10 @@
       "layoutGrid": "Cuadrícula",
       "layoutList": "Listado",
       "layoutSwitchToList": "Cambiar a listado",
-      "layoutSwitchToGrid": "Cambiar a cuadrícula","layoutCanvas": "Plano","layoutViewLabel": "Vista","layoutSwitchToCanvas": "Cambiar a plano",
+      "layoutSwitchToGrid": "Cambiar a cuadrícula",
+      "layoutCanvas": "Plano",
+      "layoutViewLabel": "Vista",
+      "layoutSwitchToCanvas": "Cambiar a plano",
       "layoutDefault": "Por defecto",
       "layoutDefaultHelp": "Usar la vista configurada en Operaciones → POS",
       "layoutSaveError": "No se pudo guardar tu vista del catálogo"

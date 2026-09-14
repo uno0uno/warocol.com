@@ -395,7 +395,8 @@
       "noActiveConsumption": "कोई सक्रिय उपभोग नहीं",
       "barAlwaysOpenAria": "बार — हमेशा खुला",
       "remaining": "{amount} शेष",
-      "accumulated": "{amount} संचित"
+      "accumulated": "{amount} संचित",
+      "counter": "काउंटर"
     },
     "delivery": {
       "notesPlaceholder": "उदा: 51वीं गली में गेट, पीली इमारत",
