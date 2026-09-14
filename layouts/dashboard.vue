@@ -128,10 +128,14 @@ watch(graceDismissKey, (k) => {
 }, { immediate: true })
 
 const preExpiryGraceDays = computed(() => {
-  if (subscription.value?.status !== 'active') return null
-  if (accessStatus.value?.level === 'full_with_warning' || accessStatus.value?.level === 'read_only' || accessStatus.value?.level === 'blocked') return null
-  if (isGraceDismissed.value) return null
-  return getPreExpiryGraceDays(subscription.value?.current_period_end)
+  const dbg = { status: subscription.value?.status, level: accessStatus.value?.level, end: subscription.value?.current_period_end, dismissed: isGraceDismissed.value }
+  if (import.meta.client) console.log('[WARO grace DBG] preExpiry input', dbg)
+  if (subscription.value?.status !== 'active') { if (import.meta.client) console.log('[WARO grace DBG] blocked: status != active'); return null }
+  if (accessStatus.value?.level === 'full_with_warning' || accessStatus.value?.level === 'read_only' || accessStatus.value?.level === 'blocked') { if (import.meta.client) console.log('[WARO grace DBG] blocked: level recovery'); return null }
+  if (isGraceDismissed.value) { if (import.meta.client) console.log('[WARO grace DBG] blocked: dismissed'); return null }
+  const days = getPreExpiryGraceDays(subscription.value?.current_period_end)
+  if (import.meta.client) console.log('[WARO grace DBG] getPreExpiryGraceDays ->', days, 'end:', subscription.value?.current_period_end, 'now:', new Date().toISOString())
+  return days
 })
 
 const subscriptionBannerLevel = computed<SubscriptionBannerLevel | null>(() => {
