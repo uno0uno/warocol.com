@@ -73,16 +73,26 @@
       >
         {{ ctaLabel }}
       </NuxtLink>
+      <button
+        v-if="dismissible"
+        type="button"
+        class="flex-shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-lg hover:bg-black/5 transition-colors"
+        :aria-label="t('shell.dismiss')"
+        @click="$emit('dismiss')"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const props = defineProps<{
-  level: 'starter' | 'full_with_warning' | 'read_only'
+  level: 'starter' | 'full_with_warning' | 'read_only' | 'pre_expiry_grace'
   message: string
   messagePending?: boolean
   graceDaysRemaining?: number | null
+  dismissible?: boolean
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
@@ -93,18 +103,21 @@ const isVisible = computed(
   () =>
     props.level === 'starter'
     || props.level === 'full_with_warning'
-    || props.level === 'read_only',
+    || props.level === 'read_only'
+    || props.level === 'pre_expiry_grace',
 )
 
 const bannerClass = computed(() => {
   if (props.level === 'read_only') return 'bg-orange-100 text-orange-900 border-b border-orange-200'
   if (props.level === 'full_with_warning') return 'bg-yellow-100 text-yellow-900 border-b border-yellow-200'
+  if (props.level === 'pre_expiry_grace') return 'bg-yellow-100 text-yellow-900 border-b border-yellow-200'
   return 'bg-primary/10 text-primary border-b border-primary/20'
 })
 
 const ctaClass = computed(() => {
   if (props.level === 'read_only') return 'bg-orange-800 text-white'
   if (props.level === 'full_with_warning') return 'bg-yellow-800 text-white'
+  if (props.level === 'pre_expiry_grace') return 'bg-yellow-800 text-white'
   return 'bg-primary text-white'
 })
 
@@ -112,6 +125,8 @@ const ctaLabel = computed(() => {
   if (props.level === 'starter') return t('shell.subscriptionTrialCta')
   return t('shell.subscriptionRenewCta')
 })
+
+defineEmits<{ dismiss: [] }>()
 </script>
 
 <style scoped>

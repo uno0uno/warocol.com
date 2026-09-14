@@ -210,6 +210,19 @@ export const billingEventProviderLabelKey = (metadata: Record<string, unknown> |
   return 'billing.processedByProvider'
 }
 
+export const PRE_EXPIRY_GRACE_WINDOW_DAYS = 7
+
+export const getPreExpiryGraceDays = (currentPeriodEnd: string | null | undefined, nowMs = Date.now()): number | null => {
+  if (!currentPeriodEnd) return null
+  const end = Date.parse(currentPeriodEnd)
+  if (!Number.isFinite(end)) return null
+  const diff = end - nowMs
+  if (diff <= 0) return null
+  const days = Math.ceil(diff / (24 * 60 * 60 * 1000))
+  if (days < 1 || days > PRE_EXPIRY_GRACE_WINDOW_DAYS) return null
+  return days
+}
+
 /**
  * Hosted checkout may return https://localhost even when Nuxt is http.
  * Local Nuxt has no TLS — force http and drop a mistaken /waro-colombia prefix (#2205 / #943).

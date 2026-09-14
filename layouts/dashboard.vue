@@ -18,6 +18,8 @@
         :message="subscriptionBannerMessage"
         :message-pending="starterBannerPending"
         :grace-days-remaining="accessStatus?.grace_days_remaining"
+        :dismissible="subscriptionBannerLevel === 'pre_expiry_grace'"
+        @dismiss="handleGraceDismiss"
       />
 
       <!-- Content Area with Overflow — header shares page padding with body -->
@@ -91,6 +93,7 @@ import { usePosMobileCart } from '~/composables/usePosMobileCart'
 import { getDashboardHome } from '~/utils/internalAccess'
 import { resolveTrialPriceAnchor } from '~/utils/publicCta'
 import { useTenantFinancialProfile } from '~/composables/useTenantFinancialProfile'
+import { getPreExpiryGraceDays } from '~/utils/billingPresentation'
 
 const { t, locale } = useI18n()
 
@@ -102,23 +105,50 @@ const accessStore = useAccessStore()
 const dashboardHome = computed(() =>
   getDashboardHome(accessStore.modules, { isLoaded: accessStore.isLoaded }),
 )
-const { accessStatus, fetchAccessStatus } = useBilling({ overview: false })
+const { accessStatus, fetchAccessStatus, subscription } = useBilling({ overview: false })
 const { profile: financialProfile } = useTenantFinancialProfile()
 const isBillingBlocked = computed(() =>
   accessStore.can('mi_plan') && accessStatus.value?.level === 'blocked',
 )
 
-type SubscriptionBannerLevel = 'starter' | 'full_with_warning' | 'read_only'
+type SubscriptionBannerLevel = 'starter' | 'full_with_warning' | 'read_only' | 'pre_expiry_grace'
+
+const graceDismissKey = computed(() => {
+  const tid = currentTenant.value?.id
+  const end = subscription.value?.current_period_end
+  if (!tid || !end) return null
+  return `waro:billing:grace-dismiss:${tid}:${end}`
+})
+
+const isGraceDismissed = ref(false)
+watch(graceDismissKey, (k) => {
+  if (!k || !import.meta.client) { isGraceDismissed.value = false; return }
+  isGraceDismissed.value = localStorage.getItem(k) === '1'
+}, { immediate: true })
+
+const preExpiryGraceDays = computed(() => {
+  if (subscription.value?.status !== 'active') return null
+  if (accessStatus.value?.level === 'full_with_warning' || accessStatus.value?.level === 'read_only' || accessStatus.value?.level === 'blocked') return null
+  if (isGraceDismissed.value) return null
+  return getPreExpiryGraceDays(subscription.value?.current_period_end)
+})
 
 const subscriptionBannerLevel = computed<SubscriptionBannerLevel | null>(() => {
   const level = accessStatus.value?.level
   if (level === 'full_with_warning' || level === 'read_only' || level === 'starter') {
     return level
   }
+  if (preExpiryGraceDays.value != null) return 'pre_expiry_grace'
   return null
 })
 
 const showSubscriptionBanner = computed(() => subscriptionBannerLevel.value != null)
+
+const handleGraceDismiss = () => {
+  const k = graceDismissKey.value
+  if (k && import.meta.client) localStorage.setItem(k, '1')
+  isGraceDismissed.value = true
+}
 
 const starterBannerPending = computed(() => {
   if (subscriptionBannerLevel.value !== 'starter') return false
@@ -132,7 +162,12 @@ const starterBannerPending = computed(() => {
 const subscriptionBannerMessage = computed(() => {
   const status = accessStatus.value
   const level = subscriptionBannerLevel.value
-  if (!status || !level) return ''
+  if (!level) return ''
+  if (level === 'pre_expiry_grace' && preExpiryGraceDays.value != null) {
+    const n = preExpiryGraceDays.value
+    return n === 1 ? t('shell.subscriptionGracePreExpiryOne') : t('shell.subscriptionGracePreExpiry', { n })
+  }
+  if (!status) return ''
   // Prefer localized conversion copy for Starter; API starter message is operational, not CTA.
   if (level === 'starter') {
     const priceAnchor = resolveTrialPriceAnchor({
