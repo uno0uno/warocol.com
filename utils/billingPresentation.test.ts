@@ -7,6 +7,7 @@ import {
   billingOfferAnnualSavings,
   canStartBillingSubscription,
   formatBillingOfferAmount,
+  getPreExpiryGraceDays,
   normalizeLocalCheckoutUrl,
   resolveBillingScenario,
   shouldShowBillingRecoveryAlert,
@@ -204,6 +205,15 @@ test('prefers paddle transaction id over wompi for event refs', () => {
     billingEventProviderLabelKey({ provider: 'lemon_squeezy' }),
     'billing.processedByLemonSqueezy',
   )
+})
+
+test('pre-expiry grace window 7d before period_end', () => {
+  const end = new Date('2026-09-14T13:28:21Z').toISOString()
+  assert.equal(getPreExpiryGraceDays(end, Date.parse('2026-09-07T13:28:22Z')), 7)
+  assert.equal(getPreExpiryGraceDays(end, Date.parse('2026-09-13T13:28:21Z')), 1)
+  assert.equal(getPreExpiryGraceDays(end, Date.parse('2026-09-14T13:28:21Z')), null)
+  assert.equal(getPreExpiryGraceDays(end, Date.parse('2026-09-06T13:28:21Z')), null)
+  assert.equal(getPreExpiryGraceDays(null, Date.now()), null)
 })
 
 test('normalizes local hosted checkout urls to http without waro-colombia prefix', () => {

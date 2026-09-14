@@ -82,7 +82,10 @@
     "businessOpen": "Abierto",
     "businessClosed": "Cerrado",
     "businessOpenAria": "Restaurante abierto — click para cerrar",
-    "businessClosedAria": "Restaurante cerrado — click para abrir"
+    "businessClosedAria": "Restaurante cerrado — click para abrir",
+    "subscriptionGracePreExpiry": "Te faltan {n} días para renovar tu plan.",
+    "subscriptionGracePreExpiryOne": "Te falta 1 día para renovar tu plan.",
+    "dismiss": "Cerrar"
   },
   "integraciones": {
     "pageTitle": "Integraciones - API Keys",
