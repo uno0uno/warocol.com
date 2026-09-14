@@ -593,12 +593,8 @@
                         :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                         :title="t('menu.productos.recipeQuantityHelp')"
                       />
-                      <div class="relative w-full sm:w-44 flex-shrink-0">
-                        <select disabled class="input-base w-full min-h-[44px] py-2 pe-8 text-sm disabled:opacity-50 ps-3 bg-surface-secondary whitespace-nowrap" aria-label="Unidad">
-                          <option :value="getRecipeYieldUnit(link.recipe_base_id) || ''" selected>
-                            {{ getRecipeYieldUnit(link.recipe_base_id) === 'gr' ? 'Gramos (gr)' : getRecipeYieldUnit(link.recipe_base_id) === 'g' ? 'Gramos (g)' : getRecipeYieldUnit(link.recipe_base_id) === 'ml' ? 'Mililitros (ml)' : getRecipeYieldUnit(link.recipe_base_id) || t('menu.productos.recipeUnit') }}
-                          </option>
-                        </select>
+                      <div class="input-base w-full sm:w-44 flex-shrink-0 min-h-[44px] px-3 py-2 text-sm bg-white border-border flex items-center whitespace-nowrap">
+                        {{ getRecipeYieldUnit(link.recipe_base_id) === 'gr' ? 'Gramos (gr)' : getRecipeYieldUnit(link.recipe_base_id) === 'g' ? 'Gramos (g)' : getRecipeYieldUnit(link.recipe_base_id) === 'ml' ? 'Mililitros (ml)' : getRecipeYieldUnit(link.recipe_base_id) || t('menu.productos.recipeUnit') }}
                       </div>
                     </div>
                   </div>
