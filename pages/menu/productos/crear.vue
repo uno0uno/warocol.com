@@ -483,12 +483,12 @@
                             :aria-label="t('menu.productos.recipeQuantity', { index: index + 1 })"
                             :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
                           />
-                            <span class="text-xs text-text-secondary whitespace-nowrap">{{ t('menu.productos.recipeUnit') }}</span>
+                          <span class="text-xs text-text-secondary whitespace-nowrap">{{ getRecipeYieldUnit(link.recipe_base_id) || t('menu.productos.recipeUnit') }}</span>
                         </div>
-                        <p v-if="getRecipeYieldHint(link)" class="text-xs text-text-tertiary mt-1">
-                          {{ getRecipeYieldHint(link) }}
-                        </p>
                       </div>
+                      <p v-if="getRecipeYieldHint(link)" class="text-xs text-text-tertiary mt-1.5 leading-snug">
+                        {{ getRecipeYieldHint(link) }}
+                      </p>
 
                       <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
                         <div class="text-xs space-y-1">
@@ -1460,16 +1460,21 @@ function getRecipeBaseIngredients(recipeBaseId: string) {
   return recipe?.ingredients || []
 }
 
+function getRecipeYieldUnit(recipeId: string): string {
+  const recipe: any = recipeBases.value.find((r: any) => r.id === recipeId)
+  return recipe?.unidad_rendimiento ?? recipe?.yield_unit ?? ''
+}
 function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }): string {
   const recipe: any = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
-  if (!recipe || !link.quantity) return ''
+  if (!recipe || link.quantity == null || Number(link.quantity) <= 0) return ''
   const rawYield = (recipe as any).rendimiento_total ?? (recipe as any).yield_amount
   if (rawYield == null) return ''
   const yieldAmount = Number(rawYield) || 0
   if (!yieldAmount) return ''
   const yieldUnit = (recipe as any).unidad_rendimiento ?? (recipe as any).yield_unit ?? 'ml'
-  const portion = Number(link.quantity) * yieldAmount
-  return `≈ ${portion.toFixed(2)} ${yieldUnit} de ${yieldAmount} ${yieldUnit}`
+  const qty = Number(link.quantity)
+  const pct = ((qty / yieldAmount) * 100).toFixed(1)
+  return `≈ ${formatDomainQuantity(qty, 2)} ${yieldUnit} de ${formatDomainQuantity(yieldAmount, 2)} ${yieldUnit} (${pct}%)`
 }
 
 function onRecipeBaseChange() {
