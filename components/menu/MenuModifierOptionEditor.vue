@@ -182,14 +182,20 @@
           </option>
         </select>
       </div>
-      <div class="min-w-0 sm:max-w-xs">
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.recipeQuantity') }}</label>
-        <UiDecimalInput
-          v-model="modifier.recipe_base_quantity"
-          :min="0.01"
-          :precision="6"
-          class="input-base w-full min-h-[38px] px-3 py-2 text-sm"
-        />
+        <div class="flex gap-2">
+          <UiDecimalInput
+            v-model="modifier.recipe_base_quantity"
+            :min="0.01"
+            :precision="6"
+            class="input-base flex-1 min-w-0 min-h-[38px] px-3 py-2 text-sm"
+          />
+          <div class="input-base shrink-0 min-h-[38px] px-3 py-2 text-sm bg-white border-border flex items-center whitespace-nowrap">
+            {{ recipeYieldUnitLabel }}
+          </div>
+        </div>
+        <p v-if="recipeYieldHint" class="text-xs text-text-tertiary mt-1.5 leading-snug">{{ recipeYieldHint }}</p>
       </div>
       <div
         v-if="modifier.recipe_base_type_id && recipeBaseIngredients.length > 0"
@@ -437,6 +443,29 @@ function onProductSelect(product: ProductRow) {
 const selectedRecipeBase = computed(() =>
   props.recipeBases.find((r) => r.id === props.modifier.recipe_base_type_id),
 )
+
+const recipeYieldUnitLabel = computed(() => {
+  const r: any = selectedRecipeBase.value
+  const u = r?.unidad_rendimiento ?? r?.yield_unit ?? 'und'
+  if (u === 'gr') return 'Gramos (gr)'
+  if (u === 'g') return 'Gramos (g)'
+  if (u === 'ml') return 'Mililitros (ml)'
+  if (u === 'und') return 'Unidades (und)'
+  return u || 'Unidades (und)'
+})
+const recipeYieldHint = computed(() => {
+  const r: any = selectedRecipeBase.value
+  if (!r) return ''
+  const raw = r.rendimiento_total ?? r.yield_amount
+  if (raw == null) return ''
+  const y = Number(raw)
+  if (!y) return ''
+  const qty = Number(props.modifier.recipe_base_quantity) || 0
+  if (!qty) return ''
+  const u = r.unidad_rendimiento ?? r.yield_unit ?? 'und'
+  const pct = ((qty / y) * 100).toFixed(1)
+  return `≈ ${formatDomainQuantity(qty, 2)} ${u} de ${formatDomainQuantity(y, 2)} ${u} (${pct}%)`
+})
 
 const recipeBaseIngredients = computed(() => {
   const ingredients = selectedRecipeBase.value?.ingredients
