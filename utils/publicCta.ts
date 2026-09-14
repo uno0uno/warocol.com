@@ -152,7 +152,7 @@ function trialPriceCopy(
   return isEn ? en : es
 }
 
-/** In-app Starter trial banner price slot (warocol.com#1917, #2293, #2302). */
+/** In-app Starter trial banner price slot (warocol.com#1917, #2293, #2302, #2694). */
 export function resolveTrialPriceAnchor(options: {
   locale?: string | null
   countryCode?: string | null
@@ -165,9 +165,13 @@ export function resolveTrialPriceAnchor(options: {
   const usd9 = () => trialPriceCopy(isEn, 'menos de USD $9/mes', 'under USD $9/month')
   const usd30 = () => trialPriceCopy(isEn, 'menos de USD $30/mes', 'under USD $30/month')
   const eur30 = () => trialPriceCopy(isEn, 'menos de EUR €30/mes', 'under EUR €30/month')
+  const cop30 = () => trialPriceCopy(isEn, 'COP $30.000/mes', 'COP $30,000/month')
 
-  // No COP fallback while country/currency are still loading (warocol.com#2302).
+  // No fallback while country/currency are still loading (warocol.com#2302).
   if (!country && !currency) return null
+
+  // Country-aware unified pricing: CO/COP → COP 30k, resto → USD 9 (#2694 reuses articleMarket/currency logic)
+  if (country === 'CO' || country === 'COL' || currency === 'COP') return cop30()
 
   if (country) {
     if (EUR_30_COUNTRIES.has(country)) return eur30()

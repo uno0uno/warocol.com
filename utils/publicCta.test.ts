@@ -90,22 +90,26 @@ test('restores server-bound attribution in a fresh magic-link tab', () => {
   assert.equal(values.get(PUBLIC_CTA_ATTRIBUTION_KEY)?.includes('email'), false)
 })
 
-test('trial banner price anchor uses USD $9 for Colombia (usd_9), not COP', () => {
+test('trial banner price anchor uses COP 30k for Colombia (country-aware #2694)', () => {
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'es', countryCode: 'CO', currencyCode: 'COP' }),
-    'menos de USD $9/mes',
+    'COP $30.000/mes',
   )
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'en', countryCode: 'CO', currencyCode: 'COP' }),
-    'under USD $9/month',
+    'COP $30,000/month',
   )
   assert.equal(
     resolveTrialPriceAnchor({ locale: 'es', countryCode: null, currencyCode: 'COP' }),
-    'menos de USD $9/mes',
+    'COP $30.000/mes',
+  )
+  assert.match(
+    resolveTrialPriceAnchor({ locale: 'es', countryCode: 'CO', currencyCode: 'COP' }),
+    /COP/i,
   )
   assert.doesNotMatch(
     resolveTrialPriceAnchor({ locale: 'es', countryCode: 'CO', currencyCode: 'COP' }),
-    /COP/i,
+    /USD \$9/i,
   )
 })
 
