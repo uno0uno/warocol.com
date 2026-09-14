@@ -49,6 +49,22 @@
                   />
                 </div>
 
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-1">Rendimiento <span class="text-text-tertiary font-normal">(opcional)</span></label>
+                    <input v-model.number="form.rendimiento_total" type="number" min="0" step="0.01" placeholder="1000" class="input-base w-full px-4 py-2" />
+                    <p class="text-xs text-text-tertiary mt-1">Ej. 1000 para 1L / 2000 gr</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-1">Unidad</label>
+                    <select v-model="form.unidad_rendimiento" class="input-base w-full px-4 py-2">
+                      <option value="ml">ml</option>
+                      <option value="gr">gr</option>
+                      <option value="und">und</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div class="flex items-start gap-3">
                   <input
                     v-model="form.is_active"
@@ -301,6 +317,8 @@ const form = ref({
   name: '',
   description: '',
   is_active: true,
+  rendimiento_total: null as number | null,
+  unidad_rendimiento: 'ml' as string,
   ingredients: [] as Array<{
     ingredient_id: string
     base_quantity: number
@@ -499,6 +517,8 @@ async function submitRecipe() {
         name: form.value.name,
         description: form.value.description,
         is_active: form.value.is_active,
+        rendimiento_total: form.value.rendimiento_total,
+        unidad_rendimiento: form.value.unidad_rendimiento,
         ingredients: combinedIngredients.value.map(ing => ({
           ingredient_id: ing.ingredient_id,
           base_quantity: ing.base_quantity,

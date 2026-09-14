@@ -474,7 +474,7 @@
                             {{ recipe.name }}
                           </option>
                         </select>
-                        <div class="flex items-center gap-1.5 sm:w-32">
+                        <div class="flex items-center gap-1.5 sm:w-40">
                           <UiDecimalInput
                             v-model="link.quantity"
                             :min="0"
@@ -485,6 +485,9 @@
                           />
                             <span class="text-xs text-text-secondary whitespace-nowrap">{{ t('menu.productos.recipeUnit') }}</span>
                         </div>
+                        <p v-if="getRecipeYieldHint(link)" class="text-xs text-text-tertiary mt-1">
+                          {{ getRecipeYieldHint(link) }}
+                        </p>
                       </div>
 
                       <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
@@ -1457,6 +1460,18 @@ function getRecipeBaseIngredients(recipeBaseId: string) {
   return recipe?.ingredients || []
 }
 
+function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }): string {
+  const recipe: any = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+  if (!recipe || !link.quantity) return ''
+  const rawYield = (recipe as any).rendimiento_total ?? (recipe as any).yield_amount
+  if (rawYield == null) return ''
+  const yieldAmount = Number(rawYield) || 0
+  if (!yieldAmount) return ''
+  const yieldUnit = (recipe as any).unidad_rendimiento ?? (recipe as any).yield_unit ?? 'ml'
+  const portion = Number(link.quantity) * yieldAmount
+  return `≈ ${portion.toFixed(2)} ${yieldUnit} de ${yieldAmount} ${yieldUnit}`
+}
+
 function onRecipeBaseChange() {
   console.log('Recipe bases:', form.value.recipe_bases)
 }
@@ -1469,6 +1484,11 @@ async function submitProduct() {
   submitError.value = null
   clearQuotaError()
 
+  if (calculatedCost.value !== null && calculatedCost.value >= 1e8) {
+    submitError.value = 'El costo calculado supera el limite permitido. Revisa la cantidad de receta (ej. usa 0.015 para 15 ml de 1.000 ml).'
+    isSubmitting.value = false
+    return
+  }
   try {
     const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
     const seenIds = new Set<string>()

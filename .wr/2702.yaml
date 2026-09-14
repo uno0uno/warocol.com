@@ -1,0 +1,44 @@
+issue: 2702
+title: "feat(menu): add gr/ml quantity field for recipe bases in products/modifiers"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2702-recipe-grml-quantity
+
+paths:
+  - front_nuxt/pages/menu/productos/[id].vue
+  - front_nuxt/pages/menu/productos/crear.vue
+  - front_nuxt/pages/menu/recetas/index.vue
+  - front_nuxt/components/menu/ProductRecipeSelector.vue
+  - front_nuxt/utils/recipeIngredientLineCost.ts
+  - api_warocol.com/app/models/product.py
+
+ac:
+  - Receta base guarda rendimiento_total + unidad (ml/gr); sin unidad -> legacy x receta sin cambios
+  - Selector en producto/modificador muestra Usar [cantidad] ml/gr segun unidad receta y convierte a quantity decimal al guardar
+  - Datos antiguos compatibles: lectura convierte quantity*rendimiento a gr/ml visible
+  - Validacion no permite overflow (costo <1e8) con mensaje amigable
+
+out_of_scope:
+  - conversion ml<>gr densidad
+  - pricing TOPPINGS
+  - migracion forzada de recetas viejas
+
+hints:
+  entry: "front_nuxt/pages/menu/productos/[id].vue:1556 recipe_bases quantity multiplier"
+  pattern: "front_nuxt/utils/recipeIngredientLineCost.ts:55 recipeIngredientLineCost multiplier"
+  tests: "front: no build; api: pytest -k product -q"
+
+risk:
+  sensitive: false
+  areas:
+    - cost calculation
+    - stock deduction
+
+skip:
+  audits:
+    - no full repo inventory
+
+next:
+  after_pr: "API companion PR: add rendimiento column to product_base_types/base_recipe_templates"

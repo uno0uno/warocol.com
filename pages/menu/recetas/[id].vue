@@ -36,6 +36,21 @@
                 />
               </div>
 
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">Rendimiento <span class="text-text-tertiary font-normal">(opcional)</span></label>
+                  <input v-model.number="form.rendimiento_total" type="number" min="0" step="0.01" placeholder="1000" class="input-base w-full px-4 py-2" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">Unidad</label>
+                  <select v-model="form.unidad_rendimiento" class="input-base w-full px-4 py-2">
+                    <option value="ml">ml</option>
+                    <option value="gr">gr</option>
+                    <option value="und">und</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="flex items-start gap-3">
                 <input
                   v-model="form.is_active"
@@ -436,6 +451,8 @@ const form = ref({
   name: '',
   description: '',
   is_active: true,
+  rendimiento_total: null as number | null,
+  unidad_rendimiento: 'ml' as string,
   ingredients: [] as Array<{
     ingredient_id: string
     ingredient_name: string
@@ -492,6 +509,8 @@ watch(recipeData, (data) => {
       name: recipe.name,
       description: recipe.description || '',
       is_active: recipe.is_active,
+      rendimiento_total: recipe.rendimiento_total ?? recipe.yield_amount ?? null,
+      unidad_rendimiento: recipe.unidad_rendimiento ?? recipe.yield_unit ?? 'ml',
       ingredients: recipe.ingredients.map((ing: any) => {
         if (ing.ingredient_id) {
           cacheIngredientForUnits({ id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit })
@@ -566,6 +585,8 @@ const handleSubmit = async () => {
         name: form.value.name,
         description: form.value.description,
         is_active: form.value.is_active,
+        rendimiento_total: form.value.rendimiento_total,
+        unidad_rendimiento: form.value.unidad_rendimiento,
         ingredients: combinedIngredients.value.map(ing => ({
           ingredient_id: ing.ingredient_id,
           ingredient_name: ing.ingredient_name,

@@ -584,7 +584,7 @@
                         {{ recipe.name }}
                       </option>
                     </select>
-                    <div class="flex items-center gap-1.5 sm:w-32">
+                    <div class="flex items-center gap-1.5 sm:w-40">
                       <UiDecimalInput
                         v-model="link.quantity"
                         :min="0"
@@ -595,6 +595,9 @@
                       />
                       <span class="text-xs text-text-secondary whitespace-nowrap">{{ t('menu.productos.recipeUnit') }}</span>
                     </div>
+                    <p v-if="getRecipeYieldHint(link)" class="text-xs text-text-tertiary mt-1">
+                      {{ getRecipeYieldHint(link) }}
+                    </p>
                   </div>
 
                   <!-- Ingredientes de esta receta base -->
@@ -1702,6 +1705,18 @@ const onRecipeBaseChange = () => {
   console.log('Recipe bases:', form.value.recipe_bases)
 }
 
+function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }): string {
+  const recipe: any = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+  if (!recipe || !link.quantity) return ''
+  const rawYield = recipe.rendimiento_total ?? recipe.yield_amount
+  if (rawYield == null) return ''
+  const yieldAmount = Number(rawYield) || 0
+  if (!yieldAmount) return ''
+  const yieldUnit = recipe.unidad_rendimiento ?? recipe.yield_unit ?? 'ml'
+  const portion = Number(link.quantity) * yieldAmount
+  return `≈ ${formatDomainQuantity(portion, 2)} ${yieldUnit} de ${yieldAmount} ${yieldUnit}`
+}
+
 const addIngredient = () => {
   void handleAddProductRecipeLine(form.value.ingredients.length, () => {
     // Adding an ingredient implies the product tracks inventory.
@@ -1764,6 +1779,11 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    if (calculatedCost.value !== null && calculatedCost.value >= 1e8) {
+      quantityError.value = 'El costo calculado supera el limite permitido. Revisa la cantidad de receta (ej. usa 0.015 para 15 ml de 1.000 ml).'
+      isSubmitting.value = false
+      return
+    }
     // Validate no duplicate recipe bases and positive quantity (Issue #517)
     const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
     const seenIds = new Set<string>()
