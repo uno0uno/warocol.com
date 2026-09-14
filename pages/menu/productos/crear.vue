@@ -1464,7 +1464,7 @@ function getRecipeBaseIngredients(recipeBaseId: string) {
 
 function getRecipeYieldUnit(recipeId: string): string {
   const recipe: any = recipeBases.value.find((r: any) => r.id === recipeId)
-  return recipe?.unidad_rendimiento ?? recipe?.yield_unit ?? ''
+  return recipe?.unidad_rendimiento ?? recipe?.yield_unit ?? 'und'
 }
 function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }): string {
   const recipe: any = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
@@ -1473,7 +1473,7 @@ function getRecipeYieldHint(link: { recipe_base_id: string; quantity: number }):
   if (rawYield == null) return ''
   const yieldAmount = Number(rawYield) || 0
   if (!yieldAmount) return ''
-  const yieldUnit = (recipe as any).unidad_rendimiento ?? (recipe as any).yield_unit ?? 'ml'
+  const yieldUnit = (recipe as any).unidad_rendimiento ?? (recipe as any).yield_unit ?? 'und'
   const qty = Number(link.quantity)
   const pct = ((qty / yieldAmount) * 100).toFixed(1)
   return `≈ ${formatDomainQuantity(qty, 2)} ${yieldUnit} de ${formatDomainQuantity(yieldAmount, 2)} ${yieldUnit} (${pct}%)`

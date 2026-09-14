@@ -318,7 +318,7 @@ const form = ref({
   description: '',
   is_active: true,
   rendimiento_total: null as number | null,
-  unidad_rendimiento: 'ml' as string,
+  unidad_rendimiento: 'und' as string,
   ingredients: [] as Array<{
     ingredient_id: string
     base_quantity: number

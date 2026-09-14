@@ -452,7 +452,7 @@ const form = ref({
   description: '',
   is_active: true,
   rendimiento_total: null as number | null,
-  unidad_rendimiento: 'ml' as string,
+  unidad_rendimiento: 'und' as string,
   ingredients: [] as Array<{
     ingredient_id: string
     ingredient_name: string
@@ -510,7 +510,7 @@ watch(recipeData, (data) => {
       description: recipe.description || '',
       is_active: recipe.is_active,
       rendimiento_total: recipe.rendimiento_total ?? recipe.yield_amount ?? null,
-      unidad_rendimiento: recipe.unidad_rendimiento ?? recipe.yield_unit ?? 'ml',
+      unidad_rendimiento: recipe.unidad_rendimiento ?? recipe.yield_unit ?? 'und',
       ingredients: recipe.ingredients.map((ing: any) => {
         if (ing.ingredient_id) {
           cacheIngredientForUnits({ id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit })
