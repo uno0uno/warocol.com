@@ -87,9 +87,6 @@
         </button>
       </div>
     </div>
-    <p class="text-xs text-text-tertiary">
-      {{ t('menu.modificadores.optionQuantityThresholdHelp') }}
-    </p>
     <p v-if="quantityAdjustmentHint" class="text-xs text-warning" role="status">
       {{ quantityAdjustmentHint }}
     </p>
@@ -141,7 +138,6 @@
           resale-only
           @select="onResaleProductSelect"
         />
-        <p class="mt-1 text-xs text-text-tertiary">{{ t('menu.modificadores.resaleProductHelp') }}</p>
       </div>
       <div class="min-w-0 lg:col-span-2">
         <label class="block text-xs font-medium text-text-secondary mb-1">{{ t('menu.modificadores.quantity') }}</label>

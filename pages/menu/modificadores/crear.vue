@@ -71,8 +71,6 @@
                       class="input-base w-full px-4 py-2"
                       required
                     />
-                    <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.maxSelectionHelp') }}</p>
-                    <p class="text-xs text-text-tertiary mt-1">{{ t('menu.modificadores.groupSelectionVsOptionHelp') }}</p>
                   </div>
                 </div>
 
@@ -101,9 +99,6 @@
                     <label for="is_required" class="text-sm font-medium text-text-primary cursor-pointer">
                       {{ t('menu.modificadores.requiredToggle') }}
                     </label>
-                    <p class="text-xs text-text-tertiary mt-0.5">
-                      {{ t('menu.modificadores.requiredHelp') }}
-                    </p>
                   </div>
                 </div>
               </div>
