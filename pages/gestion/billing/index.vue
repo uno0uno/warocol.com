@@ -658,11 +658,8 @@ const offerMonthlyLabel = computed(() => {
     const market = resolveArticleMarket({ country_code: cc || 'CO', lang: locale.value })
     return market.annualPriceLabel
   }
-  // If profile still loading (no cc/curr), keep API offer to avoid flash
-  if (!cc && !curr) {
-    if (!priceOffer.value) return '—'
-    return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
-  }
+  // Pending without country/currency → skeleton, no flash $9 (AC4, mirrors resolveTrialPriceAnchor null #2302)
+  if (!cc && !curr) return '—'
   // Non-CO: keep segment offer from API, fallback to USD 9 via articleMarket for consistency
   if (priceOffer.value) return formatOffer(priceOffer.value.monthly_amount, priceOffer.value.currency)
   const fallback = resolveArticleMarket({ country_code: cc || 'MX', lang: locale.value })
