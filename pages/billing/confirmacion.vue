@@ -246,6 +246,28 @@ const pollThankYouOnce = async () => {
   pollingStatus.value = true
   errorMessage.value = ''
   try {
+    const preapprovalId = typeof route.query.preapproval_id === 'string' ? route.query.preapproval_id : null
+    if (preapprovalId) {
+      const mp = await $fetch<{status:string}>('/api/billing/confirm/mercadopago/' + preapprovalId, { credentials: 'include' })
+      if (mp.status === 'active') {
+        thankYouPhase.value = 'ready'
+        await cache.invalidateQueries({ key: ['billing'] })
+        stopThankYouPoll()
+        clearHostedCheckoutPending()
+        try { await Promise.all([authStore.refreshSession(), accessStore.load()]) } catch {}
+        return
+      }
+      // keep polling if pending
+      pollAttempt.value += 1
+      thankYouPhase.value = billingThankYouPhaseFromStatus(null, pollAttempt.value)
+      if (pollAttempt.value >= BILLING_THANK_YOU_MAX_ATTEMPTS) {
+        clearHostedCheckoutPending()
+        errorMessage.value = t('billing.thankYouPollError')
+      } else {
+        scheduleThankYouPoll()
+      }
+      return
+    }
     const query: Record<string, string> = {}
     if (lsCheckoutId.value) query.checkout_id = lsCheckoutId.value
     const status = await $fetch<BillingCheckoutStatusResponse>('/api/billing/lemon-squeezy/checkout-status', {
