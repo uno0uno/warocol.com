@@ -48,7 +48,7 @@
           :empty-message="t('menu.recetas.empty')"
           :empty-sub-message="t('menu.recetas.emptySub')"
           variant="default"
-          row-size="xs"
+          row-size="sm"
         >
           <template #header-is_active>
             <UiTableHeaderFilter
