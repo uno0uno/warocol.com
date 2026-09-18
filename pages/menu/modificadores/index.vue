@@ -45,7 +45,7 @@
         :empty-message="t('menu.modificadores.empty')"
         :empty-sub-message="t('menu.modificadores.emptySub')"
         variant="default"
-        row-size="sm"
+        row-size="xs"
       >
       <template #header-tipo>
         <UiTableHeaderFilter
