@@ -79,6 +79,7 @@
 
     <!-- Global Purchase Action Bar -->
     <!-- <PurchasesGlobalPurchaseActionBar /> -->
+    <LegalTermsReacceptModal />
   </div>
 </template>
 
