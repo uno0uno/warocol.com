@@ -59,11 +59,11 @@
             </div>
 
             <div v-else class="mt-6 space-y-3">
-              <!-- Text rendering preferred; PDF fallback (#1022) -->
+              <!-- Text rendering preferred; PDF fallback (#1022) — sanitize; legal source is trusted but prevent XSS -->
               <div
                 v-if="hasTextContent"
                 class="prose prose-sm max-w-none rounded-lg border border-border bg-white p-6 text-text-primary prose-headings:text-text-primary prose-a:text-primary"
-                v-html="termsHtml"
+                v-html="sanitizedTermsHtml"
               />
               <div
                 v-else-if="isPdfDocument"
@@ -234,9 +234,15 @@ const termsHtml = computed(() => {
   const html = document.value.body_html || d?.body_html || d?.metadata?.body_html || ''
   if (html && String(html).trim()) return String(html)
   const sections = document.value.sections || d?.sections || []
-  if (Array.isArray(sections) && sections.length) return sections.map((s: any) => `<h3>${s.title || ''}</h3><div>${s.body || ''}</div>`).join('')
+  if (Array.isArray(sections) && sections.length) return sections.map((s: any) => `<h3>${escapeHtml(s.title || '')}</h3><div>${s.body || ''}</div>`).join('')
   return ''
 })
+const sanitizedTermsHtml = computed(() => sanitizeHtml(termsHtml.value))
+function escapeHtml(s: string) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function sanitizeHtml(html: string) {
+  // minimal sanitizer: strip script/iframe/on* — legal HTML is trusted but prevent XSS
+  return String(html).replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<iframe[\s\S]*?<\/iframe>/gi,'').replace(/\son\w+="[^"]*"/gi,'').replace(/\son\w+='[^']*'/gi,'')
+}
 const pdfViewerUrl = computed(() => {
   if (!sourceUrl.value) return ''
   const separator = sourceUrl.value.includes('#') ? '&' : '#'

@@ -4,5 +4,6 @@
     content-class="public-page-shell"
   >
     <slot />
+    <LegalTermsReacceptModal />
   </LayoutPublicShell>
 </template>
