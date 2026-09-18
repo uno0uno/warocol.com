@@ -28,7 +28,7 @@
             </div>
             <div class="rounded-lg border border-border bg-surface p-4">
               <p class="text-xs font-medium uppercase text-text-tertiary">{{ t('terms.format') }}</p>
-              <p class="mt-2 text-lg font-semibold text-text-primary">PDF</p>
+              <p class="mt-2 text-lg font-semibold text-text-primary">{{ hasTextContent ? 'Texto' : 'PDF' }}</p>
             </div>
           </section>
 
@@ -59,8 +59,14 @@
             </div>
 
             <div v-else class="mt-6 space-y-3">
+              <!-- Text rendering preferred; PDF fallback (#1022) — sanitize; legal source is trusted but prevent XSS -->
               <div
-                v-if="isPdfDocument"
+                v-if="hasTextContent"
+                class="prose prose-sm max-w-none rounded-lg border border-border bg-white p-6 text-text-primary prose-headings:text-text-primary prose-a:text-primary"
+                v-html="sanitizedTermsHtml"
+              />
+              <div
+                v-else-if="isPdfDocument"
                 class="relative overflow-hidden rounded-lg border border-border bg-white"
               >
                 <iframe
@@ -70,7 +76,7 @@
                 />
               </div>
 
-              <p v-if="isPdfDocument && sourceUrl" class="text-xs leading-5 text-text-tertiary">
+              <p v-if="isPdfDocument && !hasTextContent && sourceUrl" class="text-xs leading-5 text-text-tertiary">
                 {{ t('terms.pdfPreviewHint') }}
                 <a
                   :href="sourceUrl"
@@ -83,7 +89,7 @@
               </p>
 
               <div
-                v-else-if="currentDocument && !isPdfDocument"
+                v-else-if="currentDocument && !hasTextContent && !isPdfDocument"
                 class="rounded-lg border border-status-warning-text/30 bg-status-warning-bg p-4 text-sm leading-6 text-status-warning-text"
               >
                 <p>{{ t('terms.pdfLoadError') }}</p>
@@ -217,6 +223,26 @@ const isPdfDocument = computed(() => {
   if (document.value.display_mode === 'pdf') return true
   return /\.pdf($|[?#])/i.test(sourceUrl.value)
 })
+const hasTextContent = computed(() => {
+  const d: any = currentDocument.value as any
+  const html = document.value.body_html || d?.body_html || d?.metadata?.body_html || ''
+  const sections = document.value.sections || d?.sections || []
+  return !!(html && String(html).trim()) || (Array.isArray(sections) && sections.length > 0)
+})
+const termsHtml = computed(() => {
+  const d: any = currentDocument.value as any
+  const html = document.value.body_html || d?.body_html || d?.metadata?.body_html || ''
+  if (html && String(html).trim()) return String(html)
+  const sections = document.value.sections || d?.sections || []
+  if (Array.isArray(sections) && sections.length) return sections.map((s: any) => `<h3>${escapeHtml(s.title || '')}</h3><div>${s.body || ''}</div>`).join('')
+  return ''
+})
+const sanitizedTermsHtml = computed(() => sanitizeHtml(termsHtml.value))
+function escapeHtml(s: string) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function sanitizeHtml(html: string) {
+  // minimal sanitizer: strip script/iframe/on* — legal HTML is trusted but prevent XSS
+  return String(html).replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<iframe[\s\S]*?<\/iframe>/gi,'').replace(/\son\w+="[^"]*"/gi,'').replace(/\son\w+='[^']*'/gi,'')
+}
 const pdfViewerUrl = computed(() => {
   if (!sourceUrl.value) return ''
   const separator = sourceUrl.value.includes('#') ? '&' : '#'
@@ -225,19 +251,17 @@ const pdfViewerUrl = computed(() => {
 const isDocumentLoading = computed(() => !currentDocument.value && isInitialLoading.value)
 const isAccepted = computed(() => hasAcceptedLocally.value || statusData.value?.accepted === true)
 const isAcceptingOrRedirecting = computed(() => isAccepting.value || isRedirectingAfterAccept.value)
-const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocument.value && isPdfDocument.value)
+const canAcceptTerms = computed(() => hasTenantSession.value && !!currentDocument.value && (hasTextContent.value || isPdfDocument.value))
 
 /**
  * Why the checkbox was stuck disabled:
  * - Required hasPdfLoaded (iframe @load) AND hasEngagedWithPdf via window.blur
  * - Chrome/mobile PDF viewers rarely fire that path → permanently disabled
  *
- * Checkbox enables once the published PDF document metadata is available.
- * Do NOT infer “PDF failed” from missing iframe @load — Chrome often never fires
- * load for application/pdf embeds even when the preview works (false positive banner).
+ * Checkbox enables once published document metadata is available (text or PDF #1022).
  */
 const canEnableReadCheckbox = computed(() =>
-  !isDocumentLoading.value && !!currentDocument.value && isPdfDocument.value,
+  !isDocumentLoading.value && !!currentDocument.value && (hasTextContent.value || isPdfDocument.value),
 )
 
 const returnTarget = computed(() => {

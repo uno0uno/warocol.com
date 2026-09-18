@@ -228,13 +228,13 @@ export const useLegalTerms = () => {
   })
 
   const acceptMutation = useMutation({
-    mutation: (payload?: { document_id?: string; version?: string }) =>
+    mutation: (payload?: { document_id?: string; version?: string; source?: string }) =>
       $fetch<ApiEnvelope<{ current?: ApiLegalTermsDocument | null; acceptance?: ApiLegalTermsAcceptance | null }> | LegalTermsStatus>('/api/legal/terms/accept', {
         method: 'POST',
         credentials: 'include',
         timeout: 10000,
         body: {
-          source: 'terms_page',
+          source: (payload as any)?.source || 'terms_page',
         },
       }).then(mapAcceptResponseToStatus),
     onSuccess: (result) => {
