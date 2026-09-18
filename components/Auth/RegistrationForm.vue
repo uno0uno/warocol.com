@@ -1,6 +1,6 @@
 <template>
   <AuthSplitShell
-    image-src="https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/brand/auth-register-2026.webp"
+    image-src="https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/brand/auth-patos.jpeg"
     image-position="67% center"
     content-width="wide"
   >
