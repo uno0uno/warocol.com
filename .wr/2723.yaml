@@ -1,0 +1,44 @@
+# Compact Codex plan for wr-fast / wr-exec. Keep <=80 lines.
+issue: 2723
+title: "feat(billing): confirm checkout via provider API fallback when webhook missing (MP + LS)"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: "/Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt"
+stack: both
+branch: wr-2723-billing-confirm-fallback
+
+paths:
+  - pages/billing/confirmacion.vue
+  - ../api_warocol.com/app/routers/billing.py
+  - ../api_warocol.com/app/services/mercadopago_subscription_service.py
+  - ../api_warocol.com/app/services/lemon_squeezy_service.py
+  - ../api_warocol.com/app/routers/payments_webhook.py
+
+ac:
+  - GET /billing/confirmacion?preapproval_id=xxx hace GET MP api con token TEST/PROD y si authorized activa tenant_subscriptions
+  - Equivalente LS hace GET LS API con subscription_id
+  - Mantiene verificando si pending; marca payment_approved si authorized/active
+  - Idempotente si webhook ya proceso
+
+out_of_scope:
+  - reconfigurar webhook URL en dashboard MP/LS
+  - cambios UI agradecimiento
+
+hints:
+  entry: "pages/billing/confirmacion.vue polling + app/routers/billing.py confirm endpoint"
+  pattern: "app/services/mercadopago_subscription_service.py:12 MP_API + _access_token env test/prod"
+  tests: "pytest api_warocol.com/tests/test_billing* ; pnpm --filter front_nuxt test"
+
+risk:
+  sensitive: true
+  areas:
+    - pagos/secrets tenant (MP token, webhook secret)
+    - doble activacion idempotencia
+
+skip:
+  audits:
+    - no infra
+
+next:
+  after_pr: "verificar webhook + fallback en staging warocolombia test"
+
