@@ -1,0 +1,41 @@
+# Compact Codex plan for wr-fast / wr-exec. Keep <=80 lines.
+issue: 2719
+title: "fix(ui): normalize row density compras-directas vs analiza + align recetas/modificadores"
+repo: warocol.com
+repo_remote: uno0uno/warocol.com
+cwd: "/Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt"
+stack: nuxt
+branch: wr-2719-normalize-row-density
+
+paths:
+  - pages/abastecimiento/compras-directas/index.vue
+  - pages/menu/recetas/index.vue
+  - pages/menu/modificadores/index.vue
+  - components/ui/data-table/index.vue
+
+ac:
+  - compras-directas mantiene row-size sm igual que resto abastecimiento (proveedores/movimientos/calidad-datos) — no mas compacto
+  - recetas y modificadores pasan de row-size xs a sm para unificar densidad con compras-directas/analiza
+  - thumbnail/icon sizing acorde: mismo py/px y text-sm coherente (sin h-6 vs h-10 dispar)
+  - sin cambio de logica, solo props densidad
+
+out_of_scope:
+  - filtros/calculo/paginacion/API
+  - rediseno completo analza (no existe ruta analza dedicada — se toma como referencia abastecimiento sm)
+
+hints:
+  entry: "pages/abastecimiento/compras-directas/index.vue:87 row-size sm, pages/menu/recetas/index.vue:51 xs -> sm, pages/menu/modificadores/index.vue:48 xs -> sm"
+  pattern: "UiResponsiveDataView rowSize xs=py-1 px-2 vs sm=py-2 px-3 en components/ui/data-table/index.vue:272/342"
+  tests: "pnpm --filter front_nuxt test 2>&1 | head -30 || npm run test 2>&1 | head -30"
+
+risk:
+  sensitive: false
+  areas:
+    - cambio visual global en 2 tablas menu
+
+skip:
+  audits:
+    - no infra
+next:
+  after_pr: "deploy front"
+
