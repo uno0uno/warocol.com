@@ -127,7 +127,7 @@
           :empty-message="emptyMessage"
           :empty-sub-message="emptySubMessage"
           variant="default"
-          row-size="sm"
+          row-size="xs"
           :sort-field="tableSortField"
           :sort-direction="tableSortDirection"
           @sort="handleProductsTableSort"
