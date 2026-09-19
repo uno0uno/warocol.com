@@ -1,0 +1,46 @@
+# Compact Codex plan for wr-plan / wr-exec. Keep <=80 lines.
+issue: 2726
+title: "feat(legal): enforce TyC v1.1 gate for legacy courtesy tenants"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-2726-legal-courtesy-gate
+
+paths:
+  - front_nuxt/middleware/legal-gate.global.ts
+  - front_nuxt/composables/useLegalTerms.ts
+  - front_nuxt/middleware/auth.global.js
+  - front_nuxt/pages/terminos-y-condiciones.vue
+
+ac:
+  - Tenant activo con accepted=false en ruta privada → redirect a /terminos-y-condiciones?return=<original> (allowlist: /terminos-y-condiciones, /auth/*, /proveedor/*, /blog/*, public layouts)
+  - Aceptar en /terminos-y-condiciones crea tenant_legal_acceptances v1.1 y navega a return (ya existe, validar return sanitizado)
+  - armelo-perro y jc-hoteleria bloqueados hasta aceptar; post-aceptación operan normal
+  - Trials nuevos no regresan (terms_pending lo maneja onboarding, legal gate no interfiere con pending onboarding)
+
+out_of_scope:
+  - Texto legal, Wompi, planes/precios, rediseño página
+  - Backend legal_service changes (PR espejo separado)
+
+hints:
+  entry: "front_nuxt/middleware/legal-gate.global.ts"
+  pattern: "front_nuxt/middleware/billing-gate.global.ts:12 skip logic + useQueryCache + $fetch('/api/legal/terms/status')"
+  legal_status: "front_nuxt/composables/useLegalTerms.ts:162 fetchTermsStatus maps requires_acceptance → pending/accepted"
+  return: "front_nuxt/pages/terminos-y-condiciones.vue:268 returnTarget validates startsWith('/') and !startsWith('//')"
+  tests: "npm run build not allowed; verify via manual navigation + unit for redirect helper if exists"
+
+risk:
+  sensitive: true
+  areas:
+    - auth middleware redirect loops
+    - legal acceptance evidence
+    - tenant-scoped cache
+
+skip:
+  audits:
+    - no full repo inventory
+    - no backend migration
+
+next:
+  after_pr: "Mirror PR in api-warolabs if needed; validate with armelo-perro login"
